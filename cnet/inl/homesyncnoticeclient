@@ -1,0 +1,47 @@
+	public:
+		unsigned int localsid;
+		int opt_type;
+		int ret_code;
+		GHomeSync home_sync_data;
+		Octets addition_data;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMESYNCNOTICECLIENT };
+	public:
+		HomeSyncNoticeClient() { type = PROTOCOL_HOMESYNCNOTICECLIENT; }
+		HomeSyncNoticeClient(void*) : Protocol(PROTOCOL_HOMESYNCNOTICECLIENT) { }
+		HomeSyncNoticeClient (unsigned int l_localsid,int l_opt_type,int l_ret_code,
+			GHomeSync l_home_sync_data,const Octets& l_addition_data = Octets())
+			 : localsid(l_localsid),opt_type(l_opt_type),ret_code(l_ret_code)
+			,home_sync_data(l_home_sync_data),addition_data(l_addition_data)
+		{
+			type = PROTOCOL_HOMESYNCNOTICECLIENT;
+		}
+
+		HomeSyncNoticeClient(const HomeSyncNoticeClient &rhs)
+			: Protocol(rhs),localsid(rhs.localsid),opt_type(rhs.opt_type),ret_code(rhs.ret_code)
+			,home_sync_data(rhs.home_sync_data),addition_data(rhs.addition_data) { }
+
+		GNET::Protocol *Clone() const { return new HomeSyncNoticeClient(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << localsid;
+			os << opt_type;
+			os << ret_code;
+			os << home_sync_data;
+			os << addition_data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> localsid;
+			os >> opt_type;
+			os >> ret_code;
+			os >> home_sync_data;
+			os >> addition_data;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

@@ -1,0 +1,70 @@
+#ifndef __GNET_EC_ARENABATTLESTARTRE_RPCDATA
+#define __GNET_EC_ARENABATTLESTARTRE_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaBattleStartRe : public GNET::Rpc::Data
+	{
+	public:
+		Int64Vector member;
+		long long team_id;
+		unsigned int counter;
+
+	public:
+		EC_ArenaBattleStartRe (const Int64Vector& l_member = Int64Vector(),long long l_team_id = 0,unsigned int l_counter = 0)
+			: member(l_member),team_id(l_team_id),counter(l_counter)
+		{
+		}
+
+		EC_ArenaBattleStartRe(const EC_ArenaBattleStartRe &rhs)
+			: member(rhs.member),team_id(rhs.team_id),counter(rhs.counter) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaBattleStartRe(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaBattleStartRe *r = dynamic_cast<const EC_ArenaBattleStartRe *>(&rhs);
+			if (r && r != this)
+			{
+				member = r->member;
+				team_id = r->team_id;
+				counter = r->counter;
+			}
+			return *this;
+		}
+
+		EC_ArenaBattleStartRe& operator = (const EC_ArenaBattleStartRe &rhs)
+		{
+			const EC_ArenaBattleStartRe *r = &rhs;
+			if (r && r != this)
+			{
+				member = r->member;
+				team_id = r->team_id;
+				counter = r->counter;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << member;
+			os << team_id;
+			os << counter;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> member;
+			os >> team_id;
+			os >> counter;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaBattleStartRe>	EC_ArenaBattleStartReVector;
+};
+#endif

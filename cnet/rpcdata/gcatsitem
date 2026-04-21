@@ -1,0 +1,101 @@
+#ifndef __GNET_GCATSITEM_RPCDATA
+#define __GNET_GCATSITEM_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GCatsItem : public GNET::Rpc::Data
+	{
+	public:
+		char mode;
+		int price;
+		int id;
+		int pos;
+		int count;
+		int proctype;
+		int expire_date;
+		Octets data;
+
+	public:
+		GCatsItem (char l_mode = 0,int l_price = 0,int l_id = -1
+			,int l_pos = -1,int l_count = 0,int l_proctype = 0
+			,int l_expire_date = 0,const Octets& l_data = Octets())
+			: mode(l_mode),price(l_price),id(l_id)
+			,pos(l_pos),count(l_count),proctype(l_proctype)
+			,expire_date(l_expire_date),data(l_data)
+		{
+		}
+
+		GCatsItem(const GCatsItem &rhs)
+			: mode(rhs.mode),price(rhs.price),id(rhs.id),
+			pos(rhs.pos),count(rhs.count),proctype(rhs.proctype),
+			expire_date(rhs.expire_date),data(rhs.data) { }
+
+		Rpc::Data *Clone() const { return new GCatsItem(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GCatsItem *r = dynamic_cast<const GCatsItem *>(&rhs);
+			if (r && r != this)
+			{
+				mode = r->mode;
+				price = r->price;
+				id = r->id;
+				pos = r->pos;
+				count = r->count;
+				proctype = r->proctype;
+				expire_date = r->expire_date;
+				data = r->data;
+			}
+			return *this;
+		}
+
+		GCatsItem& operator = (const GCatsItem &rhs)
+		{
+			const GCatsItem *r = &rhs;
+			if (r && r != this)
+			{
+				mode = r->mode;
+				price = r->price;
+				id = r->id;
+				pos = r->pos;
+				count = r->count;
+				proctype = r->proctype;
+				expire_date = r->expire_date;
+				data = r->data;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << mode;
+			os << price;
+			os << id;
+			os << pos;
+			os << count;
+			os << proctype;
+			os << expire_date;
+			os << data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> mode;
+			os >> price;
+			os >> id;
+			os >> pos;
+			os >> count;
+			os >> proctype;
+			os >> expire_date;
+			os >> data;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GCatsItem>	GCatsItemVector;
+};
+#endif

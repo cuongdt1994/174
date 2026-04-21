@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_SQLSETPLAYERRANKINGARG_RPCDATA
+#define __GNET_EC_SQLSETPLAYERRANKINGARG_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_sqlplayerranking"
+
+namespace GNET
+{
+	class EC_SQLSetPlayerRankingArg : public GNET::Rpc::Data
+	{
+	public:
+		int roleid;
+		EC_SQLPlayerRanking player;
+
+	public:
+		EC_SQLSetPlayerRankingArg (int l_roleid = 0,const EC_SQLPlayerRanking& l_player = EC_SQLPlayerRanking())
+			: roleid(l_roleid),player(l_player)
+		{
+		}
+
+		EC_SQLSetPlayerRankingArg(const EC_SQLSetPlayerRankingArg &rhs)
+			: roleid(rhs.roleid),player(rhs.player) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLSetPlayerRankingArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLSetPlayerRankingArg *r = dynamic_cast<const EC_SQLSetPlayerRankingArg *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				player = r->player;
+			}
+			return *this;
+		}
+
+		EC_SQLSetPlayerRankingArg& operator = (const EC_SQLSetPlayerRankingArg &rhs)
+		{
+			const EC_SQLSetPlayerRankingArg *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				player = r->player;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << player;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> player;
+			return os;
+		}
+
+	};
+};
+#endif

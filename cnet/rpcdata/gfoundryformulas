@@ -1,0 +1,77 @@
+#ifndef __GNET_GFOUNDRYFORMULAS_RPCDATA
+#define __GNET_GFOUNDRYFORMULAS_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gfoundryformulasdata"
+
+namespace GNET
+{
+	class GFoundryFormulas : public GNET::Rpc::Data
+	{
+	public:
+		int id;
+		Octets rolename;
+		int timestamp;
+		GFoundryFormulasDataVector data;
+
+	public:
+		GFoundryFormulas (const Octets& l_rolename = Octets())
+			: rolename(l_rolename)
+		{
+		}
+
+		GFoundryFormulas(const GFoundryFormulas &rhs)
+			: id(rhs.id),rolename(rhs.rolename),timestamp(rhs.timestamp),
+			data(rhs.data) { }
+
+		Rpc::Data *Clone() const { return new GFoundryFormulas(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GFoundryFormulas *r = dynamic_cast<const GFoundryFormulas *>(&rhs);
+			if (r && r != this)
+			{
+				id = r->id;
+				rolename = r->rolename;
+				timestamp = r->timestamp;
+				data = r->data;
+			}
+			return *this;
+		}
+
+		GFoundryFormulas& operator = (const GFoundryFormulas &rhs)
+		{
+			const GFoundryFormulas *r = &rhs;
+			if (r && r != this)
+			{
+				id = r->id;
+				rolename = r->rolename;
+				timestamp = r->timestamp;
+				data = r->data;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << rolename;
+			os << timestamp;
+			os << data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> rolename;
+			os >> timestamp;
+			os >> data;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GFoundryFormulas>	GFoundryFormulasVector;
+};
+#endif

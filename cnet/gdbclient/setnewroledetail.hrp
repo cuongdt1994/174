@@ -1,0 +1,55 @@
+
+#ifndef __GNET_SETNEWROLEDETAIL_HPP
+#define __GNET_SETNEWROLEDETAIL_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "setnewroledetailarg"
+#include "setnewroledetailres"
+
+#include "db_if.h"
+
+namespace GNET
+{
+
+class SetNewRoleDetail : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "setnewroledetail"
+#undef	RPC_BASECLASS
+
+	GDB::OnSaveNewRoleDetail_Re *_callback;
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// SetNewRoleDetailArg *arg = (SetNewRoleDetailArg *)argument;
+		// SetNewRoleDetailRes *res = (SetNewRoleDetailRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		SetNewRoleDetailArg *arg = (SetNewRoleDetailArg *)argument;
+		SetNewRoleDetailRes *res = (SetNewRoleDetailRes *)result;
+		
+		if(res->retcode) 
+		{
+			_callback->OnFailed();
+			return;
+		}
+		
+		_callback->OnSucceed( arg->roleid, res->retcode );
+		
+		//GDB::SaveNewRoleDetail_Re( arg->roleid, res->retcode);
+	}
+
+	void OnTimeout()
+	{
+		_callback->OnTimeOut();
+	}
+
+};
+
+};
+#endif

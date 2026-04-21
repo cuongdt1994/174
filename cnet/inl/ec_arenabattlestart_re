@@ -1,0 +1,38 @@
+	public:
+		int retcode;
+		int arena_id;
+		int world_tag;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENABATTLESTART_RE };
+	public:
+		EC_ArenaBattleStart_Re() { type = PROTOCOL_EC_ARENABATTLESTART_RE; }
+		EC_ArenaBattleStart_Re(void*) : Protocol(PROTOCOL_EC_ARENABATTLESTART_RE) { }
+		EC_ArenaBattleStart_Re (int l_retcode,int l_arena_id,int l_world_tag)
+			 : retcode(l_retcode),arena_id(l_arena_id),world_tag(l_world_tag)
+		{
+			type = PROTOCOL_EC_ARENABATTLESTART_RE;
+		}
+
+		EC_ArenaBattleStart_Re(const EC_ArenaBattleStart_Re &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),arena_id(rhs.arena_id),world_tag(rhs.world_tag) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaBattleStart_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << arena_id;
+			os << world_tag;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> arena_id;
+			os >> world_tag;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

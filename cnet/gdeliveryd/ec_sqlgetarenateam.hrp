@@ -1,0 +1,44 @@
+
+#ifndef __GNET_EC_SQLGETARENATEAM_HPP
+#define __GNET_EC_SQLGETARENATEAM_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "ec_sqlgetarenateamarg"
+#include "ec_sqlgetarenateamres"
+
+#include "ec_arenamanager.h"
+
+namespace GNET
+{
+
+class EC_SQLGetArenaTeam : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "ec_sqlgetarenateam"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// EC_SQLGetArenaTeamArg *arg = (EC_SQLGetArenaTeamArg *)argument;
+		// EC_SQLGetArenaTeamRes *res = (EC_SQLGetArenaTeamRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		EC_SQLGetArenaTeamArg *arg = (EC_SQLGetArenaTeamArg *)argument;
+		EC_SQLGetArenaTeamRes *res = (EC_SQLGetArenaTeamRes *)result;
+		ArenaOfAuroraManager::GetInstance()->EC_GetArenaTeam_Re( arg->capitan_id , arg->team_id, res->retcode, res->team);
+	}
+
+	void OnTimeout()
+	{
+		Log::log(LOG_ERR,"EC_SQLGetArenaTeam: timeout.\n");
+	}
+
+};
+
+};
+#endif

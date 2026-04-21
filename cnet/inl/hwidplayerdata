@@ -1,0 +1,38 @@
+	public:
+		int roleid;
+		unsigned int localsid;
+		Octets hwid;
+		enum { PROTOCOL_TYPE = PROTOCOL_HWIDPLAYERDATA };
+	public:
+		HwidPlayerData() { type = PROTOCOL_HWIDPLAYERDATA; }
+		HwidPlayerData(void*) : Protocol(PROTOCOL_HWIDPLAYERDATA) { }
+		HwidPlayerData (int l_roleid = 0,unsigned int l_localsid = 0,const Octets& l_hwid = Octets(0))
+			 : roleid(l_roleid),localsid(l_localsid),hwid(l_hwid)
+		{
+			type = PROTOCOL_HWIDPLAYERDATA;
+		}
+
+		HwidPlayerData(const HwidPlayerData &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),localsid(rhs.localsid),hwid(rhs.hwid) { }
+
+		GNET::Protocol *Clone() const { return new HwidPlayerData(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << localsid;
+			os << hwid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> localsid;
+			os >> hwid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 24; }

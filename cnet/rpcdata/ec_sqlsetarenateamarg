@@ -1,0 +1,70 @@
+#ifndef __GNET_EC_SQLSETARENATEAMARG_RPCDATA
+#define __GNET_EC_SQLSETARENATEAMARG_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_sqlarenateam"
+
+namespace GNET
+{
+	class EC_SQLSetArenaTeamArg : public GNET::Rpc::Data
+	{
+	public:
+		int capitan_id;
+		int team_id;
+		EC_SQLArenaTeam team;
+
+	public:
+		EC_SQLSetArenaTeamArg (int l_capitan_id = 0,int l_team_id = 0,const EC_SQLArenaTeam& l_team = EC_SQLArenaTeam())
+			: capitan_id(l_capitan_id),team_id(l_team_id),team(l_team)
+		{
+		}
+
+		EC_SQLSetArenaTeamArg(const EC_SQLSetArenaTeamArg &rhs)
+			: capitan_id(rhs.capitan_id),team_id(rhs.team_id),team(rhs.team) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLSetArenaTeamArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLSetArenaTeamArg *r = dynamic_cast<const EC_SQLSetArenaTeamArg *>(&rhs);
+			if (r && r != this)
+			{
+				capitan_id = r->capitan_id;
+				team_id = r->team_id;
+				team = r->team;
+			}
+			return *this;
+		}
+
+		EC_SQLSetArenaTeamArg& operator = (const EC_SQLSetArenaTeamArg &rhs)
+		{
+			const EC_SQLSetArenaTeamArg *r = &rhs;
+			if (r && r != this)
+			{
+				capitan_id = r->capitan_id;
+				team_id = r->team_id;
+				team = r->team;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << capitan_id;
+			os << team_id;
+			os << team;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> capitan_id;
+			os >> team_id;
+			os >> team;
+			return os;
+		}
+
+	};
+};
+#endif

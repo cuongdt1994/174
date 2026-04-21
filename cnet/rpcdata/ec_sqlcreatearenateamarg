@@ -1,0 +1,82 @@
+#ifndef __GNET_EC_SQLCREATEARENATEAMARG_RPCDATA
+#define __GNET_EC_SQLCREATEARENATEAMARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLCreateArenaTeamArg : public GNET::Rpc::Data
+	{
+	public:
+		int capitan_id;
+		int capitan_cls;
+		Octets capitan_name;
+		int team_type;
+		Octets team_name;
+
+	public:
+		EC_SQLCreateArenaTeamArg (int l_capitan_id = 0,int l_capitan_cls = 0,const Octets& l_capitan_name = Octets(0)
+			,int l_team_type = 0,const Octets& l_team_name = Octets(0))
+			: capitan_id(l_capitan_id),capitan_cls(l_capitan_cls),capitan_name(l_capitan_name)
+			,team_type(l_team_type),team_name(l_team_name)
+		{
+		}
+
+		EC_SQLCreateArenaTeamArg(const EC_SQLCreateArenaTeamArg &rhs)
+			: capitan_id(rhs.capitan_id),capitan_cls(rhs.capitan_cls),capitan_name(rhs.capitan_name),
+			team_type(rhs.team_type),team_name(rhs.team_name) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLCreateArenaTeamArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLCreateArenaTeamArg *r = dynamic_cast<const EC_SQLCreateArenaTeamArg *>(&rhs);
+			if (r && r != this)
+			{
+				capitan_id = r->capitan_id;
+				capitan_cls = r->capitan_cls;
+				capitan_name = r->capitan_name;
+				team_type = r->team_type;
+				team_name = r->team_name;
+			}
+			return *this;
+		}
+
+		EC_SQLCreateArenaTeamArg& operator = (const EC_SQLCreateArenaTeamArg &rhs)
+		{
+			const EC_SQLCreateArenaTeamArg *r = &rhs;
+			if (r && r != this)
+			{
+				capitan_id = r->capitan_id;
+				capitan_cls = r->capitan_cls;
+				capitan_name = r->capitan_name;
+				team_type = r->team_type;
+				team_name = r->team_name;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << capitan_id;
+			os << capitan_cls;
+			os << capitan_name;
+			os << team_type;
+			os << team_name;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> capitan_id;
+			os >> capitan_cls;
+			os >> capitan_name;
+			os >> team_type;
+			os >> team_name;
+			return os;
+		}
+
+	};
+};
+#endif

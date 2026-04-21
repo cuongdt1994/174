@@ -1,0 +1,159 @@
+#ifndef __GNET_GLICENSESESSIONINFO_RPCDATA
+#define __GNET_GLICENSESESSIONINFO_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GLicenseSessionInfo : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int ip_new;
+		Octets challenge;
+		unsigned int time_start;
+		Octets service;
+		Octets login;
+		Octets passwd;
+		Octets rpc_passwd;
+		Octets sev_rand;
+		int id;
+		int version;
+		unsigned int ip_last;
+		unsigned int time_end;
+		Octets clt_rand;
+		unsigned int time_live;
+		Octets iseckey;
+		Octets oseckey;
+		Octets datakey;
+		unsigned int success;
+
+	public:
+		GLicenseSessionInfo (unsigned int l_ip_new = 0,const Octets& l_challenge = Octets(),unsigned int l_time_start = 0
+			,const Octets& l_service = Octets(),const Octets& l_login = Octets(),const Octets& l_passwd = Octets()
+			,const Octets& l_rpc_passwd = Octets(),const Octets& l_sev_rand = Octets(),int l_id = 0
+			,int l_version = 0,unsigned int l_ip_last = 0,unsigned int l_time_end = 0
+			,const Octets& l_clt_rand = Octets(),unsigned int l_time_live = 5,const Octets& l_iseckey = Octets()
+			,const Octets& l_oseckey = Octets(),const Octets& l_datakey = Octets(),unsigned int l_success = 0)
+			: ip_new(l_ip_new),challenge(l_challenge),time_start(l_time_start)
+			,service(l_service),login(l_login),passwd(l_passwd)
+			,rpc_passwd(l_rpc_passwd),sev_rand(l_sev_rand),id(l_id)
+			,version(l_version),ip_last(l_ip_last),time_end(l_time_end)
+			,clt_rand(l_clt_rand),time_live(l_time_live),iseckey(l_iseckey)
+			,oseckey(l_oseckey),datakey(l_datakey),success(l_success)
+		{
+		}
+
+		GLicenseSessionInfo(const GLicenseSessionInfo &rhs)
+			: ip_new(rhs.ip_new),challenge(rhs.challenge),time_start(rhs.time_start),
+			service(rhs.service),login(rhs.login),passwd(rhs.passwd),
+			rpc_passwd(rhs.rpc_passwd),sev_rand(rhs.sev_rand),id(rhs.id),
+			version(rhs.version),ip_last(rhs.ip_last),time_end(rhs.time_end),
+			clt_rand(rhs.clt_rand),time_live(rhs.time_live),iseckey(rhs.iseckey),
+			oseckey(rhs.oseckey),datakey(rhs.datakey),success(rhs.success) { }
+
+		Rpc::Data *Clone() const { return new GLicenseSessionInfo(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GLicenseSessionInfo *r = dynamic_cast<const GLicenseSessionInfo *>(&rhs);
+			if (r && r != this)
+			{
+				ip_new = r->ip_new;
+				challenge = r->challenge;
+				time_start = r->time_start;
+				service = r->service;
+				login = r->login;
+				passwd = r->passwd;
+				rpc_passwd = r->rpc_passwd;
+				sev_rand = r->sev_rand;
+				id = r->id;
+				version = r->version;
+				ip_last = r->ip_last;
+				time_end = r->time_end;
+				clt_rand = r->clt_rand;
+				time_live = r->time_live;
+				iseckey = r->iseckey;
+				oseckey = r->oseckey;
+				datakey = r->datakey;
+				success = r->success;
+			}
+			return *this;
+		}
+
+		GLicenseSessionInfo& operator = (const GLicenseSessionInfo &rhs)
+		{
+			const GLicenseSessionInfo *r = &rhs;
+			if (r && r != this)
+			{
+				ip_new = r->ip_new;
+				challenge = r->challenge;
+				time_start = r->time_start;
+				service = r->service;
+				login = r->login;
+				passwd = r->passwd;
+				rpc_passwd = r->rpc_passwd;
+				sev_rand = r->sev_rand;
+				id = r->id;
+				version = r->version;
+				ip_last = r->ip_last;
+				time_end = r->time_end;
+				clt_rand = r->clt_rand;
+				time_live = r->time_live;
+				iseckey = r->iseckey;
+				oseckey = r->oseckey;
+				datakey = r->datakey;
+				success = r->success;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << ip_new;
+			os << challenge;
+			os << time_start;
+			os << service;
+			os << login;
+			os << passwd;
+			os << rpc_passwd;
+			os << sev_rand;
+			os << id;
+			os << version;
+			os << ip_last;
+			os << time_end;
+			os << clt_rand;
+			os << time_live;
+			os << iseckey;
+			os << oseckey;
+			os << datakey;
+			os << success;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> ip_new;
+			os >> challenge;
+			os >> time_start;
+			os >> service;
+			os >> login;
+			os >> passwd;
+			os >> rpc_passwd;
+			os >> sev_rand;
+			os >> id;
+			os >> version;
+			os >> ip_last;
+			os >> time_end;
+			os >> clt_rand;
+			os >> time_live;
+			os >> iseckey;
+			os >> oseckey;
+			os >> datakey;
+			os >> success;
+			return os;
+		}
+
+	};
+};
+#endif

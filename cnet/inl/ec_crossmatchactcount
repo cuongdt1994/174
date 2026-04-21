@@ -1,0 +1,32 @@
+	public:
+		unsigned int reserve1;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_CROSSMATCHACTCOUNT };
+	public:
+		EC_CrossMatchActCount() { type = PROTOCOL_EC_CROSSMATCHACTCOUNT; }
+		EC_CrossMatchActCount(void*) : Protocol(PROTOCOL_EC_CROSSMATCHACTCOUNT) { }
+		EC_CrossMatchActCount (unsigned int l_reserve1 = 0)
+			 : reserve1(l_reserve1)
+		{
+			type = PROTOCOL_EC_CROSSMATCHACTCOUNT;
+		}
+
+		EC_CrossMatchActCount(const EC_CrossMatchActCount &rhs)
+			: Protocol(rhs),reserve1(rhs.reserve1) { }
+
+		GNET::Protocol *Clone() const { return new EC_CrossMatchActCount(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reserve1;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reserve1;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

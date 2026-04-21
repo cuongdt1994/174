@@ -1,0 +1,317 @@
+
+#ifndef __GNET_PUTROLE2_HPP
+#define __GNET_PUTROLE2_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "dbbuffer.h"
+#include "rolepair"
+#include "localmacro.h"
+#include "grefstore"
+#include "guserstorehouse"
+#include "gamedbmanager.h"
+#include "utilfunction.h"
+#include "putroleres"
+#include "gcashvipinfo"
+
+#include "grewardstore152"
+
+namespace GNET
+{
+
+class PutRole : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "putrole"
+#undef	RPC_BASECLASS
+
+	bool SaveData(RolePair *arg, PutRoleRes *res)
+	{
+		try
+		{
+			StorageEnv::Storage * pstatus = StorageEnv::GetStorage("status");
+			StorageEnv::Storage * pinventory = StorageEnv::GetStorage("inventory");
+			StorageEnv::Storage * pequipment = StorageEnv::GetStorage("equipment");
+			StorageEnv::Storage * pstorehouse = StorageEnv::GetStorage("storehouse");
+			StorageEnv::Storage * ptask = StorageEnv::GetStorage("task");
+			StorageEnv::Storage * puser = StorageEnv::GetStorage("user");
+			StorageEnv::Storage * puserstore = StorageEnv::GetStorage("userstore");
+			//StorageEnv::Storage * plog = arg->value.logs.size()?StorageEnv::GetStorage("shoplog"):NULL;
+			Marshal::OctetsStream key, key_user, value_userstore;
+
+			if ( arg->key.id != arg->value.id )
+			{
+				Log::log(LOG_ERR,"PutRole, fatal, key.id(%d)!=value.id(%d)\n",arg->key.id,arg->value.id);
+				res->retcode = ERR_VERIFYFAILED;
+				return true;
+			}
+			StorageEnv::CommonTransaction txn;
+			int money_delta=0,cash_delta=0;
+			try
+			{
+				key << arg->key;
+				GRolePocket	pocket;
+				Marshal::OctetsStream( pinventory->find( key, txn ) ) >> pocket;
+				if(arg->value.inventory.timestamp <= pocket.timestamp)
+				{
+					Log::log(LOG_ERR,"PutRole, fatal, timestamp mismatch. %d<%d",
+						arg->value.inventory.timestamp, pocket.timestamp);
+					res->retcode = ERR_VERIFYFAILED;
+					return true;
+				}
+				money_delta = arg->value.inventory.money - pocket.money;
+				
+				
+					pstatus->insert( key, Marshal::OctetsStream() << arg->value.status, txn );
+				
+				if( arg->data_mask & CDB_PUT_INVENTORY )
+					pinventory->insert( key, Marshal::OctetsStream() << arg->value.inventory, txn );
+				if( arg->data_mask & CDB_PUT_EQUIPMENT )
+					pequipment->insert( key, Marshal::OctetsStream() << arg->value.equipment, txn );
+				if( arg->data_mask & CDB_PUT_TASK)
+					ptask->insert( key, Marshal::OctetsStream()<<arg->value.task,txn );
+				if( arg->data_mask & CDB_PUT_STOREHOUSE )
+				{
+					Marshal::OctetsStream value;
+					if(pstorehouse->find(key, value, txn))
+					{
+						GRoleStorehouse store;
+						value >> store;
+						money_delta += arg->value.storehouse.money - store.money;
+					}
+					pstorehouse->insert( key, Marshal::OctetsStream() << arg->value.storehouse, txn );
+				}
+				//if( arg->data_mask & CDB_PUT_CASH ) Ϊ�˱������������
+				{
+					User user;
+					key_user << arg->value.userid;
+					Marshal::OctetsStream(puser->find(key_user,txn))>>user;
+					if(user.logicuid && (int)user.logicuid!=LOGICUID(arg->key.id))
+						throw DbException(DB_VERIFY_BAD);
+					if( arg->data_mask & CDB_PUT_CASH && arg->value.cash_serial!=user.use_serial ) 
+					{
+						Log::formatlog("updatecash","userid=%d:roleid=%d:used=%d:serail=%d:cash_used=%d:preserial=%d",
+							arg->value.userid,arg->key.id, arg->value.cash_used, arg->value.cash_serial, user.cash_used,
+							user.use_serial);
+						cash_delta = arg->value.cash_used - user.cash_used;
+						user.use_serial = arg->value.cash_serial;
+						user.cash_used = arg->value.cash_used;
+					}
+					user.addiction = arg->value.addiction;
+					LOG_TRACE("PutRole roleid %d bonus_used %d", arg->key.id, arg->value.bonus_used);
+					GRefStore ref_store;
+					if (user.reference.size())
+					{
+						Marshal::OctetsStream   os_ref(user.reference);
+						os_ref >> ref_store;
+						if (ref_store.bonus_used != arg->value.bonus_used)
+						{
+							ref_store.bonus_used = arg->value.bonus_used;
+							user.reference = Marshal::OctetsStream() << ref_store;
+						}
+					}
+					else
+					{
+						if (arg->value.bonus_used != 0)
+						{
+							ref_store.bonus_add = 0;
+							ref_store.bonus_used = arg->value.bonus_used;
+							user.reference = Marshal::OctetsStream() << ref_store;
+						}
+					}
+
+					GConsumptionRecord consumption_rec;
+					if (user.mall_consumption.size() > 0) {
+						Marshal::OctetsStream os_consumption(user.mall_consumption);
+						os_consumption >> consumption_rec;
+						if(consumption_rec.consumption != arg->value.mall_consumption) {
+							consumption_rec.consumption = arg->value.mall_consumption;
+							user.mall_consumption = Marshal::OctetsStream() << consumption_rec;
+						}
+					} else {
+						if (arg->value.mall_consumption != 0) {
+							consumption_rec.consumption = arg->value.mall_consumption;
+							user.mall_consumption = Marshal::OctetsStream() << consumption_rec;
+						}
+					}
+					
+					user.taskcounter = arg->value.taskcounter;
+					LOG_TRACE("PutRole, roleid=%d taskcounter.size %d", arg->key.id, arg->value.taskcounter.size());
+
+					//CASH_VIP
+					GRewardStore reward_store;
+					if(0 != user.consume_reward.size())
+					{
+						try
+						{
+							Marshal::OctetsStream os_reward(user.consume_reward);
+							os_reward >> reward_store;
+						}
+						catch( ... ) // is db <= 152
+						{
+							Marshal::OctetsStream os_reward(user.consume_reward);
+							GRewardStore152 r152;
+							os_reward >> r152;
+							
+							reward_store.consume_points	= r152.consume_points	;
+							reward_store.bonus_reward	= r152.bonus_reward		;
+							reward_store.rewardlist		= r152.rewardlist		;
+							reward_store.cash_vip_info.clear()					;
+						}
+					}
+					GCashVipInfo vipinfo;
+					if(0 != reward_store.cash_vip_info.size())
+					{
+						Marshal::OctetsStream os_vip_info(reward_store.cash_vip_info);
+						try
+						{
+							os_vip_info >> vipinfo;
+						}
+						catch( ... )
+						{
+							vipinfo.purchase_limit_items_info = Octets(0);
+							//vipinfo.asm_data = Octets(0);
+						}
+					}
+					HandleCashVipInfo(vipinfo, arg, res);
+					
+					reward_store.cash_vip_info = Marshal::OctetsStream() << vipinfo;	
+					user.consume_reward = Marshal::OctetsStream() << reward_store;
+		
+					puser->insert( key_user, Marshal::OctetsStream()<<user, txn );
+
+					if( arg->data_mask & CDB_PUT_USERSTORE )
+					{
+						GUserStorehouse user_store;
+						if(puserstore->find( key_user, value_userstore, txn ))
+						{
+							value_userstore >> user_store;
+						}
+						money_delta += arg->value.userstorehouse.money - user_store.money;
+						puserstore->insert( key_user, Marshal::OctetsStream()<<arg->value.userstorehouse, txn );
+						LOG_TRACE("PutRole, roleid=%d userstore capacity %d money %d count %d", arg->key.id, arg->value.userstorehouse.capacity, arg->value.userstorehouse.money, arg->value.userstorehouse.items.size());
+					}
+				}
+				/*
+				if( arg->value.logs.size() )
+				{
+					Marshal::OctetsStream keylog;
+					keylog << GameDBManager::GetInstance()->GetShoplogid();
+					plog->insert(keylog, Marshal::OctetsStream()<<arg->value.logs, txn);
+				}
+				*/
+
+				res->retcode = ERR_SUCCESS;
+				if(money_delta)
+					GameDBManager::GetInstance()->UpdateMoney(arg->key.id, money_delta);
+				if(cash_delta)
+					GameDBManager::GetInstance()->UpdateCash(cash_delta);
+			}
+			catch ( DbException e ) { throw; }
+			catch ( ... )
+			{
+				DbException ee( DB_OLD_VERSION );
+				txn.abort( ee );
+				throw ee;
+			}
+		}
+		catch ( DbException e )
+		{
+			res->retcode = -1;
+			if(e.get_errno()==DB_LOCK_DEADLOCK)
+				return false;
+			else
+				Log::log( LOG_ERR, "PutRole, roleid=%d, what=%s\n", arg->key.id, e.what() );
+		}
+		return true;
+	}
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		RolePair *arg = (RolePair *)argument;
+		PutRoleRes *res = (PutRoleRes *)result;
+
+		LOG_TRACE( "PutRole, roleid=%d mask=%d timestamp=%d priority=%d.\n", arg->key.id, arg->data_mask, 
+				arg->value.inventory.timestamp, arg->priority);
+
+		int extend = 100000;
+		int retry = arg->priority;
+		if(retry > 2)
+			retry = 2;
+		do
+		{
+			if(SaveData(arg,res) || retry<=0)
+				break;
+			usleep(extend);
+			extend += 900000;
+			retry--;
+		}while(true);
+
+		if(res->retcode != ERR_SUCCESS)
+			Log::log( LOG_ERR, "PutRole, roleid=%d, priority=%d, retry failed\n", arg->key.id, arg->priority);
+		if(arg->priority>1)
+		{
+			unsigned int money = arg->value.inventory.money + arg->value.storehouse.money;
+			Log::formatlog("putrole","sid=%d:userid=%d:roleid=%d:timestamp=%d:level=%d:exp=%d:money=%u:cash_used=%d", sid,arg->value.userid,
+					arg->key.id,arg->value.inventory.timestamp,arg->value.status.level,arg->value.status.exp,money,arg->value.cash_used);
+		}
+	}
+
+	void HandleCashVipInfo(GCashVipInfo& vipinfo, RolePair *arg, PutRoleRes *res)
+	{
+		vipinfo.score_consume = arg->value.score_consume;
+		vipinfo.day_clear_stamp = arg->value.day_clear_stamp;
+		vipinfo.week_clear_stamp = arg->value.week_clear_stamp;
+		vipinfo.month_clear_stamp = arg->value.month_clear_stamp;
+		vipinfo.year_clear_stamp = arg->value.year_clear_stamp;
+
+		vipinfo.purchase_limit_items_info = Marshal::OctetsStream() << arg->value.purchase_limit_data;
+		//vipinfo.asm_data = Marshal::OctetsStream() << arg->value.asm_data;
+
+		int stamp = CashVip::GetTodayReduceScoreStamp();
+		if(vipinfo.cash_vip_level == 0)
+		{
+			int cur_score = vipinfo.score_add - vipinfo.score_cost - vipinfo.score_consume;
+			CashVip::CalCashVipLevel(vipinfo.cash_vip_level, cur_score);
+			vipinfo.score_cost_stamp = stamp;
+		}
+		else
+		{
+			int diff_second = stamp - vipinfo.score_cost_stamp;
+			int diff_day = diff_second / (CashVip::EVERY_DAY_SECOND);
+			int cur_score = 0;
+			if(diff_day > 0)
+			{
+				int reduce_score = CashVip::GetCashVipReduceScore(vipinfo.cash_vip_level);
+				reduce_score *= diff_day;
+				cur_score = vipinfo.score_add - vipinfo.score_cost - vipinfo.score_consume;
+				if(reduce_score > cur_score)
+					reduce_score = cur_score;
+				vipinfo.score_cost += reduce_score;
+				vipinfo.score_cost_stamp = stamp;
+				cur_score -= reduce_score;
+				CashVip::CalCashVipLevel(vipinfo.cash_vip_level, cur_score);
+				LOG_TRACE( "CASH_VIP DAILY_REDUCE, userid=%d roleid=%d, cur_timestamp=%d, diff_day=%d, vip_level=%d, score_reduce=%d .\n",arg->value.userid, arg->key.id, stamp, diff_day, vipinfo.cash_vip_level, reduce_score);
+			}
+		}
+		res->cash_vip_level = vipinfo.cash_vip_level;
+		res->score_add      = vipinfo.score_add;
+		res->score_cost     = vipinfo.score_cost;
+		res->score_consume  = vipinfo.score_consume;
+	}
+	
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// RolePair *arg = (RolePair *)argument;
+		// RpcRetcode *res = (RpcRetcode *)result;
+	}
+
+	void OnTimeout()
+	{
+	}
+
+};
+
+};
+#endif

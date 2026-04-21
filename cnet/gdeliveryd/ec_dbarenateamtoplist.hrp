@@ -1,0 +1,48 @@
+
+#ifndef __GNET_EC_DBARENATEAMTOPLIST_HPP
+#define __GNET_EC_DBARENATEAMTOPLIST_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "ec_dbarenateamtoplistarg"
+#include "ec_dbarenateamtoplistres"
+
+#include "ec_arenamanager.h"
+
+namespace GNET
+{
+
+class EC_DBArenaTeamTopList : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "ec_dbarenateamtoplist"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// EC_DBArenaTeamTopListArg *arg = (EC_DBArenaTeamTopListArg *)argument;
+		// EC_DBArenaTeamTopListRes *res = (EC_DBArenaTeamTopListRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		EC_DBArenaTeamTopListArg *arg = (EC_DBArenaTeamTopListArg *)argument;
+		EC_DBArenaTeamTopListRes *res = (EC_DBArenaTeamTopListRes *)result;
+		
+		if (res->retcode == ERR_SUCCESS)
+		{
+			ArenaOfAuroraManager::GetInstance()->EC_SetArenaTeamTopList(res->teams);
+		}
+	}
+
+	void OnTimeout()
+	{
+		Log::log(LOG_ERR,"EC_DBArenaTeamTopList: timeout.\n");
+	}
+
+};
+
+};
+#endif

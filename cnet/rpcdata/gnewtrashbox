@@ -1,0 +1,104 @@
+#ifndef __GNET_GNEWTRASHBOX_RPCDATA
+#define __GNET_GNEWTRASHBOX_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "groleinventory"
+
+namespace GNET
+{
+	class GNewTrashBox : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int roleid;
+		unsigned char size4;
+		GRoleInventoryVector box4;
+		unsigned char size5;
+		GRoleInventoryVector box5;
+		unsigned char size6;
+		GRoleInventoryVector box6;
+		unsigned char size7;
+		GRoleInventoryVector box7;
+
+	public:
+		GNewTrashBox (unsigned int l_roleid = 0,unsigned char l_size4 = 0,unsigned char l_size5 = 0
+			,unsigned char l_size6 = 0,unsigned char l_size7 = 0)
+			: roleid(l_roleid),size4(l_size4),size5(l_size5)
+			,size6(l_size6),size7(l_size7)
+		{
+		}
+
+		GNewTrashBox(const GNewTrashBox &rhs)
+			: roleid(rhs.roleid),size4(rhs.size4),box4(rhs.box4),
+			size5(rhs.size5),box5(rhs.box5),size6(rhs.size6),
+			box6(rhs.box6),size7(rhs.size7),box7(rhs.box7) { }
+
+		Rpc::Data *Clone() const { return new GNewTrashBox(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GNewTrashBox *r = dynamic_cast<const GNewTrashBox *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				size4 = r->size4;
+				box4 = r->box4;
+				size5 = r->size5;
+				box5 = r->box5;
+				size6 = r->size6;
+				box6 = r->box6;
+				size7 = r->size7;
+				box7 = r->box7;
+			}
+			return *this;
+		}
+
+		GNewTrashBox& operator = (const GNewTrashBox &rhs)
+		{
+			const GNewTrashBox *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				size4 = r->size4;
+				box4 = r->box4;
+				size5 = r->size5;
+				box5 = r->box5;
+				size6 = r->size6;
+				box6 = r->box6;
+				size7 = r->size7;
+				box7 = r->box7;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << size4;
+			os << box4;
+			os << size5;
+			os << box5;
+			os << size6;
+			os << box6;
+			os << size7;
+			os << box7;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> size4;
+			os >> box4;
+			os >> size5;
+			os >> box5;
+			os >> size6;
+			os >> box6;
+			os >> size7;
+			os >> box7;
+			return os;
+		}
+
+	};
+};
+#endif

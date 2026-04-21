@@ -1,0 +1,59 @@
+#ifndef __GNET_EC_DBARENAPLAYERTOPLISTARG_RPCDATA
+#define __GNET_EC_DBARENAPLAYERTOPLISTARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_DBArenaPlayerTopListArg : public GNET::Rpc::Data
+	{
+	public:
+		int count;
+
+	public:
+		EC_DBArenaPlayerTopListArg (int l_count = 0)
+			: count(l_count)
+		{
+		}
+
+		EC_DBArenaPlayerTopListArg(const EC_DBArenaPlayerTopListArg &rhs)
+			: count(rhs.count) { }
+
+		Rpc::Data *Clone() const { return new EC_DBArenaPlayerTopListArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_DBArenaPlayerTopListArg *r = dynamic_cast<const EC_DBArenaPlayerTopListArg *>(&rhs);
+			if (r && r != this)
+			{
+				count = r->count;
+			}
+			return *this;
+		}
+
+		EC_DBArenaPlayerTopListArg& operator = (const EC_DBArenaPlayerTopListArg &rhs)
+		{
+			const EC_DBArenaPlayerTopListArg *r = &rhs;
+			if (r && r != this)
+			{
+				count = r->count;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << count;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> count;
+			return os;
+		}
+
+	};
+};
+#endif

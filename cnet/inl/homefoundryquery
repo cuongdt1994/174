@@ -1,0 +1,44 @@
+	public:
+		int role_id;
+		int home_id;
+		char query_type;
+		int cur_rid;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEFOUNDRYQUERY };
+	public:
+		HomeFoundryQuery() { type = PROTOCOL_HOMEFOUNDRYQUERY; }
+		HomeFoundryQuery(void*) : Protocol(PROTOCOL_HOMEFOUNDRYQUERY) { }
+		HomeFoundryQuery (int l_role_id,int l_home_id,char l_query_type,
+			int l_cur_rid)
+			 : role_id(l_role_id),home_id(l_home_id),query_type(l_query_type)
+			,cur_rid(l_cur_rid)
+		{
+			type = PROTOCOL_HOMEFOUNDRYQUERY;
+		}
+
+		HomeFoundryQuery(const HomeFoundryQuery &rhs)
+			: Protocol(rhs),role_id(rhs.role_id),home_id(rhs.home_id),query_type(rhs.query_type)
+			,cur_rid(rhs.cur_rid) { }
+
+		GNET::Protocol *Clone() const { return new HomeFoundryQuery(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << role_id;
+			os << home_id;
+			os << query_type;
+			os << cur_rid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> role_id;
+			os >> home_id;
+			os >> query_type;
+			os >> cur_rid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

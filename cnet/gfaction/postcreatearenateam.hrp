@@ -1,0 +1,49 @@
+
+#ifndef __GNET_POSTCREATEARENATEAM_HPP
+#define __GNET_POSTCREATEARENATEAM_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#ifdef USE_DB
+#include "dbbuffer.h"
+#endif
+#include "postcreatearenateamarg"
+#include "postcreatearenateamres"
+
+namespace GNET
+{
+
+class PostCreateArenaTeam : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "postcreatearenateam"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+#ifdef USE_DB
+		PostCreateArenaTeamArg *arg = (PostCreateArenaTeamArg *)argument;
+		PostCreateArenaTeamRes *res = (PostCreateArenaTeamRes *)result;
+		Marshal::OctetsStream key, value;
+		key << arg->teamname;
+		value << arg->teamid;
+#endif
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// PostCreateArenaTeamArg *arg = (PostCreateArenaTeamArg *)argument;
+		// PostCreateArenaTeamRes *res = (PostCreateArenaTeamRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

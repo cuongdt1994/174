@@ -1,0 +1,101 @@
+#ifndef __GNET_EC_ARENAPLAYERTOPLIST_RPCDATA
+#define __GNET_EC_ARENAPLAYERTOPLIST_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaPlayerTopList : public GNET::Rpc::Data
+	{
+	public:
+		long long player_id;
+		long long team_id;
+		unsigned int cls;
+		unsigned int score;
+		unsigned int win_count;
+		unsigned int team_score;
+		unsigned char pos;
+		Octets name;
+
+	public:
+		EC_ArenaPlayerTopList (long long l_player_id = 0,long long l_team_id = 0,unsigned int l_cls = 0
+			,unsigned int l_score = 0,unsigned int l_win_count = 0,unsigned int l_team_score = 0
+			,unsigned char l_pos = 0,const Octets& l_name = Octets(0))
+			: player_id(l_player_id),team_id(l_team_id),cls(l_cls)
+			,score(l_score),win_count(l_win_count),team_score(l_team_score)
+			,pos(l_pos),name(l_name)
+		{
+		}
+
+		EC_ArenaPlayerTopList(const EC_ArenaPlayerTopList &rhs)
+			: player_id(rhs.player_id),team_id(rhs.team_id),cls(rhs.cls),
+			score(rhs.score),win_count(rhs.win_count),team_score(rhs.team_score),
+			pos(rhs.pos),name(rhs.name) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaPlayerTopList(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaPlayerTopList *r = dynamic_cast<const EC_ArenaPlayerTopList *>(&rhs);
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				team_id = r->team_id;
+				cls = r->cls;
+				score = r->score;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				pos = r->pos;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		EC_ArenaPlayerTopList& operator = (const EC_ArenaPlayerTopList &rhs)
+		{
+			const EC_ArenaPlayerTopList *r = &rhs;
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				team_id = r->team_id;
+				cls = r->cls;
+				score = r->score;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				pos = r->pos;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << player_id;
+			os << team_id;
+			os << cls;
+			os << score;
+			os << win_count;
+			os << team_score;
+			os << pos;
+			os << name;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> player_id;
+			os >> team_id;
+			os >> cls;
+			os >> score;
+			os >> win_count;
+			os >> team_score;
+			os >> pos;
+			os >> name;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaPlayerTopList>	EC_ArenaPlayerTopListVector;
+};
+#endif

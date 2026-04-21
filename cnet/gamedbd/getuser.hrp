@@ -1,0 +1,248 @@
+
+#ifndef __GNET_GETUSER_HPP
+#define __GNET_GETUSER_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "dbbuffer.h"
+#include "userarg"
+#include "userres"
+#include "gsysauctioncash"
+#include "gloginrecord"
+#include "grewardstore"
+#include "gcashvipinfo"
+#include "utilfunction.h"
+
+//#include <liblicense.h>
+#include "grewardstore152"
+
+namespace GNET
+{
+
+class GetUser : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getuser"
+#undef	RPC_BASECLASS
+
+	static void Balance(unsigned int& data, unsigned int& delta)
+	{
+		if(data>=delta)
+		{
+			data -= delta;
+			delta = 0;
+		}
+		else
+		{
+			delta -= data;
+			data = 0;
+		}
+	}
+	static unsigned int BalanceCash(User& u)
+	{
+		GSysAuctionCash sa_cash;
+		if(u.cash_sysauction.size())
+			Marshal::OctetsStream(u.cash_sysauction)>>sa_cash;
+		unsigned int threshold = MAX_USER_CASH-CASH_BALANCE_THRESHOLD;
+		if((u.cash_add>threshold || u.cash_used>threshold || u.cash_buy>threshold || u.cash_sell>threshold || sa_cash.cash_used_2>threshold)
+				&&(u.cash_used>CASH_BALANCE_THRESHOLD || u.cash_sell>CASH_BALANCE_THRESHOLD || sa_cash.cash_used_2>CASH_BALANCE_THRESHOLD))
+		{
+			unsigned int total = u.cash_used + u.cash_sell + sa_cash.cash_used_2;
+			if(u.cash_used)
+			{
+				Balance(u.cash_buy,u.cash_used); 
+				Balance(u.cash_add,u.cash_used); 
+			}
+			if(u.cash_sell)
+			{
+				Balance(u.cash_buy,u.cash_sell); 
+				Balance(u.cash_add,u.cash_sell); 
+			}
+			if(sa_cash.cash_used_2)
+			{
+				Balance(u.cash_buy,sa_cash.cash_used_2); 
+				Balance(u.cash_add,sa_cash.cash_used_2); 
+			}
+			u.cash_sysauction = Marshal::OctetsStream()<<sa_cash;
+			if(total!=u.cash_used+u.cash_sell+sa_cash.cash_used_2)
+				return total-u.cash_used-u.cash_sell-sa_cash.cash_used_2;
+			else
+				return 0;
+		}
+		return 0;
+	}
+
+	int BalanceScore(GCashVipInfo &vipinfo)
+	{
+		unsigned int threshold = MAX_USER_CASH_VIP_SCORE-CASH_VIP_SCORE_BALANCE_THRESHOLD;
+		if(vipinfo.score_add>threshold || vipinfo.score_cost>threshold || vipinfo.score_consume>threshold)
+		{
+			unsigned int total = vipinfo.score_cost + vipinfo.score_consume;
+			if(vipinfo.score_cost)
+			{
+				Balance(vipinfo.score_add, vipinfo.score_cost); 
+			}
+			if(vipinfo.score_consume)
+			{
+				Balance(vipinfo.score_add, vipinfo.score_consume); 
+			}
+
+			if(total != vipinfo.score_cost + vipinfo.score_consume)
+				return total - vipinfo.score_cost - vipinfo.score_consume;
+		}
+		return 0;
+	}
+	
+	void CalCashVipData(User& user, int userid)
+	{
+		GRewardStore reward_store;
+		if(0 == user.consume_reward.size())
+			return;
+
+		try
+		{
+			Marshal::OctetsStream os_reward(user.consume_reward);
+			os_reward >> reward_store;
+		}
+		catch( ... ) // is db <= 152
+		{
+			Marshal::OctetsStream os_reward(user.consume_reward);
+			GRewardStore152 r152;
+			os_reward >> r152;
+			
+			reward_store.consume_points	= r152.consume_points	;
+			reward_store.bonus_reward	= r152.bonus_reward		;
+			reward_store.rewardlist		= r152.rewardlist		;
+			reward_store.cash_vip_info.clear()					;
+		}
+		
+		GCashVipInfo vipinfo;
+		if(0 == reward_store.cash_vip_info.size())
+			return;
+		Marshal::OctetsStream os_vip_info(reward_store.cash_vip_info);
+		try
+		{
+			os_vip_info >> vipinfo;
+		}
+		catch( ... )
+		{
+			return;
+		}
+		if(vipinfo.cash_vip_level != 0)
+		{
+			int stamp = CashVip::GetTodayReduceScoreStamp();
+			int diff_second = stamp - vipinfo.score_cost_stamp;
+			int diff_day = diff_second / (CashVip::EVERY_DAY_SECOND);
+			int cur_score = 0;
+			if(diff_day > 0)
+			{
+				int reduce_score = CashVip::GetCashVipReduceScore(vipinfo.cash_vip_level);
+				reduce_score *= diff_day;
+				cur_score = vipinfo.score_add - vipinfo.score_cost - vipinfo.score_consume;
+				if(reduce_score > cur_score)
+					reduce_score = cur_score;
+				vipinfo.score_cost += reduce_score;
+				vipinfo.score_cost_stamp = stamp;
+				cur_score -= reduce_score;
+				CashVip::CalCashVipLevel(vipinfo.cash_vip_level, cur_score);
+			}
+		}
+		int delta = BalanceScore(vipinfo);
+		if(delta)
+		{
+			Log::formatlog("balancecashvipscore","userid=%d:add=%d:cost=%d:consume=%d:delta=%d",userid, vipinfo.score_add, vipinfo.score_cost, vipinfo.score_consume, delta);
+		}
+		reward_store.cash_vip_info = Marshal::OctetsStream() << vipinfo;	
+		user.consume_reward = Marshal::OctetsStream() << reward_store;
+	}
+	
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		UserArg *arg = (UserArg *)argument;
+		UserRes *res = (UserRes *)result;
+
+		LOG_TRACE( "GetUser, userid=%d.\n", arg->id );
+
+		try
+		{
+			StorageEnv::Storage * puser = StorageEnv::GetStorage("user");
+			StorageEnv::Storage * precalluser = StorageEnv::GetStorage("recalluser");
+			StorageEnv::CommonTransaction txn;
+			Marshal::OctetsStream key,value;
+
+			try
+			{
+				//VM_BEGIN
+				//if (LIC_GET_ROLE_LIST)
+				//{
+					key << arg->id;
+				//}
+				//else
+				//{
+				//	kill(0, SIGUSR1);
+				//	return;
+				//}
+				//VM_END
+				
+				bool is_recall_server = GameDBManager::GetInstance()->IsRecallServer();	
+				if(is_recall_server && !precalluser->find(key, value, txn))
+				{
+					Log::log( LOG_ERR, "GetUser, not recall user userid=%d\n", arg->id );
+					res->retcode = ERR_NOT_RECALL_USER;
+					return;
+				}
+
+				
+				if(puser->find(key, value, txn))
+				{
+					value >> res->value;
+					User& u = res->value;
+					unsigned int delta = BalanceCash(u);
+					if(delta)
+					{
+						GSysAuctionCash sa_cash;
+						if(u.cash_sysauction.size())
+							Marshal::OctetsStream(u.cash_sysauction)>>sa_cash;
+						Log::formatlog("balancecash","userid=%d:add=%d:used=%d:buy=%d:sell=%d:used_2=%d:delta=%d",
+								arg->id, u.cash_add, u.cash_used, u.cash_buy, u.cash_sell, sa_cash.cash_used_2, delta);
+					}
+				
+					CalCashVipData(u, arg->id);
+					
+					Octets last_login = u.login_record;
+					u.login_record = Marshal::OctetsStream() << GLoginRecord(arg->login_time, arg->login_ip);
+					puser->insert( key, Marshal::OctetsStream() << u, txn );
+					u.login_record = last_login;
+
+					res->retcode = ERR_SUCCESS;
+				}else
+					res->retcode = ERR_DATANOTFIND;
+			}
+			catch ( DbException e ) { throw; }
+			catch ( ... )
+			{
+				DbException ee( DB_OLD_VERSION );
+				txn.abort( ee );
+				throw ee;
+			}
+		}
+		catch ( DbException e )
+		{
+			Log::log( LOG_ERR, "GetUser, userid=%d, what=%s\n", arg->id, e.what() );
+			res->retcode = -1;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+	}
+
+	void OnTimeout()
+	{
+	}
+
+};
+
+};
+#endif

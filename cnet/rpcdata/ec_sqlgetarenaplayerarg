@@ -1,0 +1,59 @@
+#ifndef __GNET_EC_SQLGETARENAPLAYERARG_RPCDATA
+#define __GNET_EC_SQLGETARENAPLAYERARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLGetArenaPlayerArg : public GNET::Rpc::Data
+	{
+	public:
+		int roleid;
+
+	public:
+		EC_SQLGetArenaPlayerArg (int l_roleid = 0)
+			: roleid(l_roleid)
+		{
+		}
+
+		EC_SQLGetArenaPlayerArg(const EC_SQLGetArenaPlayerArg &rhs)
+			: roleid(rhs.roleid) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLGetArenaPlayerArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLGetArenaPlayerArg *r = dynamic_cast<const EC_SQLGetArenaPlayerArg *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		EC_SQLGetArenaPlayerArg& operator = (const EC_SQLGetArenaPlayerArg &rhs)
+		{
+			const EC_SQLGetArenaPlayerArg *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			return os;
+		}
+
+	};
+};
+#endif

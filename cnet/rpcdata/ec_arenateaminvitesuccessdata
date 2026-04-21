@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_ARENATEAMINVITESUCCESSDATA_RPCDATA
+#define __GNET_EC_ARENATEAMINVITESUCCESSDATA_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaTeamInviteSuccessData : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int roleid;
+		unsigned int invited_id;
+
+	public:
+		EC_ArenaTeamInviteSuccessData (unsigned int l_roleid = 0,unsigned int l_invited_id = 0)
+			: roleid(l_roleid),invited_id(l_invited_id)
+		{
+		}
+
+		EC_ArenaTeamInviteSuccessData(const EC_ArenaTeamInviteSuccessData &rhs)
+			: roleid(rhs.roleid),invited_id(rhs.invited_id) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaTeamInviteSuccessData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaTeamInviteSuccessData *r = dynamic_cast<const EC_ArenaTeamInviteSuccessData *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				invited_id = r->invited_id;
+			}
+			return *this;
+		}
+
+		EC_ArenaTeamInviteSuccessData& operator = (const EC_ArenaTeamInviteSuccessData &rhs)
+		{
+			const EC_ArenaTeamInviteSuccessData *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				invited_id = r->invited_id;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << invited_id;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> invited_id;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaTeamInviteSuccessData>	EC_ArenaTeamInviteSuccessDataVector;
+};
+#endif

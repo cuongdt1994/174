@@ -1,0 +1,64 @@
+#ifndef __GNET_GMYSQLROW_RPCDATA
+#define __GNET_GMYSQLROW_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GMysqlRow : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int iindex;
+		std::vector<Octets> str;
+
+	public:
+		GMysqlRow (unsigned int l_iindex = 0,std::vector<Octets> l_str = std::vector<Octets>())
+			: iindex(l_iindex),str(l_str)
+		{
+		}
+
+		GMysqlRow(const GMysqlRow &rhs)
+			: iindex(rhs.iindex),str(rhs.str) { }
+
+		Rpc::Data *Clone() const { return new GMysqlRow(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GMysqlRow *r = dynamic_cast<const GMysqlRow *>(&rhs);
+			if (r && r != this)
+			{
+				iindex = r->iindex;
+				str = r->str;
+			}
+			return *this;
+		}
+
+		GMysqlRow& operator = (const GMysqlRow &rhs)
+		{
+			const GMysqlRow *r = &rhs;
+			if (r && r != this)
+			{
+				iindex = r->iindex;
+				str = r->str;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << iindex;
+			os << str;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> iindex;
+			os >> str;
+			return os;
+		}
+
+	};
+};
+#endif

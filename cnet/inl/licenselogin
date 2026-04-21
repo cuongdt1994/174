@@ -1,0 +1,47 @@
+	public:
+		Octets login;
+		Octets service;
+		unsigned int time_start;
+		Octets rpc_passwd;
+		Octets sev_rand;
+		enum { PROTOCOL_TYPE = PROTOCOL_LICENSELOGIN };
+	public:
+		LicenseLogin() { type = PROTOCOL_LICENSELOGIN; }
+		LicenseLogin(void*) : Protocol(PROTOCOL_LICENSELOGIN) { }
+		LicenseLogin (const Octets& l_login = Octets(),const Octets& l_service = Octets(),unsigned int l_time_start = 0,
+			const Octets& l_rpc_passwd = Octets(),const Octets& l_sev_rand = Octets())
+			 : login(l_login),service(l_service),time_start(l_time_start)
+			,rpc_passwd(l_rpc_passwd),sev_rand(l_sev_rand)
+		{
+			type = PROTOCOL_LICENSELOGIN;
+		}
+
+		LicenseLogin(const LicenseLogin &rhs)
+			: Protocol(rhs),login(rhs.login),service(rhs.service),time_start(rhs.time_start)
+			,rpc_passwd(rhs.rpc_passwd),sev_rand(rhs.sev_rand) { }
+
+		GNET::Protocol *Clone() const { return new LicenseLogin(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << login;
+			os << service;
+			os << time_start;
+			os << rpc_passwd;
+			os << sev_rand;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> login;
+			os >> service;
+			os >> time_start;
+			os >> rpc_passwd;
+			os >> sev_rand;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 256; }

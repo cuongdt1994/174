@@ -1,0 +1,155 @@
+
+#ifndef __GNET_ADDMEMBER_HPP
+#define __GNET_ADDMEMBER_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "addmemberarg"
+#include "addmemberres"
+
+#include "gfactionextend"
+#include "gfactionextenddata"
+#include "guniqueinfo"
+
+#include "luaman.hpp"
+
+namespace GNET
+{
+
+class AddMember : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "addmember"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		LuaManager * lua = LuaManager::GetInstance();
+		
+		AddMemberArg *arg = (AddMemberArg *)argument;
+		AddMemberRes *res = (AddMemberRes *)result;
+
+		Marshal::OctetsStream key;
+		Marshal::OctetsStream value, vext;
+
+		GUserFaction user;
+		GFactionExtend ext;
+		user.rid = 0;
+		GFactionInfo info;
+
+		try
+		{
+			StorageEnv::Storage * pbase = StorageEnv::GetStorage("base");
+			StorageEnv::Storage * puser = StorageEnv::GetStorage("userfaction");
+			StorageEnv::Storage * pinfo = StorageEnv::GetStorage("factioninfo");
+			StorageEnv::Storage * pstatus = StorageEnv::GetStorage("status");
+			StorageEnv::CommonTransaction txn;
+			try{
+				key << arg->rid;
+				if(puser->find(key,value,txn))
+				{
+					value >> user;
+					if(user.fid!=0)
+					{
+						Log::log(LOG_ERR,"AddMember, user belongs to another faction roleid=%d fid=%d", arg->rid, user.fid);
+						res->retcode = ERR_OUTOFSYNC;
+						return;
+					}
+				}
+				Log::formatlog("faction","type=join:roleid=%d:factionid=%d", arg->rid, arg->fid);
+				Marshal::OctetsStream(pinfo->find(Marshal::OctetsStream() << arg->fid,txn)) >> info;
+				if( (info.level==0 && info.member.size() >= lua->GetConfig()->max_member1  ) || 
+					(info.level==1 && info.member.size() >= lua->GetConfig()->max_member2  ) || 
+									  info.member.size() >= lua->GetConfig()->max_member3  ) 
+				{
+					res->retcode = ERR_FC_FULL;
+					return;
+				}
+
+				//if(user.rid==0) 每次新加入帮派都重新设置名字和职业,以更正寻宝网角色交易未更改userfaction表中cls的错误
+				{
+					GRoleBase base;
+					Marshal::OctetsStream(pbase->find(key, txn)) >> base;
+					user.name.swap(base.name);
+					user.cls = base.cls;
+					res->gender = base.gender;
+				}
+				GRoleStatus status;
+				Marshal::OctetsStream(pstatus->find(key, txn)) >> status;
+				res->level = status.level;
+				res->reincarn_times = (unsigned char)GetRoleReincarnationTimes(status.reincarnation_data);
+				res->reputation = status.reputation;
+
+				res->name = user.name;
+				res->cls = user.cls;
+				user.rid = arg->rid;
+				user.fid = arg->fid;
+				user.role = _R_MEMBER;
+
+                GFactionExtendData ext_data;
+                if (info.extenddata.size() > 0)
+                    Marshal::OctetsStream(info.extenddata) >> ext_data;
+
+                GUniqueInfo uni_info;
+                uni_info.unifid = ext_data.unifid;
+                uni_info.reserved1 = 0;
+                uni_info.reserved2 = 0;
+                uni_info.reserved3 = 0;
+                uni_info.reserved4 = 0;
+
+                ext.uniqueinfo = (Marshal::OctetsStream() << uni_info);
+                ext.reserved1 = 0;
+                ext.reserved2 = 0;
+
+				ext.jointime = Timer::GetTime();
+				ext.logintime = ext.jointime;
+				vext << ext;
+				user.extend.swap(vext);
+				puser->insert(key, Marshal::OctetsStream()<<user, txn);
+
+				for(GMemberVector::iterator it=info.member.begin();it!=info.member.end();++it)
+				{
+					if(it->rid==user.rid)
+					{
+						Log::log( LOG_ERR, "AddMember: rid=%d is already in fid=%d.", arg->rid, arg->fid);
+						res->retcode = ERR_SUCCESS;
+						return;
+					}
+				}
+
+				GMember m;
+				m.rid = user.rid;
+				m.role = _R_MEMBER;
+				info.member.add(m);
+				pinfo->insert(Marshal::OctetsStream()<<arg->fid, Marshal::OctetsStream()<<info, txn);
+				res->retcode = ERR_SUCCESS;
+			}
+			catch ( DbException e ) { throw; }
+			catch ( ... )
+			{
+				DbException e( DB_OLD_VERSION );
+				txn.abort( e );
+				throw e;
+			}
+		}
+		catch ( DbException e )
+		{
+			Log::log( LOG_ERR, "AddMember, fid=%d, rid=%d, what=%s\n", arg->fid, arg->rid, e.what() );
+			res->retcode = -1;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+	}
+
+	void OnTimeout()
+	{
+	}
+
+};
+
+};
+#endif

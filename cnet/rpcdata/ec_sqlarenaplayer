@@ -1,0 +1,119 @@
+#ifndef __GNET_EC_SQLARENAPLAYER_RPCDATA
+#define __GNET_EC_SQLARENAPLAYER_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLArenaPlayer : public GNET::Rpc::Data
+	{
+	public:
+		int player_id;
+		int team_id;
+		char cls;
+		int score;
+		int win_count;
+		int team_score;
+		int week_battle_count;
+		int invite_time;
+		int last_visite;
+		int battle_count;
+		Octets name;
+
+	public:
+		EC_SQLArenaPlayer (int l_player_id = 0,int l_team_id = 0,char l_cls = 0
+			,int l_score = 0,int l_win_count = 0,int l_team_score = 0
+			,int l_week_battle_count = 0,int l_invite_time = 0,int l_last_visite = 0
+			,int l_battle_count = 0,const Octets& l_name = Octets(0))
+			: player_id(l_player_id),team_id(l_team_id),cls(l_cls)
+			,score(l_score),win_count(l_win_count),team_score(l_team_score)
+			,week_battle_count(l_week_battle_count),invite_time(l_invite_time),last_visite(l_last_visite)
+			,battle_count(l_battle_count),name(l_name)
+		{
+		}
+
+		EC_SQLArenaPlayer(const EC_SQLArenaPlayer &rhs)
+			: player_id(rhs.player_id),team_id(rhs.team_id),cls(rhs.cls),
+			score(rhs.score),win_count(rhs.win_count),team_score(rhs.team_score),
+			week_battle_count(rhs.week_battle_count),invite_time(rhs.invite_time),last_visite(rhs.last_visite),
+			battle_count(rhs.battle_count),name(rhs.name) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLArenaPlayer(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLArenaPlayer *r = dynamic_cast<const EC_SQLArenaPlayer *>(&rhs);
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				team_id = r->team_id;
+				cls = r->cls;
+				score = r->score;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				week_battle_count = r->week_battle_count;
+				invite_time = r->invite_time;
+				last_visite = r->last_visite;
+				battle_count = r->battle_count;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		EC_SQLArenaPlayer& operator = (const EC_SQLArenaPlayer &rhs)
+		{
+			const EC_SQLArenaPlayer *r = &rhs;
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				team_id = r->team_id;
+				cls = r->cls;
+				score = r->score;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				week_battle_count = r->week_battle_count;
+				invite_time = r->invite_time;
+				last_visite = r->last_visite;
+				battle_count = r->battle_count;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << player_id;
+			os << team_id;
+			os << cls;
+			os << score;
+			os << win_count;
+			os << team_score;
+			os << week_battle_count;
+			os << invite_time;
+			os << last_visite;
+			os << battle_count;
+			os << name;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> player_id;
+			os >> team_id;
+			os >> cls;
+			os >> score;
+			os >> win_count;
+			os >> team_score;
+			os >> week_battle_count;
+			os >> invite_time;
+			os >> last_visite;
+			os >> battle_count;
+			os >> name;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_SQLArenaPlayer>	EC_SQLArenaPlayerVector;
+};
+#endif

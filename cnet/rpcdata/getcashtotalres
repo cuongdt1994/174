@@ -1,0 +1,77 @@
+#ifndef __GNET_GETCASHTOTALRES_RPCDATA
+#define __GNET_GETCASHTOTALRES_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GetCashTotalRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		int cash_total;
+		int cash_vip_score_add;
+		int cash_vip_level;
+
+	public:
+		GetCashTotalRes (int l_retcode = -1,int l_cash_total = -1,int l_cash_vip_score_add = -1
+			,int l_cash_vip_level = -1)
+			: retcode(l_retcode),cash_total(l_cash_total),cash_vip_score_add(l_cash_vip_score_add)
+			,cash_vip_level(l_cash_vip_level)
+		{
+		}
+
+		GetCashTotalRes(const GetCashTotalRes &rhs)
+			: retcode(rhs.retcode),cash_total(rhs.cash_total),cash_vip_score_add(rhs.cash_vip_score_add),
+			cash_vip_level(rhs.cash_vip_level) { }
+
+		Rpc::Data *Clone() const { return new GetCashTotalRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GetCashTotalRes *r = dynamic_cast<const GetCashTotalRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				cash_total = r->cash_total;
+				cash_vip_score_add = r->cash_vip_score_add;
+				cash_vip_level = r->cash_vip_level;
+			}
+			return *this;
+		}
+
+		GetCashTotalRes& operator = (const GetCashTotalRes &rhs)
+		{
+			const GetCashTotalRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				cash_total = r->cash_total;
+				cash_vip_score_add = r->cash_vip_score_add;
+				cash_vip_level = r->cash_vip_level;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << cash_total;
+			os << cash_vip_score_add;
+			os << cash_vip_level;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> cash_total;
+			os >> cash_vip_score_add;
+			os >> cash_vip_level;
+			return os;
+		}
+
+	};
+};
+#endif

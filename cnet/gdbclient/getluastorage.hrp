@@ -1,0 +1,52 @@
+
+#ifndef __GNET_GETLUASTORAGE_HPP
+#define __GNET_GETLUASTORAGE_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#ifdef USE_DB
+#include "dbbuffer.h"
+#endif
+#include "getluastoragearg"
+#include "getluastorageres"
+#include "db_if.h"
+
+namespace GNET
+{
+
+class GetLuaStorage : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getluastorage"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+#ifdef USE_DB
+#endif
+	}
+	GDB::OnGetLuaDataResult *_callback;
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GetLuaStorageArg *arg = (GetLuaStorageArg *)argument;
+		GetLuaStorageRes *res = (GetLuaStorageRes *)result;
+		
+		if(res->retcode) 
+		{
+			_callback->OnFailed();
+			return;
+		}
+		
+		_callback->OnSucceed( arg->data_mask, res->value.key, res->value.data.begin() , res->value.data.size() );
+	}
+
+	void OnTimeout()
+	{
+		_callback->OnTimeOut();
+	}
+
+};
+
+};
+#endif

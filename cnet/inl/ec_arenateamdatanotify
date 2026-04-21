@@ -1,0 +1,50 @@
+	public:
+		int retcode;
+		int roleid;
+		int notify;
+		EC_ArenaTeamSync teams;
+		EC_ArenaPlayerSyncVector members;
+		Octets info;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMDATANOTIFY };
+	public:
+		EC_ArenaTeamDataNotify() { type = PROTOCOL_EC_ARENATEAMDATANOTIFY; }
+		EC_ArenaTeamDataNotify(void*) : Protocol(PROTOCOL_EC_ARENATEAMDATANOTIFY) { }
+		EC_ArenaTeamDataNotify (int l_retcode = 0,int l_roleid = 0,int l_notify = 0,
+			const EC_ArenaTeamSync& l_teams = EC_ArenaTeamSync(),const EC_ArenaPlayerSyncVector& l_members = EC_ArenaPlayerSyncVector(),const Octets& l_info = Octets(0))
+			 : retcode(l_retcode),roleid(l_roleid),notify(l_notify)
+			,teams(l_teams),members(l_members),info(l_info)
+		{
+			type = PROTOCOL_EC_ARENATEAMDATANOTIFY;
+		}
+
+		EC_ArenaTeamDataNotify(const EC_ArenaTeamDataNotify &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),notify(rhs.notify)
+			,teams(rhs.teams),members(rhs.members),info(rhs.info) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamDataNotify(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << notify;
+			os << teams;
+			os << members;
+			os << info;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> notify;
+			os >> teams;
+			os >> members;
+			os >> info;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 10240; }

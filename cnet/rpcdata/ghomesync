@@ -1,0 +1,65 @@
+#ifndef __GNET_GHOMESYNC_RPCDATA
+#define __GNET_GHOMESYNC_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ghomesyncdata"
+
+namespace GNET
+{
+	class GHomeSync : public GNET::Rpc::Data
+	{
+	public:
+		GHomeSyncData home_data;
+		int save_mask;
+
+	public:
+		GHomeSync ()
+		{
+		}
+
+		GHomeSync(const GHomeSync &rhs)
+			: home_data(rhs.home_data),save_mask(rhs.save_mask) { }
+
+		Rpc::Data *Clone() const { return new GHomeSync(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GHomeSync *r = dynamic_cast<const GHomeSync *>(&rhs);
+			if (r && r != this)
+			{
+				home_data = r->home_data;
+				save_mask = r->save_mask;
+			}
+			return *this;
+		}
+
+		GHomeSync& operator = (const GHomeSync &rhs)
+		{
+			const GHomeSync *r = &rhs;
+			if (r && r != this)
+			{
+				home_data = r->home_data;
+				save_mask = r->save_mask;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << home_data;
+			os << save_mask;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> home_data;
+			os >> save_mask;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GHomeSync>	GHomeSyncVector;
+};
+#endif

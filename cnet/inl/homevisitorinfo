@@ -1,0 +1,44 @@
+	public:
+		int localsid;
+		int home_id;
+		int role_id;
+		HomeVisitorInfoData data;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEVISITORINFO };
+	public:
+		HomeVisitorInfo() { type = PROTOCOL_HOMEVISITORINFO; }
+		HomeVisitorInfo(void*) : Protocol(PROTOCOL_HOMEVISITORINFO) { }
+		HomeVisitorInfo (int l_localsid,int l_home_id,int l_role_id,
+			HomeVisitorInfoData l_data)
+			 : localsid(l_localsid),home_id(l_home_id),role_id(l_role_id)
+			,data(l_data)
+		{
+			type = PROTOCOL_HOMEVISITORINFO;
+		}
+
+		HomeVisitorInfo(const HomeVisitorInfo &rhs)
+			: Protocol(rhs),localsid(rhs.localsid),home_id(rhs.home_id),role_id(rhs.role_id)
+			,data(rhs.data) { }
+
+		GNET::Protocol *Clone() const { return new HomeVisitorInfo(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << localsid;
+			os << home_id;
+			os << role_id;
+			os << data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> localsid;
+			os >> home_id;
+			os >> role_id;
+			os >> data;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

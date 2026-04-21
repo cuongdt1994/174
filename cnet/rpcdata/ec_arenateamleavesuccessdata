@@ -1,0 +1,60 @@
+#ifndef __GNET_EC_ARENATEAMLEAVESUCCESSDATA_RPCDATA
+#define __GNET_EC_ARENATEAMLEAVESUCCESSDATA_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaTeamLeaveSuccessData : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int roleid;
+
+	public:
+		EC_ArenaTeamLeaveSuccessData (unsigned int l_roleid = 0)
+			: roleid(l_roleid)
+		{
+		}
+
+		EC_ArenaTeamLeaveSuccessData(const EC_ArenaTeamLeaveSuccessData &rhs)
+			: roleid(rhs.roleid) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaTeamLeaveSuccessData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaTeamLeaveSuccessData *r = dynamic_cast<const EC_ArenaTeamLeaveSuccessData *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		EC_ArenaTeamLeaveSuccessData& operator = (const EC_ArenaTeamLeaveSuccessData &rhs)
+		{
+			const EC_ArenaTeamLeaveSuccessData *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaTeamLeaveSuccessData>	EC_ArenaTeamLeaveSuccessDataVector;
+};
+#endif

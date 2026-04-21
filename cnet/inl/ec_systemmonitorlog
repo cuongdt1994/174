@@ -1,0 +1,32 @@
+	public:
+		std::vector<Octets> istr;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_SYSTEMMONITORLOG };
+	public:
+		EC_SystemMonitorLog() { type = PROTOCOL_EC_SYSTEMMONITORLOG; }
+		EC_SystemMonitorLog(void*) : Protocol(PROTOCOL_EC_SYSTEMMONITORLOG) { }
+		EC_SystemMonitorLog (std::vector<Octets> l_istr = std::vector<Octets>())
+			 : istr(l_istr)
+		{
+			type = PROTOCOL_EC_SYSTEMMONITORLOG;
+		}
+
+		EC_SystemMonitorLog(const EC_SystemMonitorLog &rhs)
+			: Protocol(rhs),istr(rhs.istr) { }
+
+		GNET::Protocol *Clone() const { return new EC_SystemMonitorLog(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << istr;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> istr;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

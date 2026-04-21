@@ -1,0 +1,35 @@
+	public:
+		int roleid;
+		int cmd_mode;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY };
+	public:
+		EC_ArenaPlayerTopListQuery() { type = PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY; }
+		EC_ArenaPlayerTopListQuery(void*) : Protocol(PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY) { }
+		EC_ArenaPlayerTopListQuery (int l_roleid = 0,int l_cmd_mode = 0)
+			 : roleid(l_roleid),cmd_mode(l_cmd_mode)
+		{
+			type = PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY;
+		}
+
+		EC_ArenaPlayerTopListQuery(const EC_ArenaPlayerTopListQuery &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),cmd_mode(rhs.cmd_mode) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaPlayerTopListQuery(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << cmd_mode;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> cmd_mode;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

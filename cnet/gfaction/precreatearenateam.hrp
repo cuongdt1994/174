@@ -1,0 +1,51 @@
+
+#ifndef __GNET_PRECREATEARENATEAM_HPP
+#define __GNET_PRECREATEARENATEAM_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#ifdef USE_DB
+#include "dbbuffer.h"
+#endif
+#include "precreatearenateamarg"
+#include "precreatearenateamres"
+
+namespace GNET
+{
+
+class PreCreateArenaTeam : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "precreatearenateam"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+#ifdef USE_DB
+		PreCreateArenaTeamArg *arg = (PreCreateArenaTeamArg *)argument;
+		PreCreateArenaTeamRes *res = (PreCreateArenaTeamRes *)result;
+		Marshal::OctetsStream key, value;
+		key << *arg;
+		res->retcode = DBBuffer::buf_find( "unamearenateam", key, value );
+		if( 0 == res->retcode )
+			value >> res->teamid;
+#endif
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// PreCreateArenaTeamArg *arg = (PreCreateArenaTeamArg *)argument;
+		// PreCreateArenaTeamRes *res = (PreCreateArenaTeamRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

@@ -1,0 +1,87 @@
+#ifndef __GNET_CHALLENGEWISH_RPCDATA
+#define __GNET_CHALLENGEWISH_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class ChallengeWish : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int reserve1;
+		unsigned int reserve2;
+		unsigned short reserve3;
+		unsigned char reserve4;
+		unsigned char reserve5;
+		unsigned int reserve6;
+
+	public:
+		ChallengeWish (unsigned int l_reserve1 = 0,unsigned int l_reserve2 = 0,unsigned short l_reserve3 = 0
+			,unsigned char l_reserve4 = 0,unsigned char l_reserve5 = 0,unsigned int l_reserve6 = 0)
+			: reserve1(l_reserve1),reserve2(l_reserve2),reserve3(l_reserve3)
+			,reserve4(l_reserve4),reserve5(l_reserve5),reserve6(l_reserve6)
+		{
+		}
+
+		ChallengeWish(const ChallengeWish &rhs)
+			: reserve1(rhs.reserve1),reserve2(rhs.reserve2),reserve3(rhs.reserve3),
+			reserve4(rhs.reserve4),reserve5(rhs.reserve5),reserve6(rhs.reserve6) { }
+
+		Rpc::Data *Clone() const { return new ChallengeWish(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const ChallengeWish *r = dynamic_cast<const ChallengeWish *>(&rhs);
+			if (r && r != this)
+			{
+				reserve1 = r->reserve1;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+				reserve4 = r->reserve4;
+				reserve5 = r->reserve5;
+				reserve6 = r->reserve6;
+			}
+			return *this;
+		}
+
+		ChallengeWish& operator = (const ChallengeWish &rhs)
+		{
+			const ChallengeWish *r = &rhs;
+			if (r && r != this)
+			{
+				reserve1 = r->reserve1;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+				reserve4 = r->reserve4;
+				reserve5 = r->reserve5;
+				reserve6 = r->reserve6;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reserve1;
+			os << reserve2;
+			os << reserve3;
+			os << reserve4;
+			os << reserve5;
+			os << reserve6;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reserve1;
+			os >> reserve2;
+			os >> reserve3;
+			os >> reserve4;
+			os >> reserve5;
+			os >> reserve6;
+			return os;
+		}
+
+	};
+};
+#endif

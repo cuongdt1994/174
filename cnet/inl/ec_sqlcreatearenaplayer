@@ -1,0 +1,9 @@
+		GNET::Protocol *Clone() const {  return new EC_SQLCreateArenaPlayer(*this); }
+	public:
+		enum { PROTOCOL_TYPE = RPC_EC_SQLCREATEARENAPLAYER };
+		EC_SQLCreateArenaPlayer(Type type, Rpc::Data *argument, Rpc::Data *result)
+			: RPC_BASECLASS(type, argument, result ) { }
+		EC_SQLCreateArenaPlayer(const EC_SQLCreateArenaPlayer &rhs) : RPC_BASECLASS(rhs) { }
+		int  PriorPolicy( ) const { return 1; }
+		bool SizePolicy(size_t size) const { return size <= 31744; }
+		bool TimePolicy(int timeout) const { return timeout <= 120; }

@@ -1,0 +1,44 @@
+
+#ifndef __GNET_EC_SQLDELETEARENAPLAYER_HPP
+#define __GNET_EC_SQLDELETEARENAPLAYER_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "ec_sqldeletearenaplayerarg"
+#include "ec_sqldeletearenaplayerres"
+
+#include "ec_arenamanager.h"
+
+namespace GNET
+{
+
+class EC_SQLDeleteArenaPlayer : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "ec_sqldeletearenaplayer"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// EC_SQLDeleteArenaPlayerArg *arg = (EC_SQLDeleteArenaPlayerArg *)argument;
+		// EC_SQLDeleteArenaPlayerRes *res = (EC_SQLDeleteArenaPlayerRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		EC_SQLDeleteArenaPlayerArg *arg = (EC_SQLDeleteArenaPlayerArg *)argument;
+		EC_SQLDeleteArenaPlayerRes *res = (EC_SQLDeleteArenaPlayerRes *)result;
+		ArenaOfAuroraManager::GetInstance()->EC_DeleteArenaPlayer_Re(arg->roleid, res->retcode);
+	}
+
+	void OnTimeout()
+	{
+		Log::log(LOG_ERR,"EC_SQLDeleteArenaPlayer: timeout.\n");
+	}
+
+};
+
+};
+#endif

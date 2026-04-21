@@ -1,0 +1,91 @@
+#ifndef __GNET_HOMECROPPER_RPCDATA
+#define __GNET_HOMECROPPER_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class HomeCropper : public GNET::Rpc::Data
+	{
+	public:
+		int level;
+		int timestamp;
+		int crop_id;
+		int capacity;
+		int storage_grain;
+		int reserved1;
+		int reserved2;
+
+	public:
+		HomeCropper ()
+		{
+		}
+
+		HomeCropper(const HomeCropper &rhs)
+			: level(rhs.level),timestamp(rhs.timestamp),crop_id(rhs.crop_id),
+			capacity(rhs.capacity),storage_grain(rhs.storage_grain),reserved1(rhs.reserved1),
+			reserved2(rhs.reserved2) { }
+
+		Rpc::Data *Clone() const { return new HomeCropper(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeCropper *r = dynamic_cast<const HomeCropper *>(&rhs);
+			if (r && r != this)
+			{
+				level = r->level;
+				timestamp = r->timestamp;
+				crop_id = r->crop_id;
+				capacity = r->capacity;
+				storage_grain = r->storage_grain;
+				reserved1 = r->reserved1;
+				reserved2 = r->reserved2;
+			}
+			return *this;
+		}
+
+		HomeCropper& operator = (const HomeCropper &rhs)
+		{
+			const HomeCropper *r = &rhs;
+			if (r && r != this)
+			{
+				level = r->level;
+				timestamp = r->timestamp;
+				crop_id = r->crop_id;
+				capacity = r->capacity;
+				storage_grain = r->storage_grain;
+				reserved1 = r->reserved1;
+				reserved2 = r->reserved2;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << level;
+			os << timestamp;
+			os << crop_id;
+			os << capacity;
+			os << storage_grain;
+			os << reserved1;
+			os << reserved2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> level;
+			os >> timestamp;
+			os >> crop_id;
+			os >> capacity;
+			os >> storage_grain;
+			os >> reserved1;
+			os >> reserved2;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeCropper>	HomeCropperVector;
+};
+#endif

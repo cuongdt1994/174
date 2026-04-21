@@ -1,0 +1,44 @@
+	public:
+		int roleid;
+		int team_type;
+		IntVector members;
+		int queue_time;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMMATCH };
+	public:
+		EC_ArenaTeamMatch() { type = PROTOCOL_EC_ARENATEAMMATCH; }
+		EC_ArenaTeamMatch(void*) : Protocol(PROTOCOL_EC_ARENATEAMMATCH) { }
+		EC_ArenaTeamMatch (int l_roleid = 0,int l_team_type = 0,const IntVector& l_members = IntVector(),
+			int l_queue_time = 0)
+			 : roleid(l_roleid),team_type(l_team_type),members(l_members)
+			,queue_time(l_queue_time)
+		{
+			type = PROTOCOL_EC_ARENATEAMMATCH;
+		}
+
+		EC_ArenaTeamMatch(const EC_ArenaTeamMatch &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),team_type(rhs.team_type),members(rhs.members)
+			,queue_time(rhs.queue_time) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamMatch(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << team_type;
+			os << members;
+			os << queue_time;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> team_type;
+			os >> members;
+			os >> queue_time;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 128; }

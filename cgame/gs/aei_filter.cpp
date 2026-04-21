@@ -1,0 +1,814 @@
+#include "clstab.h"
+#include "world.h"
+#include "aei_filter.h"
+#include "player_imp.h"
+#include "sfilterdef.h"
+#include "instance/faction_world_ctrl.h"
+#include "luamanager.h"
+
+DEFINE_SUBSTANCE(aei_filter,filter,CLS_FILTER_CHECK_INSTANCE_KEY)
+DEFINE_SUBSTANCE(aebf_filter,filter,CLS_FILTER_CHECK_BATTLEFIELD_KEY)
+DEFINE_SUBSTANCE(aeff_filter,filter,CLS_FILTER_CHECK_FACTIONFORTRESS_KEY)
+DEFINE_SUBSTANCE(aegw_filter,filter,CLS_FILTER_CHECK_KICKOUT)
+DEFINE_SUBSTANCE(aect_filter,filter,CLS_FILTER_CHECK_COUNTRYKICKOUT)
+DEFINE_SUBSTANCE(aecb_filter,filter,CLS_FILTER_CHECK_COUNTRYBATTLE_KEY)
+DEFINE_SUBSTANCE(aetb_filter,filter,CLS_FILTER_CHECK_TRICKBATTLE_KEY)
+DEFINE_SUBSTANCE(aecv_filter,filter,CLS_FILTER_CHECK_VISA)
+DEFINE_SUBSTANCE(aemf_filter,filter,CLS_FILTER_CHECK_MNFACTION_KEY)
+DEFINE_SUBSTANCE(aesl_filter,filter,CLS_FILTER_CHECK_SOLOCHALLENGE_KEY)
+// Arena of Aurora
+DEFINE_SUBSTANCE(aeaa_filter,filter,CLS_FILTER_CHECK_ARENAOFAURORA_KEY)
+
+void 
+aei_filter::OnAttach()
+{
+	_key =_parent.GetImpl()->_plane->w_ins_key;
+}
+
+void 
+aei_filter::OnRelease()
+{
+	//do nothing
+}
+
+void 
+aei_filter::Heartbeat(int tick)
+{
+	int world_tag = world_manager::GetWorldTag();
+	bool is_dead = _parent.IsDead();
+	gplayer_imp * pImp = (gplayer_imp*)_parent.GetImpl();
+	bool is_kick = pImp->_plane->w_ins_kick;
+	
+	if(_state == NORMAL && (_timeout -= tick) < 0)
+	{
+		instance_key key;
+		pImp->GetInstanceKey(world_tag, key);
+		key.target = key.essence;
+		//Whether the comparison key here is consistent should be judged by world_manager?
+		bool key_match = world_manager::GetInstance()->CompareInsKey(key,_key);
+		bool playercount_exceed = (pImp->GetTeamCtrl().GetMemberCountInSpecWorld(world_tag) > world_manager::GetInstance()->GetPlayerLimitPerInstance());
+		
+		
+		
+		if((!key_match || playercount_exceed) && !is_dead && is_kick)
+		{
+			
+			//Need to be kicked out, check if GM
+			if(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege())
+			{
+				//GM And this world allows the GM to traverse at will, they will not be kicked out
+				_timeout = 3;
+			}
+			else
+			{
+				_state = WAIT_ESCAPE;
+				_timeout = 60;
+				pImp->_runner->kickout_instance((key_match ? KIR_KEY_MISMATCH : KIR_PLAYERCOUNT_EXCEED), _timeout);
+			}
+		}
+		else
+		{
+			//check every three seconds
+			_timeout = 3;
+			if(key_match && pImp->_plane->w_life_time == 0)
+			{
+				//The copy has expired and needs to be reset
+				pImp->ResetInstance(world_tag);
+			}
+		}
+	}
+	else if(_state == WAIT_ESCAPE)
+	{
+		if((_timeout -= tick) <= 0)
+		{
+				//It's time to kick out the copy
+				__PRINTF("¸±±¾¸ÃÌß³öÀ±\n");
+				pImp->LeaveAbnormalState();
+				if(!pImp->ReturnToTown())
+				{
+					if(world_manager::GetSavePoint().tag > 0)
+					{
+						pImp->LongJump(world_manager::GetSavePoint().pos,world_manager::GetSavePoint().tag);
+					}
+				}
+			
+			//Reset the timeout
+			_timeout = 5;
+		}
+		//fix relog instance cancel counter if party.
+		else
+		{
+			//Check again if it is restored
+			instance_key key;
+			pImp->GetInstanceKey(world_tag, key);
+			key.target = key.essence;
+			bool key_match = world_manager::GetInstance()->CompareInsKey(key,_key);
+			bool playercount_exceed = (pImp->GetTeamCtrl().GetMemberCountInSpecWorld(world_tag) > world_manager::GetInstance()->GetPlayerLimitPerInstance());
+			if(key_match && !playercount_exceed || is_dead || !is_kick)
+			{
+				_state = NORMAL;
+				_timeout = 3;
+				pImp->_runner->kickout_instance(KIR_NULL,-1);
+			}
+		}		
+	}
+}
+
+/*--------------------------------------------------------*/
+void 
+aebf_filter::OnAttach()
+{
+	if(_attack_defend_award && LuaManager::GetInstance()->GetConfig()->atk_def_enable)
+	{	
+		_parent.InsertTeamVisibleState(254,-1);
+		_parent.EnhanceAttackDegree(_attack_defend_award);
+		_parent.EnhanceDefendDegree(_attack_defend_award);
+	}
+
+	
+}
+
+void 
+aebf_filter::OnRelease()
+{
+	if(_attack_defend_award && LuaManager::GetInstance()->GetConfig()->atk_def_enable)
+	{	
+		_parent.RemoveTeamVisibleState(254);
+		_parent.ImpairAttackDegree(_attack_defend_award);
+		_parent.ImpairDefendDegree(_attack_defend_award);
+	}
+}
+
+void  
+aebf_filter::OnModify(int ctrlname,void * ctrlval,unsigned int ctrllen)
+{
+	if(ctrlname == FMID_CLEAR_AEBF)
+	{
+		_origin_mafia = -1;
+	}
+}
+
+void 
+aebf_filter::Heartbeat(int tick)
+{
+	int cur_mafia = _parent.GetMafiaID();
+	gplayer_imp * pImp = (gplayer_imp*)_parent.GetImpl();
+	world * pPlane = pImp->_plane;
+
+//Calculating and Stating Scores
+	int attacker_score = pPlane->w_offense_cur_score;
+	int defender_score = pPlane->w_defence_cur_score;
+
+	if(attacker_score != _attacker_score || defender_score != _defender_score)
+	{
+		//Attack and defense scores are reversed
+		pImp->_runner->battle_score( defender_score,pPlane->w_defence_goal, attacker_score,pPlane->w_offense_goal);
+
+		_attacker_score = attacker_score;
+		_defender_score = defender_score;
+	}
+
+//Does the analysis result appear
+	if(!_battle_result)
+	{
+		if(pImp->_plane->w_battle_result != _battle_result)
+		{
+			_battle_result = pImp->_plane->w_battle_result;
+			pImp->_runner->battle_result(_battle_result);
+
+			//Activate the ready-to-leave action
+			_battle_end_timer = 4;
+			_timeout = abase::Rand(55,90);
+		}
+	}
+
+//ready to exit countdown
+	if(_battle_end_timer)
+	{
+		_battle_end_timer --;
+		if(_battle_end_timer <= 0)
+		{
+			_timeout = abase::Rand(55,90);
+			pImp->_runner->kickout_instance(KIR_BATTLE_END, _timeout);
+		}
+	}
+
+	
+	
+	if(_battle_result)
+	{
+		if(_timeout > 0)  _timeout --;
+		if(_timeout <=0)
+		{
+			_kickout ++;
+		}
+	
+	}
+	else
+	{
+		if(cur_mafia != _origin_mafia || _origin_mafia <= 0)
+		if(_origin_mafia <= 0 || 
+		   	cur_mafia != _origin_mafia &&
+		    	!(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege()) )
+		{
+			_origin_mafia = -1;
+			if(_timeout > 0)  _timeout --;
+			if(_timeout <=0)
+			{
+				_kickout ++;
+			}
+		}
+	}
+
+	if(_kickout && _timeout <=0)
+	{
+		if(_kickout > 5)
+		{
+			//If you cannot leave the copy for many times, after disconnecting
+			_is_deleted = true;
+			pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+		}
+		else
+		{
+			pImp->LeaveAbnormalState();
+			_timeout = 3;
+			//Use the savepoint here to process
+			A3DVECTOR pos;
+			int tag;
+			world_manager::GetInstance()->GetLogoutPos(pImp,tag,pos);
+			if(tag > 0)
+			{
+				pImp->LongJump(pos,tag);
+			}
+		}
+	}
+}
+
+void 
+aeff_filter::Heartbeat(int tick)
+{
+	gplayer_imp * pImp = (gplayer_imp*)_parent.GetImpl();
+
+	if(_state == NORMAL)
+	{
+		if(_timeout > 0) _timeout --;
+		if(_timeout <= 0)
+		{
+			int cur_mafia = _parent.GetMafiaID();
+			world * pPlane = pImp->_plane;
+			faction_world_ctrl * pCtrl = (faction_world_ctrl *)pPlane->w_ctrl;
+
+			if(pCtrl->iskick 
+				|| cur_mafia != pCtrl->factionid 
+				&& (!pCtrl->inbattle || cur_mafia != pCtrl->offense_faction)
+				&& !(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege()) )
+			{
+				_state = WAIT_ESCAPE;
+				_timeout = abase::Rand(55,90);
+				pImp->_runner->kickout_instance((pCtrl->iskick ? KIR_FACTION_FORTRESS_CLEAR : KIR_FACTION_MISMATCH), _timeout);
+			}
+			else
+			{
+				_timeout = 3;
+			}
+		}
+	}
+	else if(_state == WAIT_ESCAPE)
+	{
+		if(_timeout > 0) _timeout --;
+		if(_timeout <= 0)
+		{
+			_kickout ++;
+			if(_kickout > 5)
+			{
+				//If you cannot leave the copy for many times, after disconnecting
+				_is_deleted = true;
+				pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+			}
+			else
+			{
+				pImp->LeaveAbnormalState();
+				_timeout = 3;
+				//Use the savepoint here to process
+				A3DVECTOR pos;
+				int tag;
+				world_manager::GetInstance()->GetLogoutPos(pImp,tag,pos);
+				if(tag > 0)
+				{
+					pImp->LongJump(pos,tag);
+				}
+			}
+		}	
+	}
+}
+
+void  
+aeff_filter::OnModify(int ctrlname,void * ctrlval,unsigned int ctrllen)
+{
+	if(ctrlname == FMID_CLEAR_AEFF)
+	{
+		_state = WAIT_ESCAPE;
+		_timeout = 0;
+	}
+}
+
+void 
+aegw_filter::Heartbeat(int tick)
+{
+	gplayer_imp * pImp = (gplayer_imp*)_parent.GetImpl();
+
+	if(_state == NORMAL)
+	{
+		if(_timeout > 0) _timeout --;
+		if(_timeout <= 0)
+		{
+			//Check the kickout flag global variable
+			if(pImp->_plane->GetCommonValue(COMMON_VALUE_ID_KICKOUT) != 0)
+			{
+				//time to kick out
+				_state = WAIT_ESCAPE;
+				_timeout = 60;
+				pImp->_runner->kickout_instance(KIR_GLOBALWORLD_KICKOUT, _timeout);
+			}
+			else
+			{
+				_timeout = 3;
+			}
+		}
+	}
+	else if(_state == WAIT_ESCAPE)
+	{
+		if(_timeout > 0) _timeout --;	
+		if(_timeout <= 0)
+		{
+			_kickout ++;
+			if(_kickout > 5)
+			{
+				//If you cannot leave the copy for many times, after disconnecting
+				_is_deleted = true;
+				pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+			}
+			else
+			{
+				pImp->LeaveAbnormalState();
+				_timeout = 3;
+				if(world_manager::GetKickoutPoint().tag > 0)
+					pImp->LongJump(world_manager::GetKickoutPoint().pos, world_manager::GetKickoutPoint().tag);			
+			}
+		}
+	}
+}
+
+void 
+aect_filter::Heartbeat(int tick)
+{
+	gplayer_imp * pImp = (gplayer_imp*)_parent.GetImpl();
+
+	if(_state == NORMAL)
+	{
+		if(_timeout > 0) _timeout --;
+		if(_timeout <= 0)
+		{
+			//Check the kickout flag global variable
+			if(!pImp->GetCountryId()
+					&& !(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege()) )
+			{
+				//time to kick out
+				_state = WAIT_ESCAPE;
+				_timeout = 3;
+				pImp->_runner->kickout_instance(KIR_NO_COUNTRY, _timeout);
+			}
+			else
+			{
+				_timeout = 3;
+			}
+		}
+	}
+	else if(_state == WAIT_ESCAPE)
+	{
+		if(_timeout > 0) _timeout --;	
+		if(_timeout <= 0)
+		{
+			_kickout ++;
+			if(_kickout > 5)
+			{
+				//If you cannot leave the copy for many times, after disconnecting
+				_is_deleted = true;
+				pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+			}
+			else
+			{
+				_timeout = 3;
+				pImp->ReturnRestWorld();
+			}
+		}
+	}
+}
+
+void 
+aecb_filter::Heartbeat(int tick)
+{
+	gplayer_imp* pImp = (gplayer_imp*)_parent.GetImpl();
+	world * pPlane = pImp->_plane;
+	int cur_country = pImp->GetCountryId();
+
+//Calculating and Stating Scores
+	int attacker_score = pPlane->w_offense_cur_score;
+	int defender_score = pPlane->w_defence_cur_score;
+
+	if(attacker_score != _attacker_score || defender_score != _defender_score)
+	{
+		pImp->_runner->countrybattle_score( attacker_score,pPlane->w_offense_goal, defender_score,pPlane->w_defence_goal);
+
+		_attacker_score = attacker_score;
+		_defender_score = defender_score;
+	}
+
+	int attacker_count = 0;
+	int defender_count = 0;
+	ASSERT(pPlane->w_ctrl);
+	pPlane->w_ctrl->GetCountryBattleInfo(attacker_count,defender_count);
+	if(attacker_count != _attacker_count || defender_count != _defender_count)
+	{
+		pImp->_runner->countrybattle_info(attacker_count,defender_count);
+		_attacker_count = attacker_count;
+		_defender_count = defender_count;
+	}
+
+//Does the analysis result appear
+	if(!_battle_result)
+	{
+		if(pImp->_plane->w_battle_result != _battle_result)
+		{
+			_battle_result = pImp->_plane->w_battle_result;
+			pImp->SyncScoreToPlane();
+			pImp->_runner->countrybattle_result(_battle_result);
+
+			//Activate the ready-to-leave action
+			_battle_end_timer = 4;
+			_timeout = 10;
+		}
+	}
+
+//ready to exit countdown
+	if(_battle_end_timer)
+	{
+		_battle_end_timer --;
+		if(_battle_end_timer <= 0)
+		{
+			_timeout = abase::Rand(3,10);
+			pImp->_runner->kickout_instance(KIR_COUNTRYBATTLE_END, _timeout);
+		}
+	}
+
+	
+	
+	if(_battle_result)
+	{
+		if(_timeout > 0)  _timeout --;
+		if(_timeout <=0)
+		{
+			_kickout ++;
+		}
+	
+	}
+	else
+	{
+		if(_origin_country <= 0 
+				|| cur_country != _origin_country && !(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege())
+				|| pImp->_parent->IsZombie() && !pImp->CanResurrect(0))
+		{
+			_origin_country = -1;
+			if(_timeout > 0)  _timeout --;
+			if(_timeout <=0)
+			{
+				_kickout ++;
+			}
+		}
+	}
+
+	if(_kickout && _timeout <=0)
+	{
+		if(_kickout > 3)
+		{
+			//If you cannot leave the copy for many times, after disconnecting
+			_is_deleted = true;
+			pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+		}
+		else
+		{
+			_timeout = 3;
+			pImp->CountryReturn();				
+		}
+	}
+}
+
+void  
+aecb_filter::OnModify(int ctrlname,void * ctrlval,unsigned int ctrllen)
+{
+	if(ctrlname == FMID_CLEAR_AECB)
+	{
+		_origin_country = -1;
+	}
+}
+
+void 
+aetb_filter::Heartbeat(int tick)
+{
+	gplayer_imp* pImp = (gplayer_imp*)_parent.GetImpl();
+	gplayer * pPlayer = pImp->GetParent();
+
+//Does the analysis result appear
+	if(!_battle_result)
+	{
+		if(pImp->_plane->w_battle_result != _battle_result)
+		{
+			_battle_result = pImp->_plane->w_battle_result;
+			pImp->SyncScoreToPlane();
+
+			//Activate the ready-to-leave action
+			_timeout = abase::Rand(3,15);
+			pImp->_runner->kickout_instance(KIR_TRICKBATTLE_END, _timeout);
+		}
+	}
+
+	if(_battle_result)
+	{
+		if(_timeout > 0)  _timeout --;
+		if(_timeout <=0)
+		{
+			_kickout ++;
+		}
+	}
+	else
+	{
+		if(_err_condition || 
+				!pPlayer->IsBattleOffense() && !pPlayer->IsBattleDefence())
+		{
+			_err_condition = 1;
+			if(_timeout > 0)  _timeout --;
+			if(_timeout <=0)
+			{
+				_kickout ++;
+			}
+		}
+	}
+
+	if(_kickout && _timeout <=0)
+	{
+		if(_kickout > 3)
+		{
+			//If you can't leave the copy for many times, disconnect it
+			_is_deleted = true;
+			pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+		}
+		else
+		{
+			_timeout = 3;
+			pImp->ReturnRestWorld();
+		}
+	}
+}
+
+void  
+aetb_filter::OnModify(int ctrlname,void * ctrlval,unsigned int ctrllen)
+{
+	if(ctrlname == FMID_CLEAR_AETB)
+	{
+		_err_condition = 1;
+	}
+}
+
+void 
+aecv_filter::Heartbeat(int tick)
+{
+	gplayer_imp * pImp = (gplayer_imp*)_parent.GetImpl();
+
+	if(_state == NORMAL)
+	{
+		if(_timeout > 0) _timeout --;
+		if(_timeout <= 0)
+		{
+			//Check the kickout flag global variable
+			if(!pImp->CheckVisaValid())
+			{
+				//time to kick out
+				_state = WAIT_ESCAPE;
+				_timeout = 5;
+				pImp->_runner->kickout_instance(KIR_VISA_EXPIRED, _timeout);
+			}
+			else
+			{
+				_timeout = 3;
+			}
+		}
+	}
+	else if(_state == WAIT_ESCAPE)
+	{
+		if(_timeout > 0) _timeout --;	
+		if(_timeout <= 0)
+		{
+			_kickout ++;
+			if(_kickout > 5)
+			{
+				//If you cannot leave the copy for many times, after disconnecting
+				_is_deleted = true;
+				pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+			}
+			else
+			{
+				_timeout = 5;
+				pImp->Repatriate();
+			}
+		}
+	}
+}
+
+void
+aemf_filter::Heartbeat(int tick)
+{
+	gplayer_imp* pImp = (gplayer_imp*)_parent.GetImpl(); 
+	world * pPlane = pImp->_plane;
+	
+	ASSERT(pPlane->w_ctrl);
+	
+	if(!_battle_result)
+	{
+		if(pImp->_plane->w_battle_result != _battle_result)
+		{
+			_battle_result = pImp->_plane->w_battle_result;
+			pImp->_runner->mnfaction_result(_battle_result);
+
+			//Activate the ready-to-leave action
+			_battle_end_timer = 4;
+			_timeout = 20;
+		}
+	}
+	
+	if(_battle_end_timer)
+	{
+		--_battle_end_timer;
+		if(_battle_end_timer <= 0)
+		{
+			_timeout = abase::Rand(15,20);
+			pImp->_runner->kickout_instance(KIR_MNFACTION_END, _timeout);
+		}
+	}
+
+	
+	
+	if(_battle_result)
+	{
+		if(_timeout > 0)  _timeout --;
+		if(_timeout <=0)
+		{
+			_kickout ++;
+		}
+	
+	}
+	else
+	{
+		if(_origin_domain_id < 0  && !(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege()))
+		{
+			_origin_domain_id = -1;
+			if(_timeout > 0)  _timeout --;
+			if(_timeout <=0)
+			{
+				_kickout ++;
+			}
+		}
+	}
+	if(_kickout && _timeout <=0)
+	{
+		if(_kickout > 3)
+		{
+			_is_deleted = true;
+			pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+		}
+		else
+		{
+			_timeout = 3;
+			pImp->ReturnRestWorld();
+		}
+	}
+}
+
+void aemf_filter::OnModify(int ctrlname,void * ctrlval,unsigned int ctrllen)
+{
+	if(ctrlname == FMID_CLEAR_AEMF)
+	{
+		_origin_domain_id = -1;
+	}
+}
+
+void aesl_filter::Heartbeat(int tick)
+{
+	gplayer_imp* pImp = (gplayer_imp*)_parent.GetImpl();
+	if(_kickout)
+	{
+		--_timeout;
+	}
+	else if(pImp->_plane->w_life_time == 0 && !_kickout)
+	{
+		if( !(world_manager::GetWorldLimit().gmfree && _parent.CheckGMPrivilege()) )
+		{
+			_timeout = 60;
+			pImp->_runner->kickout_instance(KIR_KEY_MISMATCH, _timeout);
+			_kickout = true;
+		}
+	}
+	if(_timeout <= 0 && _kickout)
+	{
+		++_kicktime;
+		if(_kicktime > 3)
+		{
+			_is_deleted = true;
+			pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+		}
+		else
+		{
+			world_pos kickout_pos = world_manager::GetKickoutPoint();
+			pImp->LongJump(kickout_pos.pos, kickout_pos.tag);
+			_timeout = 3;
+		}
+	}
+}
+
+// Arena Oficial ( Contagem de Saida )
+void aeaa_filter::Heartbeat(int tick)
+{
+	gplayer_imp* pImp = (gplayer_imp*)_parent.GetImpl();
+	gplayer* pPlayer = pImp->GetParent();
+
+	if (!_battle_result)
+	{
+		if (pPlayer->team_id == 0)
+		{
+			if (pPlayer->IsBattleOffense())
+			{
+				pPlayer->team_id = 1;
+			}
+			else if (pPlayer->IsBattleDefence())
+			{
+				pPlayer->team_id = 2;
+			}
+		}
+
+		if (pImp->_plane->w_battle_result != _battle_result)
+		{
+			_battle_result = pImp->_plane->w_battle_result;
+			//pImp->SyncScoreToPlane();
+
+			_timeout = 105;
+			pImp->_runner->kickout_instance(KIR_ARENAOFAURORA_END, _timeout);
+		}
+	}
+
+	if (_err_condition)
+	{
+		_err_condition = 1;
+		_timeout = 0;
+		_kickout++;
+	}
+	else
+	{
+		if (_battle_result)
+		{
+			if (_timeout > 0)  _timeout--;
+			if (_timeout <= 0)
+			{
+				_kickout++;
+			}
+		}
+	}
+
+	if (_kickout && _timeout <= 0)
+	{
+		if (_kickout > 3)
+		{
+			_is_deleted = true;
+			pImp->LostConnection(gplayer_imp::PLAYER_OFF_LPG_DISCONNECT);
+		}
+		else
+		{
+			pImp->LeaveAbnormalState();
+			_timeout = 3;
+			A3DVECTOR pos;
+			int tag;
+			pImp->GetLastInstanceSourcePos(tag, pos);
+			if (tag > 0)
+			{
+				pImp->LongJump(pos, tag);
+			}
+		}
+	}
+}
+
+void aeaa_filter::OnModify(int ctrlname, void* ctrlval, unsigned int ctrllen)
+{
+	if (ctrlname == FMID_CLEAR_AEAA)
+	{
+		_err_condition = 1;
+	}
+}
+// end arena of aurora

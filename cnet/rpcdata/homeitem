@@ -1,0 +1,75 @@
+#ifndef __GNET_HOMEITEM_RPCDATA
+#define __GNET_HOMEITEM_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class HomeItem : public GNET::Rpc::Data
+	{
+	public:
+		short tid;
+		short count;
+		short use_count;
+		short prosperous;
+
+	public:
+		HomeItem ()
+		{
+		}
+
+		HomeItem(const HomeItem &rhs)
+			: tid(rhs.tid),count(rhs.count),use_count(rhs.use_count),
+			prosperous(rhs.prosperous) { }
+
+		Rpc::Data *Clone() const { return new HomeItem(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeItem *r = dynamic_cast<const HomeItem *>(&rhs);
+			if (r && r != this)
+			{
+				tid = r->tid;
+				count = r->count;
+				use_count = r->use_count;
+				prosperous = r->prosperous;
+			}
+			return *this;
+		}
+
+		HomeItem& operator = (const HomeItem &rhs)
+		{
+			const HomeItem *r = &rhs;
+			if (r && r != this)
+			{
+				tid = r->tid;
+				count = r->count;
+				use_count = r->use_count;
+				prosperous = r->prosperous;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << tid;
+			os << count;
+			os << use_count;
+			os << prosperous;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> tid;
+			os >> count;
+			os >> use_count;
+			os >> prosperous;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeItem>	HomeItemVector;
+};
+#endif

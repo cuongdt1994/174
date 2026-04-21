@@ -1,0 +1,47 @@
+	public:
+		int roleid;
+		int tag;
+		float x;
+		float y;
+		float z;
+		enum { PROTOCOL_TYPE = PROTOCOL_PLAYERTELEPORT };
+	public:
+		PlayerTeleport() { type = PROTOCOL_PLAYERTELEPORT; }
+		PlayerTeleport(void*) : Protocol(PROTOCOL_PLAYERTELEPORT) { }
+		PlayerTeleport (int l_roleid = 0,int l_tag = 1,float l_x = 0.0,
+			float l_y = 0.0,float l_z = 0.0)
+			 : roleid(l_roleid),tag(l_tag),x(l_x)
+			,y(l_y),z(l_z)
+		{
+			type = PROTOCOL_PLAYERTELEPORT;
+		}
+
+		PlayerTeleport(const PlayerTeleport &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),tag(rhs.tag),x(rhs.x)
+			,y(rhs.y),z(rhs.z) { }
+
+		GNET::Protocol *Clone() const { return new PlayerTeleport(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << tag;
+			os << x;
+			os << y;
+			os << z;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> tag;
+			os >> x;
+			os >> y;
+			os >> z;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 24; }

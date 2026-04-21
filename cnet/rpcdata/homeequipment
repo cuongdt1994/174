@@ -1,0 +1,59 @@
+#ifndef __GNET_HOMEEQUIPMENT_RPCDATA
+#define __GNET_HOMEEQUIPMENT_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class HomeEquipment : public GNET::Rpc::Data
+	{
+	public:
+		short tid;
+
+	public:
+		HomeEquipment ()
+		{
+		}
+
+		HomeEquipment(const HomeEquipment &rhs)
+			: tid(rhs.tid) { }
+
+		Rpc::Data *Clone() const { return new HomeEquipment(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeEquipment *r = dynamic_cast<const HomeEquipment *>(&rhs);
+			if (r && r != this)
+			{
+				tid = r->tid;
+			}
+			return *this;
+		}
+
+		HomeEquipment& operator = (const HomeEquipment &rhs)
+		{
+			const HomeEquipment *r = &rhs;
+			if (r && r != this)
+			{
+				tid = r->tid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << tid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> tid;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeEquipment>	HomeEquipmentVector;
+};
+#endif

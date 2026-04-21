@@ -1,0 +1,77 @@
+#ifndef __GNET_GMYSQLSTORAGEARG_RPCDATA
+#define __GNET_GMYSQLSTORAGEARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GMySQLStorageArg : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int id;
+		unsigned int userid;
+		unsigned int roleid;
+		std::vector<Octets> ioutput_str;
+
+	public:
+		GMySQLStorageArg (unsigned int l_id = 0,unsigned int l_userid = 0,unsigned int l_roleid = 0
+			,std::vector<Octets> l_ioutput_str = std::vector<Octets>())
+			: id(l_id),userid(l_userid),roleid(l_roleid)
+			,ioutput_str(l_ioutput_str)
+		{
+		}
+
+		GMySQLStorageArg(const GMySQLStorageArg &rhs)
+			: id(rhs.id),userid(rhs.userid),roleid(rhs.roleid),
+			ioutput_str(rhs.ioutput_str) { }
+
+		Rpc::Data *Clone() const { return new GMySQLStorageArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GMySQLStorageArg *r = dynamic_cast<const GMySQLStorageArg *>(&rhs);
+			if (r && r != this)
+			{
+				id = r->id;
+				userid = r->userid;
+				roleid = r->roleid;
+				ioutput_str = r->ioutput_str;
+			}
+			return *this;
+		}
+
+		GMySQLStorageArg& operator = (const GMySQLStorageArg &rhs)
+		{
+			const GMySQLStorageArg *r = &rhs;
+			if (r && r != this)
+			{
+				id = r->id;
+				userid = r->userid;
+				roleid = r->roleid;
+				ioutput_str = r->ioutput_str;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << userid;
+			os << roleid;
+			os << ioutput_str;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> userid;
+			os >> roleid;
+			os >> ioutput_str;
+			return os;
+		}
+
+	};
+};
+#endif

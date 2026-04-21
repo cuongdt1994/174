@@ -1,0 +1,38 @@
+	public:
+		int reserve1;
+		int reserve2;
+		int reserve3;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAREWARDMONEYGET };
+	public:
+		EC_ArenaRewardMoneyGet() { type = PROTOCOL_EC_ARENAREWARDMONEYGET; }
+		EC_ArenaRewardMoneyGet(void*) : Protocol(PROTOCOL_EC_ARENAREWARDMONEYGET) { }
+		EC_ArenaRewardMoneyGet (int l_reserve1 = 0,int l_reserve2 = 0,int l_reserve3 = 0)
+			 : reserve1(l_reserve1),reserve2(l_reserve2),reserve3(l_reserve3)
+		{
+			type = PROTOCOL_EC_ARENAREWARDMONEYGET;
+		}
+
+		EC_ArenaRewardMoneyGet(const EC_ArenaRewardMoneyGet &rhs)
+			: Protocol(rhs),reserve1(rhs.reserve1),reserve2(rhs.reserve2),reserve3(rhs.reserve3) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaRewardMoneyGet(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reserve1;
+			os << reserve2;
+			os << reserve3;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reserve1;
+			os >> reserve2;
+			os >> reserve3;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

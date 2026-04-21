@@ -1,0 +1,78 @@
+#ifndef __GNET_EC_DBARENATEAMTOPLISTDETAILRES_RPCDATA
+#define __GNET_EC_DBARENATEAMTOPLISTDETAILRES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_arenaplayertoplist"
+
+namespace GNET
+{
+	class EC_DBArenaTeamTopListDetailRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		int roleid;
+		long long teamid;
+		EC_ArenaPlayerTopListVector playerlist;
+
+	public:
+		EC_DBArenaTeamTopListDetailRes (int l_retcode = 0,int l_roleid = 0,long long l_teamid = 0
+			,const EC_ArenaPlayerTopListVector& l_playerlist = EC_ArenaPlayerTopListVector())
+			: retcode(l_retcode),roleid(l_roleid),teamid(l_teamid)
+			,playerlist(l_playerlist)
+		{
+		}
+
+		EC_DBArenaTeamTopListDetailRes(const EC_DBArenaTeamTopListDetailRes &rhs)
+			: retcode(rhs.retcode),roleid(rhs.roleid),teamid(rhs.teamid),
+			playerlist(rhs.playerlist) { }
+
+		Rpc::Data *Clone() const { return new EC_DBArenaTeamTopListDetailRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_DBArenaTeamTopListDetailRes *r = dynamic_cast<const EC_DBArenaTeamTopListDetailRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				roleid = r->roleid;
+				teamid = r->teamid;
+				playerlist = r->playerlist;
+			}
+			return *this;
+		}
+
+		EC_DBArenaTeamTopListDetailRes& operator = (const EC_DBArenaTeamTopListDetailRes &rhs)
+		{
+			const EC_DBArenaTeamTopListDetailRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				roleid = r->roleid;
+				teamid = r->teamid;
+				playerlist = r->playerlist;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << teamid;
+			os << playerlist;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> teamid;
+			os >> playerlist;
+			return os;
+		}
+
+	};
+};
+#endif

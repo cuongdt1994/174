@@ -1,0 +1,59 @@
+
+#ifndef __GNET_GETNEWROLEDETAIL_HPP
+#define __GNET_GETNEWROLEDETAIL_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "getnewroledetailarg"
+#include "getnewroledetailres"
+
+#include "db_if.h"
+
+namespace GDB
+{
+bool LoadNewRoleDetail(const GNET::GNewRoleDetail & pRole, vecdata_new & data);
+}
+
+namespace GNET
+{
+
+class GetNewRoleDetail : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getnewroledetail"
+#undef	RPC_BASECLASS
+
+	GDB::OnLoadNewRoleDetail_Re *_callback;
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// GetNewRoleDetailArg *arg = (GetNewRoleDetailArg *)argument;
+		// GetNewRoleDetailRes *res = (GetNewRoleDetailRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GetNewRoleDetailArg *arg = (GetNewRoleDetailArg *)argument;
+		GetNewRoleDetailRes *res = (GetNewRoleDetailRes *)result;
+		
+		if(res->retcode) 
+		{
+			_callback->OnFailed();
+			return;
+		}
+		GDB::vecdata_new base;
+		LoadNewRoleDetail(res->detail, base);
+		_callback->OnSucceed( arg->roleid, base, res->retcode );
+	}
+
+	void OnTimeout()
+	{
+		_callback->OnTimeOut();
+	}
+
+};
+
+};
+#endif

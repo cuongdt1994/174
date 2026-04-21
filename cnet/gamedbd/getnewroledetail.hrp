@@ -1,0 +1,81 @@
+
+#ifndef __GNET_GETNEWROLEDETAIL_HPP
+#define __GNET_GETNEWROLEDETAIL_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "getnewroledetailarg"
+#include "getnewroledetailres"
+
+namespace GNET
+{
+
+class GetNewRoleDetail : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getnewroledetail"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GetNewRoleDetailArg *arg = (GetNewRoleDetailArg *)argument;
+		GetNewRoleDetailRes *res = (GetNewRoleDetailRes *)result;
+
+		LOG_TRACE( "GetNewRoleDetail, roleid=%d.\n", arg->roleid);
+
+		try
+		{
+			StorageEnv::Storage * pserver= StorageEnv::GetStorage("newroleinfo");
+			StorageEnv::CommonTransaction txn;
+			Marshal::OctetsStream key, value;
+
+			try
+			{
+				key << arg->roleid;
+
+				if (pserver->find(key, value, txn))
+				{
+					value >> res->detail;
+
+					res->detail.roleid = arg->roleid;
+
+					res->retcode = ERR_SUCCESS;
+				}
+			}
+			catch ( DbException e ) { throw; }
+			catch ( ... )
+			{
+				DbException ee( DB_OLD_VERSION );
+				txn.abort( ee );
+				throw ee;
+			}
+		}
+		catch ( DbException e )
+		{
+			res->retcode = ERR_EXCEPTION;
+			Log::log( LOG_ERR, "GetNewRoleDetail, roleid=%d, what=%s\n", arg->roleid, e.what() );
+		}
+		
+		Log::formatlog("GetNewRoleDetail", "roleid=%d retcode=%d", arg->roleid, res->retcode);
+		
+		
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// GetNewRoleDetailArg *arg = (GetNewRoleDetailArg *)argument;
+		// GetNewRoleDetailRes *res = (GetNewRoleDetailRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

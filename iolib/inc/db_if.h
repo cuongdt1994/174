@@ -1,0 +1,572 @@
+#ifndef __GAMEDB_IF_H__
+#define __GAMEDB_IF_H__
+
+#include "db_os.h"
+
+//��Ҫ��localmacro.h ��CDB_PUT_*����һ��
+#define DBMASK_PUT_STOREHOUSE     0x00000001
+#define DBMASK_PUT_INVENTORY      0x00000002
+#define DBMASK_PUT_TASK           0x00000004
+#define DBMASK_PUT_EQUIPMENT      0x00000008
+#define DBMASK_PUT_CASH           0x00000010
+#define DBMASK_PUT_USERSTORE      0x00000020
+#define DBMASK_PUT_ALL            0x0000003F
+
+#define DBMASK_PUT_SYNC_TIMEOUT  (DBMASK_PUT_ALL^(DBMASK_PUT_INVENTORY | DBMASK_PUT_EQUIPMENT))
+
+namespace GNET
+{
+	class GRoleDetail;
+	class GRoleInventory;
+	template <class T> class RpcDataVector;
+	//class RpcDataVector<GRoleInventory>;
+//	typedef RpcDataVector<GRoleInventory>	GRoleInventoryVector;
+};
+
+enum
+{
+//�� ../include/localmacro.h ������ͬ�Ķ��壬�뱣��һ��
+//ע��: �����µ�����ʱ��Ҫ��Ѱ������ɫ���ס���ɫ����н�ɫ���ݿ����Ĵ�������޸�
+//��ɫ����(gamedbd/dbwebtradesold.hrp) (gamedbd/dbwebtradeprepost.hrp)
+//��ɫ���(gamedbd/abstractplayers.cpp AbstractPlayerData())
+
+	GROLE_STATUS_EXTRAPROP_TOUCH_HALF_TRADE = 0, // Touch
+	GROLE_STATUS_EXTRAPROP_DAILY_SIGN_IN,
+	GROLE_STATUS_EXTRAPROP_GIFTCARD_HALF_REDEEM, // ��Ʒ��һ�
+	GROLE_STATUS_EXTRAPROP_LEADERSHIP,
+	GROLE_STATUS_EXTRAPROP_GENERALCARD_COLLECTION,
+	GROLE_STATUS_EXTRAPROP_FATERING,                // 5
+	GROLE_STATUS_EXTRAPROP_CLOCK_DATA,
+	GROLE_STATUS_EXTRAPROP_RAND_MALL_DATA,
+	GROLE_STATUS_EXTRAPROP_WORLD_CONTRIBUTION,
+	GROLE_STATUS_EXTRAPROP_ASTROLABE_EXTERN,
+    GROLE_STATUS_EXTRAPROP_SOLO_CHALLENGE_INFO,     // 10
+    GROLE_STATUS_EXTRAPROP_MNFACTION_INFO,
+    GROLE_STATUS_EXTRAPROP_VISA_INFO,
+	GROLE_STATUS_EXTRAPROP_FIX_POSITION_TRANSMIT_INFO,
+    GROLE_STATUS_EXTRAPROP_CASH_RESURRECT_INFO,
+
+	GROLE_STATUS_EXTRAPROP_COUNT, // ������������
+};
+
+namespace GDB
+{
+
+struct base_info
+{
+	unsigned int 	id;
+	unsigned int 	userid;
+	int 		race;		//����
+	int 		cls;		//ְҵ
+	bool 		gender;		//�Ա�
+	bool		trashbox_active;
+	bool		cash_active;
+	bool		userstore_active; //�˺Ųֿ��Ƿ���Ҫ����
+	int 		level;
+	int		sec_level;
+	int 		exp;
+	int 		sp;
+	int		pp;
+	int 		hp;
+	int		mp;
+	float 		posx;
+	float 		posy;
+	float 		posz;
+	int		worldtag;
+	int		money;
+	int 		custom_crc;
+	int 		invader_state;
+	int 		invader_time;
+	int 		pariah_time;
+	unsigned int 	factionid;
+	int 		factionrole;
+	int 		reputation;
+	int		dbltime_expire;
+	int		dbltime_mode;
+	int		dbltime_begin;
+	int		dbltime_used;
+	int		dbltime_max;
+	int		time_used;
+	unsigned int		trash_money;
+	int		create_time;
+	int		lastlogin_time;
+	short		storesize;
+	short		storesize1;
+	short		storesize2;
+	short		storesize3;
+	//short		storesize4;
+	//short		storesize5;
+	short		bagsize;
+	int		timestamp;
+	int             cash;
+	int             cash_add; //�ۼƳ�ֵ���
+	int             cash_total;
+	int             cash_used;
+	int             cash_delta;
+	int             cash_serial;
+	unsigned int	spouse;
+	int		bonus_add;
+	int		bonus_reward;
+	int		bonus_used;
+	int 		referrer;
+	int 		userstoresize;  //�˺Ųֿ�ɲ���������
+	int		userstoremoney; //�˺Ųֿ��е�money
+	int mall_consumption; //����ֵ
+	int	country_id;				//����id
+	int	country_expire_time;	//���ҹ���ʱ��
+	int is_king;
+	int king_expire_time;
+	int	src_zoneid;
+	int vip_level;
+	int score_add;
+	int score_cost;
+	int score_consume;
+	int next_day_item_clear_timestamp;
+	int next_week_item_clear_timestamp;
+	int next_month_item_clear_timestamp;
+	int next_year_item_clear_timestamp;
+
+	struct{
+    	int64_t  sn;
+	    char     state;
+	    unsigned cost;
+    	unsigned lots;
+	    unsigned itemcount;
+    	int 	 itemtype;
+		int		 itemexpire;
+	} touch_trade;
+
+	struct{
+		int update_time;
+		int month_calendar;
+		int curr_year_data;
+		int last_year_data;
+        char awarded_times;
+        char late_signin_times;
+		char awarded_times2;
+		char reserved;
+	} daily_signin;
+
+	struct{
+		char	state; 
+		int		type;
+		int		parenttype;
+		char	cardnumber[20];
+	} giftcard_redeem;
+
+	int leadership;
+
+	struct{
+		int contrib;
+		int cost;
+	}world_contribution;
+
+	struct{
+		unsigned char level;
+		int  exp;
+	} astrolabe_extern;
+
+    struct solo_challenge_info_t
+    {
+        int max_stage_level;
+        int max_stage_cost_time;
+        int total_score;
+        int total_time;
+        int left_draw_award_times;
+        int playmodes;
+
+        struct
+        {
+            int item_id;
+            int item_count;
+        } award_info[8];
+
+    } solo_challenge_info;
+
+    struct
+    {
+        int64_t unifid;
+    } mnfaction_info;
+
+    struct
+    {
+        int type;
+        int stay_timestamp;
+		int cost_item;
+		int cost_item_count;
+    } visa_info;
+
+    struct
+    {
+        int times;
+    } cash_resurrect_info;
+};
+
+struct ivec
+{
+	const void * data;
+	unsigned int size;
+};
+
+struct itemdata
+{
+	unsigned int id;
+	int index;
+	int count;
+	int max_count;
+	int guid1;
+	int guid2;
+	int mask;
+	int proctype;
+	int expire_date;
+	const void * data;
+	unsigned int size;
+};
+
+
+struct  itemlist
+{
+	itemdata * list;
+	unsigned int count;
+};
+
+struct shoplog          
+{       
+	int order_id;   
+	int item_id;    
+	int expire;     
+	int item_count; 
+	int order_count;
+	int cash_need;  
+	int time;       
+	int guid1;      
+	int guid2;      
+};      
+        
+struct  loglist         
+{       
+	shoplog * list; 
+	unsigned int count;   
+};     
+
+struct  pet
+{
+	unsigned int index;
+	ivec data;
+};
+
+struct  petcorral
+{
+	unsigned int capacity;
+	unsigned int count;
+	pet * list;
+};
+
+struct faction_relation_data
+{
+	unsigned int alliance_count;
+	int * alliance_list;
+	unsigned int hostile_count;
+	int * hostile_list;
+};
+
+struct forcedata
+{
+	int force_id;
+	int reputation;
+	int contribution;
+};
+
+struct forcedata_list
+{
+	int cur_force_id;
+	unsigned int count;
+	forcedata * list;
+};
+
+struct meridian_data
+{
+	int meridian_level;
+	int lifegate_times;
+	int deathgate_times;
+	int	free_refine_times;  
+	int paid_refine_times;
+	int player_login_time; //�����0��
+	int continu_login_days; //������������
+	int trigrams_map[3];
+};
+
+struct reincarnation_record
+{
+	int level;
+	int timestamp;
+	int exp;
+};
+
+struct reincarnation_data
+{
+	int tome_exp;
+	char tome_active;
+	unsigned int count;
+	reincarnation_record * records; 
+};
+
+struct realm_data
+{
+	int level;
+	int exp;
+	int reserved1;
+	int reserved2;
+};
+
+struct vecdata
+{
+	ivec user_name;		//������ݲ������
+	ivec custom_status;
+	ivec filter_data;
+	ivec charactermode;
+	ivec instancekeylist;
+	ivec property;
+	itemlist inventory;
+	itemlist equipment;
+	itemlist task_inventory;
+	itemlist trash_box;
+	itemlist trash_box1;
+	itemlist trash_box2;
+	itemlist trash_box3;
+	//itemlist trash_box4;
+	//itemlist trash_box5;
+	itemlist user_store;
+	ivec skill_data;
+	ivec task_data;
+	ivec finished_task_data;
+	ivec finished_time_task_data;
+	ivec var_data;
+	ivec trashbox_passwd;
+	ivec waypoint_list;
+	ivec coolingtime;
+	ivec npc_relation;
+	petcorral pets;
+	ivec dbltime_data;		
+	ivec addiction_data;		
+	loglist logs;
+	ivec task_counter;		
+	ivec multi_exp_ctrl;
+	ivec storage_task;
+	ivec faction_contrib;
+	faction_relation_data faction_relation;
+	forcedata_list force_data;
+	ivec online_award;
+	ivec profit_time_data;
+	meridian_data meridian;
+	ivec title_data;
+	reincarnation_data reincarnation;
+	realm_data	realm;
+	ivec generalcard_collection;
+	ivec fatering_data;
+	ivec clock_data;
+	ivec rand_mall_data;
+	ivec fix_position_transmit_data;
+	ivec purchase_limit_data;
+};
+
+struct vecdata_new
+{
+	int roleid;
+	int pk_time;
+	int pk_status;
+	int money_silver;
+	int color_name;
+	int pvp_rank;
+	int pvp_rank_exp;
+	int player_kill;
+	int monster_kill;
+	int player_death;
+	int monster_death;
+	int diary_exp;
+	int realm_day_verify;
+	int verify_itens_valid;
+	char has_astrolabe_lock;
+	char enabled_fashion_weapon;
+	char double_factor_exp;
+	char double_factor_sp;
+	char double_factor_realm;
+	DBStream autoswap;
+	DBStream skillsender;
+	DBStream glyph;
+	DBStream carrier;
+	DBStream repository;
+	DBStream treasure;
+	DBStream lottery;
+	DBStream treasure_items;
+	DBStream lib_items;
+	DBStream pet_skill_temp;
+	DBStream pet_skin;
+	DBStream passwd_safe;
+	DBStream day_world_points;
+	DBStream activity;
+	DBStream celestial;
+	DBStream codex;
+};
+
+struct PutRoleResData
+{
+	int cash_vip_level;
+	int score_add;
+	int score_cost;
+	int score_consume;
+};
+
+class Result
+{
+public:
+	virtual void OnTimeOut() = 0;
+	virtual void OnFailed() = 0;
+	virtual void OnGetRole(int id,const base_info * pInfo, const vecdata * data,const GNET::GRoleDetail * pRole){}
+	virtual void OnPutRole(int retcode, PutRoleResData *data = NULL){}
+	virtual void OnPutMoneyInventory(int retcode) {}
+	virtual void OnGetMoneyInventory(unsigned int money, const itemlist & list, int timestamp, int getmask) {}
+	virtual void OnGetCashTotal(int cash_total, int cash_vip_score_add, int cash_vip_level){}
+	virtual ~Result(){}
+};
+
+bool init_gamedb();
+//$$$��ʱ60��
+bool put_role(int id,const base_info* pInfo,const vecdata* data,Result *callback=NULL,int priority=0,int mask=DBMASK_PUT_ALL);
+bool get_role(int id, Result * callback);
+
+bool put_money_inventory(int id, unsigned int money, itemlist & list,Result * callback);
+bool get_money_inventory(int id, Result * callback, int getmask=0);
+
+bool get_cash_total(int userid, Result * callback);
+
+//unsigned int convert_item(const GRoleInventoryVector & ivec, itemdata * list , unsigned int size);
+unsigned int convert_item(const GNET::RpcDataVector<GNET::GRoleInventory> & ivec,  itemdata * list , unsigned int size);
+bool set_couple(int id1, int id2, int op);
+
+void itemlist_to_inventory(GNET::RpcDataVector<GNET::GRoleInventory> & ivec, const itemlist & list);
+
+
+//��Ҫ��localmacro.h ��CDBMASK_SERVERDATA_*����һ��
+#define DBMASK_SERVERDATA_WEDDING		0x00000001
+#define DBMASK_SERVERDATA_DPSRANK		0x00000002
+#define DBMASK_SERVERDATA_ALL			0x00000003
+
+struct serverdata
+{
+	int world_tag;
+	ivec wedding_data;
+	ivec dpsrank_data;
+};
+
+class ServerDataResult
+{
+public:
+	virtual void OnTimeOut() = 0;
+	virtual void OnFailed() = 0;
+	virtual void OnGetServerData(int world_tag, const serverdata * data, int mask){}
+	virtual void OnPutServerData(){}
+	virtual ~ServerDataResult(){} 
+};
+
+bool put_serverdata(int world_tag, const serverdata* data, ServerDataResult * callback=NULL, int priority=0, int mask=DBMASK_SERVERDATA_ALL);
+bool get_serverdata(int world_tag, ServerDataResult * callback, int mask=DBMASK_SERVERDATA_ALL);
+
+class CopyRoleResult
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed() { }
+    virtual ~CopyRoleResult() { }
+};
+
+bool copy_role(int src_roleid, int dst_roleid, CopyRoleResult* callback);
+
+
+
+class OnGetLuaDataResult
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed(int type, int key, void * data, unsigned int size) { }
+    virtual ~OnGetLuaDataResult() { }
+};
+
+bool OnGetLuaData(int type, int key, OnGetLuaDataResult * callback );
+
+
+
+class OnSetLuaDataResult
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed() { }
+    virtual ~OnSetLuaDataResult() { }
+};
+
+bool OnSetLuaData(int type, int key, void * data, unsigned int size, OnSetLuaDataResult * callback );
+
+
+//typedef GNET::RpcDataVector<GNET::GRoleInventory> CNET_INV;
+//typedef itemdata * list
+
+
+class OnGetNewTrashBoxResult
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed( int roleid, itemlist & box4, itemlist & box5, itemlist & box6, itemlist & box7 ) { }
+    virtual ~OnGetNewTrashBoxResult() { }
+};
+
+bool OnGetNewTrashBox(int key, OnGetNewTrashBoxResult * callback );
+
+
+
+class OnSetNewTrashBoxResult
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed( int roleid ) { }
+    virtual ~OnSetNewTrashBoxResult() { }
+};
+
+bool OnSetNewTrashBox(int key, itemlist & box4, itemlist & box5, itemlist & box6, itemlist & box7, OnSetNewTrashBoxResult * callback );
+
+// new db callback
+
+class OnLoadNewRoleDetail_Re
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed( int roleid, vecdata_new & vec, int retcode ) = 0;
+    virtual ~OnLoadNewRoleDetail_Re() {}
+};
+
+bool OnLoadNewRoleDetail(int roleid, OnLoadNewRoleDetail_Re * callback );
+
+class OnSaveNewRoleDetail_Re
+{
+public:
+    virtual void OnTimeOut() = 0;
+    virtual void OnFailed() = 0;
+    virtual void OnSucceed( int roleid, int retcode ) = 0;
+    virtual ~OnSaveNewRoleDetail_Re() {}
+};
+
+bool OnSaveNewRoleDetail(int roleid, const vecdata_new & data, OnSaveNewRoleDetail_Re * callback );
+
+// new db callback
+
+
+};
+
+#endif
+
+

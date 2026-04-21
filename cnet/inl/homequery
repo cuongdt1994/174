@@ -1,0 +1,35 @@
+	public:
+		int home_id;
+		int role_id;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEQUERY };
+	public:
+		HomeQuery() { type = PROTOCOL_HOMEQUERY; }
+		HomeQuery(void*) : Protocol(PROTOCOL_HOMEQUERY) { }
+		HomeQuery (int l_home_id,int l_role_id)
+			 : home_id(l_home_id),role_id(l_role_id)
+		{
+			type = PROTOCOL_HOMEQUERY;
+		}
+
+		HomeQuery(const HomeQuery &rhs)
+			: Protocol(rhs),home_id(rhs.home_id),role_id(rhs.role_id) { }
+
+		GNET::Protocol *Clone() const { return new HomeQuery(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << home_id;
+			os << role_id;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> home_id;
+			os >> role_id;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

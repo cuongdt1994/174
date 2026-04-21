@@ -1,0 +1,44 @@
+	public:
+		int retcode;
+		int roleid;
+		int team_type;
+		EC_ArenaTeamTopListVector teams;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMTOPLISTQUERY_RE };
+	public:
+		EC_ArenaTeamTopListQuery_Re() { type = PROTOCOL_EC_ARENATEAMTOPLISTQUERY_RE; }
+		EC_ArenaTeamTopListQuery_Re(void*) : Protocol(PROTOCOL_EC_ARENATEAMTOPLISTQUERY_RE) { }
+		EC_ArenaTeamTopListQuery_Re (int l_retcode = 0,int l_roleid = 0,int l_team_type = 0,
+			const EC_ArenaTeamTopListVector& l_teams = EC_ArenaTeamTopListVector())
+			 : retcode(l_retcode),roleid(l_roleid),team_type(l_team_type)
+			,teams(l_teams)
+		{
+			type = PROTOCOL_EC_ARENATEAMTOPLISTQUERY_RE;
+		}
+
+		EC_ArenaTeamTopListQuery_Re(const EC_ArenaTeamTopListQuery_Re &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),team_type(rhs.team_type)
+			,teams(rhs.teams) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamTopListQuery_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << team_type;
+			os << teams;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> team_type;
+			os >> teams;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 31744; }

@@ -1,0 +1,59 @@
+#ifndef __GNET_EC_DBARENATEAMTOPLISTARG_RPCDATA
+#define __GNET_EC_DBARENATEAMTOPLISTARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_DBArenaTeamTopListArg : public GNET::Rpc::Data
+	{
+	public:
+		int count;
+
+	public:
+		EC_DBArenaTeamTopListArg (int l_count = 0)
+			: count(l_count)
+		{
+		}
+
+		EC_DBArenaTeamTopListArg(const EC_DBArenaTeamTopListArg &rhs)
+			: count(rhs.count) { }
+
+		Rpc::Data *Clone() const { return new EC_DBArenaTeamTopListArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_DBArenaTeamTopListArg *r = dynamic_cast<const EC_DBArenaTeamTopListArg *>(&rhs);
+			if (r && r != this)
+			{
+				count = r->count;
+			}
+			return *this;
+		}
+
+		EC_DBArenaTeamTopListArg& operator = (const EC_DBArenaTeamTopListArg &rhs)
+		{
+			const EC_DBArenaTeamTopListArg *r = &rhs;
+			if (r && r != this)
+			{
+				count = r->count;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << count;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> count;
+			return os;
+		}
+
+	};
+};
+#endif

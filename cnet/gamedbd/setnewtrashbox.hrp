@@ -1,0 +1,53 @@
+
+#ifndef __GNET_SETNEWTRASHBOX_HPP
+#define __GNET_SETNEWTRASHBOX_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "setnewtrashboxarg"
+#include "setnewtrashboxres"
+#include "luaman.hpp"
+
+namespace GNET
+{
+
+class SetNewTrashBox : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "setnewtrashbox"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		SetNewTrashBoxArg *arg = (SetNewTrashBoxArg *)argument;
+		SetNewTrashBoxRes *res = (SetNewTrashBoxRes *)result;
+		
+		LuaManager * lua = LuaManager::GetInstance();
+		int ok = lua->game__SetBox(arg->value.roleid, arg->value);
+		if(!ok)
+		{
+			lua->game__CreateBox(arg->value.roleid);
+			lua->game__SetBox(arg->value.roleid, arg->value);
+		}
+		res->roleid = arg->value.roleid;
+		res->retcode = ERR_SUCCESS;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// SetNewTrashBoxArg *arg = (SetNewTrashBoxArg *)argument;
+		// SetNewTrashBoxRes *res = (SetNewTrashBoxRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

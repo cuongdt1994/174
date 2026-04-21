@@ -1,0 +1,138 @@
+#ifndef __GNET_EC_ARENATEAMSYNC_RPCDATA
+#define __GNET_EC_ARENATEAMSYNC_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_arenateammember"
+
+namespace GNET
+{
+	class EC_ArenaTeamSync : public GNET::Rpc::Data
+	{
+	public:
+		long long team_id;
+		long long captain_id;
+		unsigned char team_type;
+		unsigned int score;
+		Octets name;
+		EC_ArenaTeamMemberVector members;
+		Int64Vector teams;
+		unsigned int last_visite;
+		unsigned int win_count;
+		unsigned int team_score;
+		unsigned int week_battle_count;
+		unsigned int create_time;
+		unsigned int battle_count;
+		unsigned int sync;
+
+	public:
+		EC_ArenaTeamSync (long long l_team_id = 0,long long l_captain_id = 0,unsigned char l_team_type = 0
+			,unsigned int l_score = 0,const Octets& l_name = Octets(0),const EC_ArenaTeamMemberVector& l_members = EC_ArenaTeamMemberVector()
+			,const Int64Vector& l_teams = Int64Vector(),unsigned int l_last_visite = 0,unsigned int l_win_count = 0
+			,unsigned int l_team_score = 0,unsigned int l_week_battle_count = 0,unsigned int l_create_time = 0
+			,unsigned int l_battle_count = 0,unsigned int l_sync = 0)
+			: team_id(l_team_id),captain_id(l_captain_id),team_type(l_team_type)
+			,score(l_score),name(l_name),members(l_members)
+			,teams(l_teams),last_visite(l_last_visite),win_count(l_win_count)
+			,team_score(l_team_score),week_battle_count(l_week_battle_count),create_time(l_create_time)
+			,battle_count(l_battle_count),sync(l_sync)
+		{
+		}
+
+		EC_ArenaTeamSync(const EC_ArenaTeamSync &rhs)
+			: team_id(rhs.team_id),captain_id(rhs.captain_id),team_type(rhs.team_type),
+			score(rhs.score),name(rhs.name),members(rhs.members),
+			teams(rhs.teams),last_visite(rhs.last_visite),win_count(rhs.win_count),
+			team_score(rhs.team_score),week_battle_count(rhs.week_battle_count),create_time(rhs.create_time),
+			battle_count(rhs.battle_count),sync(rhs.sync) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaTeamSync(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaTeamSync *r = dynamic_cast<const EC_ArenaTeamSync *>(&rhs);
+			if (r && r != this)
+			{
+				team_id = r->team_id;
+				captain_id = r->captain_id;
+				team_type = r->team_type;
+				score = r->score;
+				name = r->name;
+				members = r->members;
+				teams = r->teams;
+				last_visite = r->last_visite;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				week_battle_count = r->week_battle_count;
+				create_time = r->create_time;
+				battle_count = r->battle_count;
+				sync = r->sync;
+			}
+			return *this;
+		}
+
+		EC_ArenaTeamSync& operator = (const EC_ArenaTeamSync &rhs)
+		{
+			const EC_ArenaTeamSync *r = &rhs;
+			if (r && r != this)
+			{
+				team_id = r->team_id;
+				captain_id = r->captain_id;
+				team_type = r->team_type;
+				score = r->score;
+				name = r->name;
+				members = r->members;
+				teams = r->teams;
+				last_visite = r->last_visite;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				week_battle_count = r->week_battle_count;
+				create_time = r->create_time;
+				battle_count = r->battle_count;
+				sync = r->sync;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << team_id;
+			os << captain_id;
+			os << team_type;
+			os << score;
+			os << name;
+			os << members;
+			os << teams;
+			os << last_visite;
+			os << win_count;
+			os << team_score;
+			os << week_battle_count;
+			os << create_time;
+			os << battle_count;
+			os << sync;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> team_id;
+			os >> captain_id;
+			os >> team_type;
+			os >> score;
+			os >> name;
+			os >> members;
+			os >> teams;
+			os >> last_visite;
+			os >> win_count;
+			os >> team_score;
+			os >> week_battle_count;
+			os >> create_time;
+			os >> battle_count;
+			os >> sync;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaTeamSync>	EC_ArenaTeamSyncVector;
+};
+#endif

@@ -1,0 +1,42 @@
+
+#ifndef __GNET_GETNEWROLEDETAIL_HPP
+#define __GNET_GETNEWROLEDETAIL_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "getnewroledetailarg"
+#include "getnewroledetailres"
+
+namespace GNET
+{
+
+class GetNewRoleDetail : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getnewroledetail"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// GetNewRoleDetailArg *arg = (GetNewRoleDetailArg *)argument;
+		// GetNewRoleDetailRes *res = (GetNewRoleDetailRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// GetNewRoleDetailArg *arg = (GetNewRoleDetailArg *)argument;
+		// GetNewRoleDetailRes *res = (GetNewRoleDetailRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

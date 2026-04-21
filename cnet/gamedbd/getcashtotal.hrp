@@ -1,0 +1,115 @@
+
+#ifndef __GNET_GETCASHTOTAL_HPP
+#define __GNET_GETCASHTOTAL_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "getcashtotalarg"
+#include "getcashtotalres"
+
+#include "gsysauctioncash"
+
+#include "grewardstore152"
+
+namespace GNET
+{
+
+class GetCashTotal : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getcashtotal"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GetCashTotalArg *arg = (GetCashTotalArg *)argument;
+		GetCashTotalRes *res = (GetCashTotalRes *)result;
+		LOG_TRACE( "GetCashTotal, userid=%d",arg->userid);
+
+		try
+		{
+			StorageEnv::Storage * puser = StorageEnv::GetStorage("user");
+			StorageEnv::CommonTransaction txn;
+		
+			try
+			{
+				User u;
+				Marshal::OctetsStream(puser->find(Marshal::OctetsStream()<<arg->userid,txn))>>u;
+				GSysAuctionCash sa_cash;
+				if(u.cash_sysauction.size())
+					Marshal::OctetsStream(u.cash_sysauction)>>sa_cash;
+
+				res->cash_total = u.cash_add+u.cash_buy-u.cash_sell-sa_cash.cash_used_2-u.cash-sa_cash.cash_2;
+				
+				/* 
+				 CASH VIP
+				*/
+				GRewardStore reward_store;
+				if(0 != u.consume_reward.size())
+				{
+					
+					
+					try
+					{
+						Marshal::OctetsStream os_reward(u.consume_reward);
+						os_reward >> reward_store;
+					}
+					catch( ... ) // is db <= 152
+					{
+						Marshal::OctetsStream os_reward(u.consume_reward);
+						GRewardStore152 r152;
+						os_reward >> r152;
+						
+						reward_store.consume_points	= r152.consume_points	;
+						reward_store.bonus_reward	= r152.bonus_reward		;
+						reward_store.rewardlist		= r152.rewardlist		;
+						reward_store.cash_vip_info.clear()					;
+					}
+					
+					
+					//Marshal::OctetsStream os_reward(u.consume_reward);
+					//os_reward >> reward_store;
+				}
+				GCashVipInfo vipinfo;
+				if(0 != reward_store.cash_vip_info.size())
+				{
+					Marshal::OctetsStream os_vip_info(reward_store.cash_vip_info);
+					os_vip_info >> vipinfo;
+				}
+				res->cash_vip_score_add = vipinfo.score_add;
+				res->cash_vip_level     = vipinfo.cash_vip_level;
+				res->retcode = ERR_SUCCESS;
+			}
+			catch ( DbException e ) { throw; }
+			catch ( ... )
+			{
+				DbException ee( DB_OLD_VERSION );
+				txn.abort( ee );
+				throw ee;
+			}
+		}
+		catch ( DbException e )
+		{
+			Log::log( LOG_ERR, "GetCashTotal, userid=%d, what=%s\n", arg->userid, e.what() );
+			res->retcode = ERR_EXCEPTION;
+		}		
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// GetCashTotalArg *arg = (GetCashTotalArg *)argument;
+		// GetCashTotalRes *res = (GetCashTotalRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

@@ -1,0 +1,80 @@
+#ifndef __GNET_HOMEMODULE_RPCDATA
+#define __GNET_HOMEMODULE_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class HomeModule : public GNET::Rpc::Data
+	{
+	public:
+		short tid;
+		char type;
+		short param0;
+		short param1;
+		short dir;
+
+	public:
+		HomeModule ()
+		{
+		}
+
+		HomeModule(const HomeModule &rhs)
+			: tid(rhs.tid),type(rhs.type),param0(rhs.param0),
+			param1(rhs.param1),dir(rhs.dir) { }
+
+		Rpc::Data *Clone() const { return new HomeModule(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeModule *r = dynamic_cast<const HomeModule *>(&rhs);
+			if (r && r != this)
+			{
+				tid = r->tid;
+				type = r->type;
+				param0 = r->param0;
+				param1 = r->param1;
+				dir = r->dir;
+			}
+			return *this;
+		}
+
+		HomeModule& operator = (const HomeModule &rhs)
+		{
+			const HomeModule *r = &rhs;
+			if (r && r != this)
+			{
+				tid = r->tid;
+				type = r->type;
+				param0 = r->param0;
+				param1 = r->param1;
+				dir = r->dir;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << tid;
+			os << type;
+			os << param0;
+			os << param1;
+			os << dir;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> tid;
+			os >> type;
+			os >> param0;
+			os >> param1;
+			os >> dir;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeModule>	HomeModuleVector;
+};
+#endif

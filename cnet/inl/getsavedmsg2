@@ -1,0 +1,38 @@
+	public:
+		int roleid;
+		unsigned int localsid;
+		unsigned int reserve1;
+		enum { PROTOCOL_TYPE = PROTOCOL_GETSAVEDMSG2 };
+	public:
+		GetSavedMsg2() { type = PROTOCOL_GETSAVEDMSG2; }
+		GetSavedMsg2(void*) : Protocol(PROTOCOL_GETSAVEDMSG2) { }
+		GetSavedMsg2 (int l_roleid,unsigned int l_localsid,unsigned int l_reserve1)
+			 : roleid(l_roleid),localsid(l_localsid),reserve1(l_reserve1)
+		{
+			type = PROTOCOL_GETSAVEDMSG2;
+		}
+
+		GetSavedMsg2(const GetSavedMsg2 &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),localsid(rhs.localsid),reserve1(rhs.reserve1) { }
+
+		GNET::Protocol *Clone() const { return new GetSavedMsg2(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << localsid;
+			os << reserve1;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> localsid;
+			os >> reserve1;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

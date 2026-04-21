@@ -1,0 +1,105 @@
+
+#ifndef __GNET_GETNEWTRASHBOX_HPP
+#define __GNET_GETNEWTRASHBOX_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#ifdef USE_DB
+#include "dbbuffer.h"
+#endif
+#include "getnewtrashboxarg"
+#include "getnewtrashboxres"
+#include "db_if.h"
+
+namespace GNET
+{
+
+class GetNewTrashBox : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "getnewtrashbox"
+#undef	RPC_BASECLASS
+
+	enum 
+	{ 
+		TRASHBOX_MAX_SIZE = 127, 
+	};
+
+	GDB::OnGetNewTrashBoxResult *_callback;
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+#ifdef USE_DB
+#endif
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		GetNewTrashBoxArg *arg = (GetNewTrashBoxArg *)argument;
+		GetNewTrashBoxRes *res = (GetNewTrashBoxRes *)result;
+		
+		if(res->retcode) 
+		{
+			_callback->OnFailed();
+			return;
+		}
+		
+		GDB::itemdata box4[TRASHBOX_MAX_SIZE];
+		GDB::itemdata box5[TRASHBOX_MAX_SIZE];
+		GDB::itemdata box6[TRASHBOX_MAX_SIZE];
+		GDB::itemdata box7[TRASHBOX_MAX_SIZE];
+		memset(box4, 0x00, sizeof(box4));
+		memset(box5, 0x00, sizeof(box5));
+		memset(box6, 0x00, sizeof(box6));
+		memset(box7, 0x00, sizeof(box7));
+		
+		GDB::itemlist list4;
+		GDB::itemlist list5;
+		GDB::itemlist list6;
+		GDB::itemlist list7;
+		list4.list = box4;
+		list5.list = box5;
+		list6.list = box6;
+		list7.list = box7;
+		list4.count = 0;
+		list5.count = 0;
+		list6.count = 0;
+		list7.count = 0;
+		
+		if ( res->value.size4 && res->value.size4 < TRASHBOX_MAX_SIZE )
+		{
+			list4.count = GDB::convert_item(res->value.box4, box4, TRASHBOX_MAX_SIZE);
+		}
+
+		if ( res->value.size4 && res->value.size5 < TRASHBOX_MAX_SIZE )
+		{
+			list5.count = GDB::convert_item(res->value.box5, box5, TRASHBOX_MAX_SIZE);
+		}		
+
+		if ( res->value.size4 && res->value.size6 < TRASHBOX_MAX_SIZE )
+		{
+			list6.count = GDB::convert_item(res->value.box6, box6, TRASHBOX_MAX_SIZE);
+		}		
+
+		if ( res->value.size4 && res->value.size7 < TRASHBOX_MAX_SIZE )
+		{
+			list7.count = GDB::convert_item(res->value.box7, box7, TRASHBOX_MAX_SIZE);
+		}
+		
+		_callback->OnSucceed( res->value.roleid, list4 , list5 , list6 , list7 );
+		return;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+		_callback->OnTimeOut();
+		return;
+	}
+
+};
+
+};
+#endif

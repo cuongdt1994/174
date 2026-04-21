@@ -1,0 +1,70 @@
+#ifndef __GNET_EC_ARENABATTLEMATCHSUCCESSRE_RPCDATA
+#define __GNET_EC_ARENABATTLEMATCHSUCCESSRE_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaBattleMatchSuccessRe : public GNET::Rpc::Data
+	{
+	public:
+		Int64Vector member;
+		unsigned int reserve2;
+		unsigned int reserve3;
+
+	public:
+		EC_ArenaBattleMatchSuccessRe (const Int64Vector& l_member = Int64Vector(),unsigned int l_reserve2 = 0,unsigned int l_reserve3 = 0)
+			: member(l_member),reserve2(l_reserve2),reserve3(l_reserve3)
+		{
+		}
+
+		EC_ArenaBattleMatchSuccessRe(const EC_ArenaBattleMatchSuccessRe &rhs)
+			: member(rhs.member),reserve2(rhs.reserve2),reserve3(rhs.reserve3) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaBattleMatchSuccessRe(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaBattleMatchSuccessRe *r = dynamic_cast<const EC_ArenaBattleMatchSuccessRe *>(&rhs);
+			if (r && r != this)
+			{
+				member = r->member;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+			}
+			return *this;
+		}
+
+		EC_ArenaBattleMatchSuccessRe& operator = (const EC_ArenaBattleMatchSuccessRe &rhs)
+		{
+			const EC_ArenaBattleMatchSuccessRe *r = &rhs;
+			if (r && r != this)
+			{
+				member = r->member;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << member;
+			os << reserve2;
+			os << reserve3;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> member;
+			os >> reserve2;
+			os >> reserve3;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaBattleMatchSuccessRe>	EC_ArenaBattleMatchSuccessReVector;
+};
+#endif

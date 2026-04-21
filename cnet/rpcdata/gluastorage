@@ -1,0 +1,64 @@
+#ifndef __GNET_GLUASTORAGE_RPCDATA
+#define __GNET_GLUASTORAGE_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GLuaStorage : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int key;
+		Octets data;
+
+	public:
+		GLuaStorage (unsigned int l_key = 0,const Octets& l_data = Octets(0))
+			: key(l_key),data(l_data)
+		{
+		}
+
+		GLuaStorage(const GLuaStorage &rhs)
+			: key(rhs.key),data(rhs.data) { }
+
+		Rpc::Data *Clone() const { return new GLuaStorage(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GLuaStorage *r = dynamic_cast<const GLuaStorage *>(&rhs);
+			if (r && r != this)
+			{
+				key = r->key;
+				data = r->data;
+			}
+			return *this;
+		}
+
+		GLuaStorage& operator = (const GLuaStorage &rhs)
+		{
+			const GLuaStorage *r = &rhs;
+			if (r && r != this)
+			{
+				key = r->key;
+				data = r->data;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << key;
+			os << data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> key;
+			os >> data;
+			return os;
+		}
+
+	};
+};
+#endif

@@ -1,0 +1,1850 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fstream>
+
+#include "world.h"
+#include <common/protocol_imp.h>
+#include <common/packetwrapper.h>
+#include "config.h"
+#include "netmsg.h"
+#include "usermsg.h"
+#include "userlogin.h"
+#include "task/taskman.h"
+#include "player_imp.h"
+#include <factionlib.h>
+#include "instance/battleground_manager.h"
+#include <strtok.h>
+#include "instance/faction_world_ctrl.h"
+#include "instance/countrybattle_manager.h"
+#include "instance/trickbattle_manager.h"
+#include "instance/arenaofaurora_manager.h"
+#include "threadusage.h"
+#include "gt_award_filter.h"
+#include "global_controller.h"
+#include "uniquedataclient.h"
+#include "instance/mnfaction_manager.h"
+#include "luamanager.h"
+#include <curl/curl.h>
+#include <common/utf.h>
+#include <jsoncpp/json/json.h>
+#include "emulate_settings.h"
+
+inline static bool check_player(gplayer *pPlayer,int cs_index,int sid,int uid)
+{
+	return pPlayer->IsActived()     && pPlayer->cs_index == cs_index 
+		&& pPlayer->cs_sid == sid 
+		&& pPlayer->ID.id == uid;
+}
+
+inline static void single_trade_end(int trade_id, int role, bool need_read,int reason)
+{	
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role || !pPlayer->IsActived() || !pPlayer->imp)  
+	{
+		return;
+	}
+	pPlayer->imp->TradeComplete(trade_id,reason,need_read);
+}
+
+void trade_end(int trade_id, int role1,int role2,bool need_read1,bool need_read2)
+{
+	ASSERT(role1 != role2 && role1 >0 && role2 > 0);
+	if(role1 == role2 || role1 <= 0 ||  role2 <= 0) return;
+	single_trade_end(trade_id,role1,need_read1,0);
+	single_trade_end(trade_id,role2,need_read2,0);
+}
+
+void trade_start(int trade_id, int role1,int role2, int localid1,int localid2)
+{
+	ASSERT(role1 != role2 && role1 >0 && role2 > 0);
+	try
+	{
+		if(role1 == role2 || role1 <= 0 ||  role2 <= 0) throw -1001;
+		if(world_manager::GetWorldParam().forbid_trade) throw -1002;
+
+		int index1,index2;
+		gplayer *pPlayer1 = world_manager::GetInstance()->FindPlayer(role1,index1);
+		gplayer *pPlayer2 = world_manager::GetInstance()->FindPlayer(role2,index2);
+		if(!pPlayer1 || !pPlayer2 || index1 != index2)
+		{
+			//Ŀ�겻���ڻ��߲���ͬһ������
+			throw -1;
+		}
+		spin_doublelock keeper(pPlayer1->spinlock,pPlayer2->spinlock);
+
+		if(pPlayer1->ID.id != role1 || pPlayer1->cs_sid != localid1) throw -3;
+		if(pPlayer2->ID.id != role2 || pPlayer2->cs_sid != localid2) throw -4;
+		if(!pPlayer1->IsActived() || pPlayer1->IsZombie() || pPlayer1->login_state != gplayer::LOGIN_OK) throw -5;
+		if(!pPlayer2->IsActived() || pPlayer2->IsZombie() || pPlayer2->login_state != gplayer::LOGIN_OK) throw -6;
+
+		if(pPlayer1->pos.squared_distance(pPlayer2->pos) > 10.f*10.f) throw -7;
+		if(!pPlayer1->imp || !pPlayer2->imp) throw -10;
+
+		if(!pPlayer1->imp->CanTrade(pPlayer2->ID)) throw -8;
+		if(!pPlayer2->imp->CanTrade(pPlayer1->ID)) throw -9;
+		pPlayer1->imp->StartTrade(trade_id,pPlayer2->ID);
+		pPlayer2->imp->StartTrade(trade_id,pPlayer1->ID);
+		GLog::log(GLOG_INFO,"��ҽ���׼����ʼ �û�%d <--> �û�%d, ����id:%d",role1,role2,trade_id);
+
+	}catch(int)
+	{
+		GMSV::ReplyTradeRequest(trade_id, role1,localid1,false);
+	}
+}
+
+void player_not_online(int user_id, int link_id, int sid) 
+{
+	GLog::log(GLOG_INFO,"�յ��û�%d�����ߵ���Ϣ %d %d",user_id, link_id, sid);
+	//������������Ĵ�������ǿ�����ߣ����Ҳ����д��̲���
+	int index1;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(user_id,index1);
+	if(!pPlayer)
+	{
+		GLog::log(GLOG_INFO,"�쳣������֣�Deliveryd�ٶȺ�����ȥ���Ʊ��");
+		//û���ҵ� ���ʵ��û�
+		//��������£�����û�Ӧ�ô��ڵ�
+		return;
+	}
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(!pPlayer->IsActived() || pPlayer->ID.id != user_id  ||  
+			pPlayer->cs_index != link_id || pPlayer->cs_sid != sid || !pPlayer->imp)
+	{
+		//����û����������Ѿ���ʧ�ˣ�����ֱ�ӷ��أ������д���
+		return;
+	}
+	pPlayer->imp->PlayerForceOffline();
+}
+
+unsigned int handle_chatdata(int uid, const void * aux_data, unsigned int size, void * buffer, unsigned int len)
+{
+	//���Ǹ��ݾ�������������
+	if(size < sizeof(short)) return 0;
+
+	//�򵥵����촦������
+	int index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);
+	if(!pPlayer) return 0;
+
+	spin_autolock keeper(&pPlayer->spinlock);
+	if(!pPlayer->IsActived() || pPlayer->ID.id != uid || pPlayer->b_disconnect || !pPlayer->imp)
+	{
+		//�����������ֱ�Ӻ���
+		return 0;
+	}
+	gplayer_imp * pImp = ((gplayer_imp*)pPlayer->imp);
+	return pImp->TransformChatData(aux_data,size, buffer, len);
+}
+
+bool check_alliance_chat(int uid, char channel)
+{
+	int index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);
+	if(!pPlayer) return 0;
+
+	spin_autolock keeper(&pPlayer->spinlock);
+	if(!pPlayer->IsActived() || 
+		pPlayer->ID.id != uid || 
+		pPlayer->b_disconnect || 
+		!pPlayer->imp) return 0;
+
+	gplayer_imp * pImp = ((gplayer_imp*)pPlayer->imp);
+	return pImp->CheckAllianceChat(channel);
+}
+
+// API key loaded from config: [Static_Setting] google_translate_api_key
+
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* user_data) {
+    ((std::string*)user_data)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+std::string detectLanguage(const std::string& text) 
+{
+	if(!EmulateSettings::GetInstance()->GetEnabledTranslation()) return "";
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        return "";
+    }
+
+    std::string readBuffer;
+
+    std::string url = "https://translation.googleapis.com/language/translate/v2/detect"
+                      "?q=" + text + "&key=" + EmulateSettings::GetInstance()->GetGoogleTranslateApiKey();
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        return "";
+    }
+
+    curl_easy_cleanup(curl);
+
+    // Parse JSON response
+    Json::Value root;
+    Json::CharReaderBuilder reader;
+    std::istringstream jsonStream(readBuffer);
+    std::string parseErrors;
+    Json::parseFromStream(reader, jsonStream, &root, &parseErrors);
+    
+    if (!parseErrors.empty()) {
+        return "";
+    }
+
+    std::string detectedLanguage = root["data"]["detections"][0][0]["language"].asString();
+    return detectedLanguage;
+}
+
+std::string preprocessText(const std::string& text)
+{
+	if(!EmulateSettings::GetInstance()->GetEnabledTranslation()) return "";
+    std::regex emoticonPattern("<[^>]*>"); 								// Remove emoticons
+    std::regex itemsPattern("&[^;]*;");								// Remove o nome dos itens
+
+    std::string result = std::regex_replace(text, emoticonPattern, "");
+    result = std::regex_replace(result, itemsPattern, "");
+
+    return result;
+}
+
+std::string preprocessTextDecode(const std::string& text)
+{
+    std::regex aspasPattern("&[^;]*;"); 								// Remove os simbolos de aspas
+    std::string result = std::regex_replace(text, aspasPattern, "'");
+    return result;
+}
+
+void auto_translate_text(int cs_index, int sid, int uid, const void *msg, unsigned int size, const void *aux_data, unsigned int size2, char channel) 
+{
+	if(!EmulateSettings::GetInstance()->GetEnabledTranslation()) return;
+
+    std::string targetLanguage;
+	
+    static std::string utf8;
+    utf8.clear();
+    utf8.resize(size + 1);
+    memset((void *)utf8.c_str(), 0x00, utf8.size());
+    utf16_to_utf8((const char16_t *)msg, (char *)utf8.c_str(), utf8.size() - 1);
+
+    CURL *curl;
+    CURLcode res;
+    std::string translateResult;
+	
+	// Remove os emoticons e o nome dos itens
+	utf8 = preprocessText(utf8);
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if (curl) {
+        char *escapedUtf8 = curl_easy_escape(curl, utf8.c_str(), 0);
+        if (!escapedUtf8) {
+            return;
+        }
+
+		std::string detectedLanguage = detectLanguage(std::string(escapedUtf8));
+		std::string newUtf8 = preprocessText(std::string(escapedUtf8));
+
+		if (detectedLanguage == "en"){
+			targetLanguage = "pt";
+		}
+		else if (detectedLanguage == "pt"){
+			targetLanguage = "en";
+		}else
+		{	// Ignora totalmente a tradução
+			return;
+		}
+
+		std::string url = "https://translation.googleapis.com/language/translate/v2"
+                          "?q=" +
+                          std::string(escapedUtf8) +
+                          "&target=" + targetLanguage + "&key=" + EmulateSettings::GetInstance()->GetGoogleTranslateApiKey();
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &translateResult);
+
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK) {
+            return;
+        }
+
+        curl_free(escapedUtf8); // Liberando a memória alocada por curl_easy_escape
+        curl_easy_cleanup(curl);
+    }
+
+    curl_global_cleanup();
+
+	// Parse JSON response
+    Json::Value rootnew;
+    Json::CharReaderBuilder reader;
+    std::istringstream jsonStream(translateResult);
+    std::string parseErrors;
+    Json::parseFromStream(reader, jsonStream, &rootnew, &parseErrors);
+    
+    if (!parseErrors.empty()) {
+        return;
+    }
+    std::string translatedText = rootnew["data"]["translations"][0]["translatedText"].asString();
+
+	char *escapedUtf82 = curl_easy_escape(curl, utf8.c_str(), 0);
+        if (!escapedUtf82) {
+            return;
+        }
+
+	std::string detectedLanguage2 = detectLanguage(std::string(escapedUtf82));
+	std::string languageIcon = "";
+
+	if (detectedLanguage2 == "en"){
+		languageIcon = "[BR]:";
+	}
+	else if (detectedLanguage2 == "pt"){
+		languageIcon = "[EN]:";
+	}else
+	{	// Ignora totalmente a tradução
+		return;
+	}
+
+	// Remove os emoticons e o nome dos itens
+	std::string decodedTranslatedText = preprocessTextDecode(translatedText);
+	std::string translatedTextWithIcon = languageIcon + " " + decodedTranslatedText;
+
+	int index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);
+	if(!pPlayer) 
+	{
+		GMSV::SendDisconnect(cs_index, uid, sid,0);
+		return ;
+	}
+	gplayer_imp * pImp = ((gplayer_imp*)pPlayer->imp);
+
+
+	static std::u16string utf16;
+	utf16.clear();
+	utf16.resize(translatedTextWithIcon.size()*2 + 2);
+	memset((char*)utf16.c_str(), 0x00, utf16.size());
+	utf8_to_utf16((const utf8_t*)translatedTextWithIcon.c_str(), translatedTextWithIcon.size(), (utf16_t*)utf16.c_str(), utf16.size() );
+
+	char buffer[1024];
+	int dsize = 0;
+	if(size2) dsize = pImp->TransformChatData(aux_data,size2, buffer, sizeof(buffer));
+
+	switch(channel)
+	{
+		case GMSV::CHAT_CHANNEL_LOCAL:
+		case GMSV::CHAT_CHANNEL_TRADE:
+		break;
+
+		case GMSV::CHAT_CHANNEL_FARCRY:
+		case GMSV::CHAT_CHANNEL_SUPERFARCRY:
+			pImp->SendFarCryChat(channel,utf16.c_str(),utf16.size(),buffer, dsize, false);
+			return;
+
+		case GMSV::CHAT_CHANNEL_WHISPER:
+		case GMSV::CHAT_CHANNEL_FACTION: 
+			return ;
+		case GMSV::CHAT_CHANNEL_TEAM:
+			pImp->SendTeamChat(channel,utf16.c_str(),utf16.size(),buffer, dsize);
+			return;
+
+		case GMSV::CHAT_CHANNEL_BATTLE:
+			pImp->SendBattleFactionChat(channel,utf16.c_str(),utf16.size(),buffer, dsize);
+			return;
+
+		case GMSV::CHAT_CHANNEL_COUNTRY:
+			pImp->SendCountryChat(channel,utf16.c_str(),utf16.size(),buffer, dsize);
+			return;
+		
+		case GMSV::CHAT_CHANNEL_GLOBAL:
+			pImp->SendGlobalChat(channel,utf16.c_str(),utf16.size(),buffer, dsize, false); 
+			return;
+	}
+
+	((gplayer_imp*)pPlayer->imp)->SendNormalChat(channel,utf16.c_str(),utf16.size(),buffer, dsize);
+}
+void handle_user_msg(int cs_index,int sid, int uid, const void * msg, unsigned int size, const void * aux_data, unsigned int size2, char channel)
+{
+	//�򵥵����촦������
+	int index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);
+	if(!pPlayer) 
+	{
+		//Ҫ��Ҫ�����⴦������Ϊ������������һ̨��������
+		GLog::log(GLOG_INFO,"user_msg::�û�%d�Ѿ����ڱ���Ϸ��������",uid);
+		//�����������ߴ���
+		GMSV::SendDisconnect(cs_index, uid, sid,0);
+		return ;
+	}
+
+	// Nível mínimo para enviar qualquer tipo de mensagem pública
+	gplayer_imp * pImp2 = ((gplayer_imp*)pPlayer->imp);
+   	if(pPlayer->base_info.level < LuaManager::GetInstance()->GetConfig()->level_min_to_send_message)
+	{
+		pImp2->_runner->error_message(S2C::ERR_LOW_LEVEL);
+		return;
+	}
+
+	spin_autolock keeper(&pPlayer->spinlock);
+	if(!pPlayer->IsActived() || pPlayer->cs_index != cs_index 
+				 || pPlayer->ID.id != uid 
+				 || pPlayer->cs_sid != sid
+				 || pPlayer->b_disconnect
+				 || !pPlayer->imp)
+	{
+		//�����������ֱ�Ӻ���
+		return ;
+	}
+
+	slice * pPiece = pPlayer->pPiece;
+	if(pPiece == NULL)
+	{
+		//�������Ҳֱ�Ӻ���
+		return ;
+	}
+	
+	if(LuaManager::GetInstance()->EventOnPlayerChat(pPlayer->ID.id, channel, msg, size))
+	return;
+	
+	gplayer_imp * pImp = ((gplayer_imp*)pPlayer->imp);
+
+	char buffer[1024];
+	int dsize = 0;
+	if(size2) dsize = pImp->TransformChatData(aux_data,size2, buffer, sizeof(buffer));
+	/*//
+	lib_sev_dump(msg,size,"CHAT_MSG");
+	lib_sev_dump(aux_data,size2,"CHAT_AUX_DATA");	
+	lib_sev_dump(buffer,dsize,"CHAT_DATA_BUFFER");	
+	*/
+	switch(channel)
+	{
+		case GMSV::CHAT_CHANNEL_LOCAL:
+		case GMSV::CHAT_CHANNEL_TRADE:
+		break;
+
+		case GMSV::CHAT_CHANNEL_FARCRY:
+		case GMSV::CHAT_CHANNEL_SUPERFARCRY:
+			pImp->SendFarCryChat(channel,msg,size,buffer, dsize, true);
+			auto_translate_text(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+			return;
+
+		case GMSV::CHAT_CHANNEL_WHISPER:
+		case GMSV::CHAT_CHANNEL_FACTION: 
+			return ;
+		case GMSV::CHAT_CHANNEL_TEAM:
+			pImp->SendTeamChat(channel,msg,size,buffer, dsize);
+			auto_translate_text(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+			return;
+
+		case GMSV::CHAT_CHANNEL_BATTLE:
+			pImp->SendBattleFactionChat(channel,msg,size,buffer, dsize);
+			auto_translate_text(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+			return;
+
+		case GMSV::CHAT_CHANNEL_COUNTRY:
+			pImp->SendCountryChat(channel,msg,size,buffer, dsize);
+			auto_translate_text(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+ 			return;
+		
+		case GMSV::CHAT_CHANNEL_GLOBAL:
+			pImp->SendGlobalChat(channel,msg,size,buffer, dsize, true); 
+			auto_translate_text(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+			return;
+	}
+
+	((gplayer_imp*)pPlayer->imp)->SendNormalChat(channel,msg,size,buffer, dsize);
+	auto_translate_text(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+	
+	return ;
+}
+
+unsigned long long cmd_rdtsc_counter[1024];
+unsigned long long cmd_number_counter[1024];
+
+static __inline__ void RecordCmd(unsigned int cmd, unsigned long long l)
+{
+	if(cmd >= 1024) return;
+	//�����Ƿ�����������Ŀǰ����Ҫ
+	cmd_number_counter[cmd] ++;
+	cmd_rdtsc_counter[cmd] += l;
+}
+
+void handle_user_cmd(int cs_index,int sid,int uid,const void * buf, unsigned int size)
+{
+	if(size < sizeof(C2S::cmd_header))
+	{
+		//�û����ݴ�С�д����
+		//GLog::log(GLOG_WARNING,"�û�%d�������������",uid);
+		GMSV::SendDisconnect(cs_index, uid, sid,0);
+		GMSV::ReportCheater2Gacd(uid , 777, NULL,0);
+		return ;
+	}
+
+	int index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);
+	if(!pPlayer) 
+	{
+		//Ҫ��Ҫ�����⴦������Ϊ������������һ̨��������
+		GLog::log(GLOG_INFO,"user_cmd::�û�%d�Ѿ����ڱ���Ϸ��������",uid);
+		//�����������ߴ��� �������ˣ�������һ�ַ�ʽ����
+		GMSV::SendDisconnect(cs_index, uid, sid,0);
+		return ;
+	}
+	/* 172 -- from glinkd!
+	int xuid = ((gplayer_imp*)pPlayer->imp)->GetDBUserId();
+	unsigned short xcmd = *(short*)buf;
+	xcmd = xcmd ^ xuid ^ 340;
+	*(short*)buf = xcmd;
+	*/
+	unsigned long long ll1,ll2;
+	ll1 = rdtsc();
+	int cmd = ((const C2S::cmd_header*)buf) -> cmd;
+
+	LuaManager::GetInstance()->EventOnRecvCmd(pPlayer->ID.id , cmd, buf, size);
+
+	pPlayer->Lock();
+	if(!pPlayer->IsActived() || pPlayer->cs_index != cs_index 
+				 || pPlayer->ID.id != uid 
+				 || pPlayer->cs_sid != sid
+				 || pPlayer->imp == NULL)
+	{
+		pPlayer->Unlock();
+		return ;
+	}
+		
+	if(pPlayer->login_state <= gplayer::WAITING_ENTER)
+	{
+		//��֤һ���Ƿ����ȡ����
+		pPlayer->Unlock();
+		GLog::log(GLOG_ERR,"user_cmd:�ڷǷ��ϵ�״̬�յ��˿ͻ��˷��������� %d(���)",uid);
+		return;
+	}
+	if(pPlayer->imp->DispatchCommand(cmd , buf, size) == 0)
+	{
+		ASSERT(pPlayer->spinlock && "����ô�ᱻ���ҽ⿪�أ�");
+		if(!pPlayer->spinlock)
+		{
+			GLog::log(GLOG_ERR,"user_cmd:�߳���������⿪��%d",uid);
+		}
+		//��������0����Ҫ���н���
+		pPlayer->Unlock();
+	}
+	else
+	{
+		//���ط�0ֵ�Ͳ���Ҫ������,��Ϊ��DispatchCommand�����Ѿ��⿪����
+		ASSERT(pPlayer->spinlock == 0 && "���ֵĸ��ʺܵ͵��Ǹ������Ǵ�������");
+	}
+
+	ll2 = rdtsc();
+	__PRINTF("player %6d command %4d use ---------------%8lld\n",uid, cmd, ll2 - ll1);
+	RecordCmd(cmd, ll2 - ll1);
+	
+	//GLog::log(GLOG_INFO,"pcmd %2d [%d] start:%06ld",cmd,uid,tv.tv_usec);
+	return;
+}
+
+void get_task_data_reply(int taskid, int uid, const void * env_data, unsigned int env_size, const void * task_data, unsigned int task_size)
+{
+	int world_index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,world_index);
+	ASSERT(task_size == TASK_GLOBAL_DATA_SIZE);
+	if(pPlayer)
+	{
+		spin_autolock keeper(pPlayer->spinlock);
+		if(pPlayer->ID.id == uid && pPlayer->IsActived() && 
+				pPlayer->login_state == gplayer::LOGIN_OK && pPlayer->imp)
+		{
+			//�����Ƿ�Ҫ����player_imp������״̬����һЩ�ж�...
+			PlayerTaskInterface task_if(((gplayer_imp*)pPlayer->imp));
+			OnTaskReceivedGlobalData(&task_if,taskid,(unsigned char*)task_data,env_data,env_size);
+		}
+	}
+	//�յ��������ݵĻ�Ӧ
+}
+
+void get_task_data_timeout(int taskid, int uid, const void * env_data, unsigned int env_size)
+{
+	__PRINTF("�յ�ȫ���������ݵĳ�ʱ \n");
+}
+
+void psvr_ongame_notify(int * start , unsigned int size,unsigned int step)
+{
+//	GLog::log(GLOG_INFO,"�յ��û�������Ϸ����Ϣ(%d):%d",*start,size);
+	__PRINTF("�յ��û�������Ϸ����Ϣ(%d):%d\n",*start,size);
+	world_manager::GetInstance()->BatchSetPlayerServer(start,size,step);
+	
+}
+
+void psvr_offline_notify(int * start , unsigned int size,unsigned int step)
+{
+//	GLog::log(GLOG_INFO,"�յ��û��뿪����Ϣ(%d):%d",*start,size);
+	__PRINTF("�յ��û��뿪����Ϣ(%d):%d\n",*start,size);
+	ASSERT(size == 1);
+	world_manager::GetInstance()->RemovePlayerServerIdx(*start);
+	
+}
+
+template <int OFFLINE_CODE>
+static void user_offline(int cs_index, int sid, int uid)
+{
+	GLog::log(GLOG_INFO,"�û�������(%d):%d",OFFLINE_CODE,uid);
+	int index;
+	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);
+	if(pPlayer == NULL)
+	{
+		//����Ѿ��������ˣ���ͬ�����Ҫ��
+		GMSV::SendOfflineRe(cs_index,uid,sid,0);	// offline re
+		return;
+	}
+
+	spin_autolock alock(pPlayer->spinlock);
+	if(!check_player(pPlayer,cs_index,sid,uid))
+	{
+		GLog::log(GLOG_WARNING,"lost_connect(%d):�û�%d�Ѿ����ٷ���������",OFFLINE_CODE,uid);
+		GMSV::SendOfflineRe(cs_index,uid,sid,0);	// offline re
+		return ;
+	}
+	if(pPlayer->login_state == gplayer::WAITING_LOGIN)
+	{	
+		//��player���ߣ����������ݱ��棬ֱ���ͷŶ���
+		ASSERT(pPlayer->pPiece == NULL);
+
+		//���ﲻ�ܹ����ж��ߴ�������Ϊ���ݿ⻹û�д����꣬һ�����ݻ����Ϳ��ܻ����
+		//����ֻ������һ�����߱�־
+		pPlayer->b_disconnect = true;
+		return ;
+	}
+	else if (pPlayer->login_state == gplayer::WAITING_ENTER)
+	{
+		//���ڵȴ�����Ľ׶Σ�ֱ���˳�
+		__PRINTF("��enter_world�׶ζ�����%d\n",uid);
+		ASSERT(pPlayer->pPiece == NULL);
+		pPlayer->imp->_commander->Release();
+		GMSV::SendOfflineRe(cs_index,uid,sid,0);	// offline re
+		return ;
+	}
+
+	
+	ASSERT(pPlayer->imp);
+	//�����˶�����Ϣ�����������������
+	((gplayer_imp*)(pPlayer->imp))->LostConnection(OFFLINE_CODE);
+}
+
+void	user_lost_connection(int cs_index,int sid,int uid)
+{
+	user_offline<gplayer_imp::PLAYER_OFF_OFFLINE>(cs_index,sid,uid);
+}
+
+void	user_kickout(int cs_index,int sid,int uid)
+{
+	user_offline<gplayer_imp::PLAYER_OFF_KICKOUT>(cs_index,sid,uid);
+}
+
+void
+switch_server_timeout(int link_id,int user_id,int localsid)
+{
+	GLog::log(GLOG_ERR,"�û�%dת�Ʒ�������ʱ",user_id);
+	//�����Ȳ�����
+	//ASSERT(false);
+}
+
+void switch_server_request(int link_id,int user_id, int localsid, int source,const void * key_buf, unsigned int key_size)
+{
+	GLog::log(GLOG_INFO,"�û�%d(%d,%d)��%d����ת����%d",user_id,link_id,localsid,source,world_manager::GetWorldTag());
+	ASSERT(source != world_manager::GetWorldIndex());
+	if(key_size != sizeof(instance_key))
+	{
+		GLog::log(GLOG_ERR,"�û�%dת������KEY��С����",user_id);
+		return;
+	}
+	instance_key & nkey = *(instance_key*)key_buf;
+	world_manager::GetInstance()->HandleSwitchRequest(link_id,user_id,localsid,source,nkey);
+}
+
+void switch_server_cancel(int link_id,int user_id, int localsid, int )
+{
+	world_manager::GetInstance()->SwitchServerCancel(link_id,user_id,localsid);
+}
+
+
+void faction_trade_lock(int trade_id, int roleid)
+{
+	try
+	{
+		int index;
+		gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+		if(!pPlayer) 
+		{
+			//Ŀ�겻����
+			throw -1;
+		}
+		spin_autolock keeper(pPlayer->spinlock);
+
+		if(pPlayer->ID.id != roleid ) throw -2;
+		if(!pPlayer->IsActived() || pPlayer->IsZombie() || pPlayer->login_state!=gplayer::LOGIN_OK) throw -3;
+		if(!pPlayer->imp) throw -4;
+		//FactionOPRequest�����޸���ҵ����ݿ⣬putmask����ΪALL
+		if(!pPlayer->imp->StartFactionTrade(trade_id,0,DBMASK_PUT_ALL)) throw -5;
+	}catch(int)
+	{
+		GNET::syncdata_t data(0,0);
+		GNET::SendFactionLockResponse(-1,trade_id,roleid,data);
+	}
+}
+
+inline void faction_trade_end(int trade_id, int role, const GNET::syncdata_t & data)
+{	
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	pPlayer->imp->FactionTradeComplete(trade_id,data);
+}
+
+void player_end_sync(int role, unsigned int money, GDB::itemlist const& item_change,bool is_write_trashbox, bool is_write_shoplog)
+{
+	__PRINTF("%d֪ͨ�ڲ����׽����ܵ�\n",role);
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	pPlayer->imp->SyncTradeComplete(0,money, item_change,is_write_trashbox, is_write_shoplog);
+}
+
+
+void player_cosmetic_result(int role, int ticket_inv_idx, int ticket_id, int result, unsigned int crc)
+{
+	__PRINTF("�յ����ݳɹ�����Ϣ\n");
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->CosmeticSuccess(ticket_inv_idx, ticket_id, result, crc);
+}
+
+void notify_player_reward(int role, int reward, int reward2, int param, int rewardmask)
+{
+	//donothing
+	__PRINTF("recv player reward %d %d %d\n",role, reward, param);
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp
+			|| (pPlayer->login_state!=gplayer::LOGIN_OK && pPlayer->login_state != gplayer::WAITING_ENTER))
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->SetSpecailTaskAward(reward,reward2,param,rewardmask);
+	if(reward)
+	{
+		GLog::log(GLOG_INFO,"�û�%d��������%d %d",role,reward,param);
+	}
+}
+
+namespace GNET
+{
+bool FactionRenameVerify(int roleid ,int fid,const void* name,unsigned int len)
+{
+	__PRINTF("player rename faction\n");
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return false;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	if(!pImp) return false;
+
+	int ipos = -1, itype = 0;
+	if((ipos = pImp->GetItemPos(FACTION_RENAME_ITEM_1)) != -1)
+		itype = FACTION_RENAME_ITEM_1;	
+	else if((ipos = pImp->GetItemPos(FACTION_RENAME_ITEM_2)) != -1)
+		itype = FACTION_RENAME_ITEM_2;	
+	else
+	{
+		GLog::log(GLOG_ERR,"�û�%d�Ƿ���������",roleid);
+		return false;
+	}
+
+	object_interface obj_if(pImp);
+
+	if(!FactionRenameRespond(roleid,fid,itype,1,ipos,name,len,obj_if))	
+	{
+		GLog::log(GLOG_ERR,"��ɫ%d���ɸ���ͬ������ʧ��",roleid); 
+		return false;
+	}
+
+	GLog::log(GLOG_INFO,"�û�%d��������ʹ����Ʒ%d",roleid,itype);
+	return true;
+}
+
+void FactionLockPlayer(unsigned int tid,int roleid)
+{
+	__PRINTF("faction lock player\n");
+	faction_trade_lock(tid,roleid);
+}
+
+void FactionUnLockPlayer(unsigned int tid,int roleid,const syncdata_t& syncdata)
+{
+	__PRINTF("faction unlock player\n");
+	faction_trade_end(tid, roleid,syncdata);
+}
+void ReceivePlayerFactionInfo(int roleid,unsigned int faction_id,char faction_role,unsigned char faction_pvp_mask,int64_t unifid)
+{
+	__PRINTF("recv player faction info\n");
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid || !pPlayer->IsActived() || !pPlayer->imp 
+			|| (pPlayer->login_state!=gplayer::LOGIN_OK && pPlayer->login_state!=gplayer::WAITING_ENTER))
+	{
+		return;
+	}
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	if(pPlayer->id_mafia != (int)faction_id || pPlayer->rank_mafia != faction_role || pPlayer->mafia_pvp_mask != faction_pvp_mask || unifid != pImp->GetMNFactionID())
+	{
+		//������Ϣ�б�
+		pPlayer->imp->UpdateMafiaInfo(faction_id, faction_role, faction_pvp_mask, unifid);
+	}
+}
+void ReceivePlayerFactionRelation(int roleid,unsigned int faction_id,int* alliance,unsigned int asize,int* hostile, unsigned int hsize)
+{
+	__PRINTF("recv player faction relation\n");
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid || !pPlayer->IsActived() || !pPlayer->imp || pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	if(pPlayer->id_mafia != (int)faction_id)
+	{
+		return;
+	}
+	pPlayer->imp->UpdateFactionRelation(alliance,asize,hostile,hsize,true);
+}
+};
+
+void gm_shutdown_server()
+{
+	world_manager::GetInstance()->ShutDown();
+}
+
+void battleground_start(int battle_id, int attacker, int defender,int end_time, int type, int map_type)
+{
+	battle_ground_param param;
+	memset(&param,0,sizeof(param));
+	param.battle_id = battle_id;
+	param.attacker = attacker;
+	param.defender = defender;
+	param.player_count = 10; 	//��ֵ�����ϣ�ʹ�������ļ��е��趨
+	param.end_timestamp = end_time;
+	if(world_manager::GetInstance()->CreateBattleGround(param))
+	{
+		GNET::ResponseBattleStart(battle_id,0);
+	}
+	else
+	{
+		GNET::ResponseBattleStart(battle_id,-1);
+	}
+}
+
+void player_enter_battleground(int role, int server_id, int world_tag, int battle_id)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->EnterBattleground(world_tag, battle_id);
+}
+
+void OnDeliveryConnected()
+{
+	world_manager::GetInstance()->OnDeliveryConnected();
+}
+
+bool gm_control_command(int target_tag, const char * buf)
+{
+	if(target_tag != -1 && target_tag != world_manager::GetWorldTag()) return false;
+
+	abase::strtok tok(buf, " \t");
+	const char * cmd = tok.token();
+	if(!cmd) return false;
+
+	if(strcmp(cmd, "active_npc_generator") == 0)
+	{
+		const char * arg = tok.token();
+		if(arg)
+		{
+			int value = atoi(arg);
+			return world_manager::GetInstance()->TriggerSpawn(value);
+		}
+		return false;
+	}
+	else if(strcmp(cmd,"cancel_npc_generator") == 0)
+	{
+		const char * arg = tok.token();
+		if(arg)
+		{
+			int value = atoi(arg);
+			return world_manager::GetInstance()->ClearSpawn(value);
+		}
+		return false;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void player_modify_cashused(int role_id, int cash_used)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role_id,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role_id || !pPlayer->IsActived() || !pPlayer->imp)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->DeliveryNotifyModifyCashUsed(cash_used);
+}
+
+void player_cash_notify(int role, int cash_plus_used)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->DeliveryNotifyCash(cash_plus_used);
+}
+
+void player_add_cash_notify(int role)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+
+	object_interface obj_if(pImp);
+	if(obj_if.TradeLockPlayer(0,DBMASK_PUT_ALL) != 0)
+	{
+		__PRINTF("�յ�Ԫ�����ѱ��֪ͨ�������(%d)״̬����, �޷�����Ԫ��\n",role);
+		return;
+	}
+
+	class GetCashTotalResult : public abase::ASmallObject, public GDB::Result
+	{
+		int _roleid;
+	public:
+		GetCashTotalResult(int roleid):_roleid(roleid){}
+		virtual void OnTimeOut()
+		{
+			__PRINTF("���(%d)����Ԫ����ʱ��\n",_roleid);
+			OnGetCashTotal(-1, -1, -1);
+		}
+		virtual void OnFailed()
+		{
+			__PRINTF("���(%d)����Ԫ��ʧ����\n",_roleid);
+			OnGetCashTotal(-1, -1, -1);
+		}
+		virtual void OnGetCashTotal(int cash_total, int cash_vip_score_add, int cash_vip_level)
+		{
+			int index;
+			gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(_roleid,index);
+			if(!pPlayer) return ; 
+			spin_autolock keeper(pPlayer->spinlock);
+
+			if(pPlayer->ID.id != _roleid||!pPlayer->IsActived()||!pPlayer->imp)
+			{
+				return;
+			}
+			gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+
+			if(cash_total >= 0)
+			{
+				int old_cash = pImp->GetMallCash();
+				pImp->DeliveryNotifyCash(cash_total);
+				pImp->GetCashVipInfo().DeliveryNotifyCashVip(cash_vip_score_add, cash_vip_level, pPlayer);
+				GLog::log(GLOG_INFO,"�û�%d����Ԫ����ɣ�Ԫ���ı�Ϊ%d",_roleid, pImp->GetMallCash()-old_cash);
+			}
+
+			object_interface obj_if(pImp);
+			obj_if.TradeUnLockPlayer();
+			delete this;
+		}
+	};
+	GDB::get_cash_total(pImp->GetDBUserId(),new GetCashTotalResult(role));
+}
+
+void player_dividend_notify(int role, int dividend)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->_dividend_mall_info.IncDividendAdd(dividend);
+	pImp->_runner->player_dividend(pImp->_dividend_mall_info.GetDividend());
+}
+
+bool query_player_level(int role, int & level, int & reputation)
+{
+	level = 0;
+	reputation = 0;
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return false;
+	spin_autolock keeper(pPlayer->spinlock);
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp)
+	{
+		return false;	
+	} 
+	level = pPlayer->base_info.level;	
+	reputation = ((gplayer_imp*)pPlayer->imp)->GetReputation();
+	return true;
+}
+
+void report_cheater(int role, int cheattype, const void *cheatinfo, unsigned int size)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->FindCheater(cheattype,true);
+}
+
+void wallow_control(int userid, int rate, std::map<int,int> & data, int msg)
+{
+	__PRINTF("recv player %d wallow control %d\n", userid, rate);
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(userid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != userid ||!pPlayer->IsActived()||!pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->WallowControl(rate, data[1], data[2], data[3], msg);
+}
+
+void acquestion_ret(int userid, int ret) // ret: 0 ��ȷ, 1 ����, 2 ��ʱ
+{
+	if(ret != 0) return ;//��ȷ�Ŵ���
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(userid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != userid ||!pPlayer->IsActived()||!pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->QuestionBonus();
+
+}
+
+void player_rename_ret(int roleid, const void *new_name, unsigned int name_len, int ret)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+	
+	if(pPlayer->ID.id != roleid ||!pPlayer->IsActived()||!pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->PlayerRenameRet(new_name, name_len, ret);
+}
+
+void player_change_gender_ret(int roleid, int ret)
+{
+    int index = 0;
+    gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(roleid, index);
+    if (pPlayer == NULL) return;
+
+    spin_autolock keeper(pPlayer->spinlock);
+    if ((pPlayer->ID.id != roleid) || !(pPlayer->IsActived()) || (pPlayer->imp == NULL) || (pPlayer->login_state != gplayer::LOGIN_OK)) return;
+
+    // ErrorCode: 1 - ERR_PR_PROFILE
+    if (ret == 1) ret = S2C::ERR_CHANGE_GENDER_PROFILE;
+
+    gplayer_imp* pImp = (gplayer_imp*)(pPlayer->imp);
+    pImp->_runner->error_message(ret);
+}
+
+void player_change_gender_logout(int roleid)
+{
+    int index = 0;
+    gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(roleid, index);
+    if (pPlayer == NULL) return;
+
+    spin_autolock keeper(pPlayer->spinlock);
+    if ((pPlayer->ID.id != roleid) || !(pPlayer->IsActived()) || (pPlayer->imp == NULL) || (pPlayer->login_state != gplayer::LOGIN_OK)) return;
+
+    MSG msg;
+    BuildMessage(msg, GM_MSG_CHANGE_GENDER_LOGOUT, pPlayer->ID, pPlayer->ID, pPlayer->pos, 0, NULL, 0);
+    gplayer_imp* pImp = (gplayer_imp*)(pPlayer->imp);
+    pImp->_plane->PostLazyMessage(msg, 2);
+}
+
+static void single_divorce(int role)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	if(pImp->IsMarried())
+	{
+		pImp->SetSpouse(0);
+		if(pPlayer->login_state == gplayer::LOGIN_OK
+				&& pImp->_plane) {
+			pImp->_runner->player_change_spouse(0);
+		}
+	}
+}
+
+void player_on_divorce(int id1, int id2)
+{
+	single_divorce(id1);
+	single_divorce(id2);
+}
+
+bool player_billing_approved(int userid, int itemid, int itemnum, int expire_time, int cost)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(userid,index);
+	if(!pPlayer) return false;
+	spin_autolock keeper(pPlayer->spinlock);
+	if(pPlayer->ID.id != userid ||!pPlayer->IsActived()||!pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return false;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	return pImp->ForeignDoShoppingStep2(itemid, itemnum , expire_time, cost);
+	
+}
+
+bool generate_item_for_delivery(int id, GDB::itemdata & data)
+{
+	element_data::item_tag_t tag = {element_data::IMT_CREATE,0}; 
+	item_data * pData = world_manager::GetDataMan().generate_item_for_drop(id,&tag,sizeof(tag));
+	if(!pData) return false;
+	if(pData->pile_limit == 0) return false;
+	data.id = pData->type;
+	data.index = -1;
+	data.count = 1;
+	data.max_count = pData->pile_limit;
+	data.guid1 = pData->guid.guid1;
+	data.guid2 = pData->guid.guid2;
+	data.mask = pData->equip_mask;
+	data.proctype = pData->proc_type;
+	data.expire_date = pData->expire_date;
+	if(pData->content_length > 0)
+	{
+		data.data = new char[pData->content_length];
+		if(data.data == NULL) return false;
+		memcpy((void*)data.data, pData->item_content, pData->content_length);
+		data.size = pData->content_length;
+	}
+	else
+	{
+		data.data = NULL;
+		data.size = 0;
+	}
+	FreeItem(pData);
+	world_manager::TestCashItemGenerated(id, 1);
+	return true;
+}
+
+bool get_faction_fortress_create_cost(int* cost, unsigned int& size)
+{
+	DATA_TYPE dt;
+	FACTION_FORTRESS_CONFIG * cfg = (FACTION_FORTRESS_CONFIG *)world_manager::GetDataMan().get_data_ptr(FACTION_FORTRESS_CONFIG_ID,ID_SPACE_CONFIG,dt);
+	if(!cfg || dt != DT_FACTION_FORTRESS_CONFIG) return false;
+	if(size < sizeof(cfg->require_item)/sizeof(cfg->require_item[0])*2) return false;
+	size = 0;
+	for(unsigned int i=0; i<sizeof(cfg->require_item)/sizeof(cfg->require_item[0]); i++)
+	{
+		if(cfg->require_item[i].id <= 0 || cfg->require_item[i].count <= 0) break;
+		cost[size++] = cfg->require_item[i].id;
+		cost[size++] = cfg->require_item[i].count;
+	}
+	return true;
+}
+
+bool get_faction_fortress_initial_value(int* technology, unsigned int& tsize, int* material, unsigned int& msize, int* building, unsigned int& bsize)
+{
+	DATA_TYPE dt;
+	FACTION_FORTRESS_CONFIG * cfg = (FACTION_FORTRESS_CONFIG *)world_manager::GetDataMan().get_data_ptr(FACTION_FORTRESS_CONFIG_ID,ID_SPACE_CONFIG,dt);
+	if(!cfg || dt != DT_FACTION_FORTRESS_CONFIG) return false;
+	if(tsize < faction_world_ctrl::TECHNOLOGY_COUNT || msize < faction_world_ctrl::MATERIAL_COUNT || bsize < sizeof(cfg->init_building)/sizeof(int)*2)  return false;
+	memset(technology,0,sizeof(int)*faction_world_ctrl::TECHNOLOGY_COUNT);
+	tsize = faction_world_ctrl::TECHNOLOGY_COUNT;
+	memset(material,0,sizeof(int)*faction_world_ctrl::MATERIAL_COUNT);
+	msize = faction_world_ctrl::MATERIAL_COUNT;
+	bsize = 0;
+	for(unsigned int i=0; i<sizeof(cfg->init_building)/sizeof(int) && i<faction_world_ctrl::BUILDING_MAX; i++)
+	{
+		if(cfg->init_building[i] <= 0) break;		
+		building[bsize++] = cfg->init_building[i];
+		building[bsize++] = 0;
+	}
+	return true;
+}
+
+bool notify_faction_fortress_data(GNET::faction_fortress_data2 * data2)
+{
+	return world_manager::GetInstance()->NotifyFactionData(data2);
+}
+
+void player_enter_faction_fortress(int role, int dst_world_tag, int dst_factionid)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->EnterFactionFortress(dst_world_tag, dst_factionid);
+}
+
+void RecvFactionCongregateRequest(int factionid, int roleid, int sponsor, void * data, unsigned int size)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	if(pPlayer->id_mafia != factionid)
+	{
+		return;
+	}
+
+	struct _data
+	{
+		world_pos wpos;
+		int level_req;
+		int sec_level_req;
+        int reincarnation_times_req;
+	};
+	if(size != sizeof(struct _data)) return;
+	struct _data * pData = (struct _data *)data;
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->RecvCongregateRequest(gplayer_imp::CONGREGATE_TYPE_FACTION, sponsor, pData->wpos.tag, pData->wpos.pos, pData->level_req, pData->sec_level_req, pData->reincarnation_times_req);
+
+}
+void UpdateForceGlobalData(int force_id, int player_count, int development, int construction, int activity, int activity_level)
+{
+	world_manager::GetForceGlobalDataMan().SetData(force_id,player_count,development,construction,activity,activity_level);
+}
+
+void player_get_aumail_task(int roleid, int level,char ex_reward)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid ||!pPlayer->IsActived()||!pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->GetAUMailTask(level,ex_reward);
+}
+
+bool player_join_country(int role, int country_id, int country_expiretime, int major_strength, int minor_strength, int world_tag, float posx, float posy, float posz)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return false;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return false;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	return pImp->CountryJoinStep1(country_id, country_expiretime, major_strength, minor_strength, world_tag, A3DVECTOR(posx,posy,posz));
+}
+
+void notify_country_battle_config(GMSV::CBConfig * config)
+{
+	world_manager::GetInstance()->NotifyCountryBattleConfig(config);
+}
+
+void country_battle_start(int battle_id, int attacker, int defender,int player_limit, int end_time, int attacker_total, int defender_total, int max_total)
+{
+	country_battle_param param;
+	memset(&param,0,sizeof(param));
+	param.battle_id = battle_id;
+	param.attacker = attacker;
+	param.defender = defender;
+	param.player_count = player_limit;
+	param.end_timestamp = end_time;
+	param.attacker_total = attacker_total;
+	param.defender_total = defender_total;
+	param.max_total = max_total;
+	if(world_manager::GetInstance()->CreateCountryBattle(param))
+	{
+		GMSV::ResponseCountryBattleStart(battle_id, world_manager::GetWorldTag(), 0, defender, attacker);
+	}
+	else
+	{
+		GMSV::ResponseCountryBattleStart(battle_id, world_manager::GetWorldTag(), -1, defender, attacker);
+	}
+}
+
+void player_enter_country_battle(int role, int world_tag, int battle_id)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->EnterCountryBattle(world_tag, battle_id);
+}
+
+void player_country_territory_move(int role, int world_tag, float posx, float posy, float posz, bool capital)
+{
+	if(world_tag != world_manager::GetWorldTag()) return;
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->CountryTerritoryMove(A3DVECTOR(posx,posy,posz),capital);
+}
+
+void country_battle_destory_instance(int battleid, int world_tag)
+{
+	if(world_tag != world_manager::GetWorldTag()) return;
+	world_manager::GetInstance()->DestroyCountryBattle(battleid);
+}
+
+void thread_usage_stat(const char * ident)
+{
+	ThreadUsage::StatSelf(ident);	
+}
+
+bool query_player_info(int role, char * name, unsigned int& name_len, int& level, int& sec_level, int& reputation, int& create_time, int& factionid, int itemid1, int& itemcount1, int itemid2, int& itemcount2, int itemid3, int& itemcount3, int& reincarn_time, int& realm_level )
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return false;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return false;
+	}
+
+	gplayer_imp * pImp = (gplayer_imp *)pPlayer->imp;
+	unsigned int len = 0;
+	const char * pName = (const char *)pImp->GetPlayerName(len);
+	ASSERT(name_len >= len);
+	name_len = len;
+	memcpy(name, pName, len);
+	level = pImp->_basic.level;
+	sec_level = pImp->_basic.sec.level;
+	reputation = pImp->GetReputation();
+	create_time = pImp->GetCreateTime();
+	factionid = pImp->OI_GetMafiaID();
+	if(itemid1) itemcount1 = pImp->GetItemCount(itemid1);
+	if(itemid2) itemcount2 = pImp->GetItemCount(itemid2);
+	if(itemid3) itemcount3 = pImp->GetItemCount(itemid3);
+	reincarn_time = pImp->GetReincarnationTimes();
+	realm_level = pImp->GetRealmLevel();
+	return true;
+}
+
+ void player_enter_leave_gt(int op,int roleid)
+ {
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(!pPlayer) return;
+	spin_autolock keeper(pPlayer->spinlock);
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp * pImp = (gplayer_imp *)pPlayer->imp;
+	if(op)
+	{
+		DATA_TYPE dt;
+		GT_CONFIG * cfg = (GT_CONFIG *)world_manager::GetDataMan().get_data_ptr(GT_CONFIG_ID,ID_SPACE_CONFIG,dt);
+		if(!cfg || dt != DT_GT_CONFIG) return;
+		if(cfg->inc_attack_degree < 0 || cfg->inc_defend_degree < 0) return;
+		pImp->_filters.AddFilter(new gt_award_filter(pImp,cfg->inc_attack_degree,cfg->inc_defend_degree));
+	}
+	else
+	{
+		pImp->_filters.RemoveFilter(FILTER_INDEX_GTAWARD);
+	}
+ }
+
+void player_safe_lock_changed(int role, int locktime, int max_locktime)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_controller * pCtrl = (gplayer_controller *) pPlayer->imp->_commander;
+	pCtrl->SetSafeLock(locktime, max_locktime);
+}
+
+void player_change_ds(int role, int flag)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	
+	gplayer_imp * pImp = (gplayer_imp *) pPlayer->imp;
+	pImp->PlayerChangeDSLogout(flag);
+}
+
+void notify_cash_money_exchange_rate(bool open, int rate)
+{
+	world_manager::GetGlobalController().SetCashMoneyExchangeRate(open, rate);
+}
+void king_notify(int role, int end_time)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp *) pPlayer->imp;
+	if(!pPlayer->IsKing()) pImp->SetKing(true, end_time);
+}
+void OnTouchPointQuery(int roleid,int64_t income,int64_t remain)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnTouchPointQuery(income,remain);
+}
+
+void OnTouchPointCost(int roleid,int64_t orderid,unsigned int cost,int64_t income,int64_t remain,int retcode)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnTouchPointCost(orderid,cost,income,remain,retcode);
+
+}
+
+void OnAuAddupMoneyQuery(int roleid,int64_t addupmoney)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnAuAddupMoneyQuery(addupmoney);
+}
+
+void OnGiftCodeRedeem(int roleid,void* cn,unsigned int cnsz,int type,int parenttype,int retcode)
+{
+	if(cnsz != player_giftcard::GIFT_CARDNUMBER_LEN)
+	{
+		GLog::log(GLOG_ERR,"role%d giftcode length%d err",roleid,cnsz);
+		return;
+	}
+
+	char cardnumber[player_giftcard::GIFT_CARDNUMBER_LEN];
+	memcpy(cardnumber,cn,cnsz);
+	
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+	
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnGiftCardRedeem(cardnumber,type,parenttype,retcode);
+}
+
+void OnUniqueDataLoad(int key,int type,int version, const void* p,unsigned int sz)
+{
+	world_manager::GetInstance()->GetUniqueDataMan().OnDataLoad(key,type,version,p,sz);
+}
+
+void OnUniqueDataLoadFinish()
+{
+	world_manager::GetInstance()->GetUniqueDataMan().OnLoadFinish();
+}
+
+void OnUniqueDataClose()
+{
+	world_manager::GetInstance()->GetUniqueDataMan().OnSystemClose();
+}
+
+void OnUniqueDataModify(int worldtag, int key, int type, const void* val, unsigned int sz, const void* oldval, unsigned int osz, int retcode, int version)
+{
+	world_manager::GetInstance()->GetUniqueDataMan().OnDataModify(worldtag,key,type,val,sz,oldval,osz,retcode,version);
+}
+
+void trick_battle_start(int battle_id, int player_limit, int end_time)
+{
+	trick_battle_param param;
+	memset(&param,0,sizeof(param));
+	param.battle_id = battle_id;
+	param.player_count = player_limit;
+	param.end_timestamp = end_time;
+	if(world_manager::GetInstance()->CreateTrickBattle(param))
+	{
+		GMSV::ResponseTrickBattleStart(battle_id, world_manager::GetWorldTag(), 0);
+	}
+	else
+	{
+		GMSV::ResponseTrickBattleStart(battle_id, world_manager::GetWorldTag(), -1);
+	}
+}
+
+void player_enter_trick_battle(int role, int world_tag, int battle_id, int chariot)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->EnterTrickBattleStep1(world_tag, battle_id, chariot);
+}
+
+void autoteam_player_ready(int roleid, int leader_id)
+{
+	int index;
+	gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnAutoTeamPlayerReady(leader_id);
+}
+
+void autoteam_compose_failed(int roleid, int leader_id)
+{
+	int index;
+	gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnAutoTeamComposeFailed(leader_id);
+}
+
+void autoteam_compose_start(int goal_id, int roleid, int member_list[], unsigned int cnt)
+{
+	int index;
+	gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+
+	if(!pPlayer) return ;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != roleid||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->OnAutoTeamComposeStart(member_list, cnt);
+}
+
+void notify_serverforbid(std::vector<int> &ctrl_list,std::vector<int> &item_list,std::vector<int> &service_list,std::vector<int> &task_list,std::vector<int> &skill_list, std::vector<int> &shopitem_list, std::vector<int>& recipe_list)
+{
+	world_manager::GetGlobalController().SetServerForbid(ctrl_list,item_list,service_list,task_list,skill_list, shopitem_list, recipe_list);
+}
+
+void notify_servertrigger(std::vector<int> &trigger_list)
+{
+	world_manager::GetGlobalController().SetServerTrigger(trigger_list);
+}
+
+void notify_mafia_pvp_status(int status,std::vector<int> &ctrl_list)
+{
+	world_manager::GetInstance()->OnMafiaPvPStatusNotice(status,ctrl_list);
+}
+
+void request_mafia_pvp_elements(unsigned int version)
+{
+	world_manager::GetInstance()->OnMafiaPvPElementRequest(version);
+}
+
+void mnfaction_battle_start(int domain_id, unsigned char domain_type, int64_t owner_faction_id, int64_t attacker_faction_id, int64_t defender_faction_id, int end_timestamp)
+{
+	mnfaction_battle_param param;
+	memset(&param,0,sizeof(param));
+	param.domain_id = domain_id;
+	param.domain_type = domain_type;
+	param.owner_faction_id    = owner_faction_id;
+	param.attacker_faction_id = attacker_faction_id;
+	param.defender_faction_id = defender_faction_id;
+	param.end_timestamp = end_timestamp;
+	int ret_code = world_manager::GetInstance()->CreateMNFactionBattle(param);
+	GMSV::ResponseMnfactionBattleStart(ret_code, domain_id, world_manager::GetWorldTag());
+}
+
+bool player_join_mnfaction(int retcode, int role, int64_t faction_id, int world_tag, int domain_id)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(role,index);
+	if(!pPlayer) return false;
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if(pPlayer->ID.id != role||!pPlayer->IsActived()||!pPlayer->imp||pPlayer->login_state!=gplayer::LOGIN_OK)
+	{
+		return false;
+	}
+	gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+	return pImp->MnfactionJoinStep1(retcode, faction_id, domain_id, world_tag);
+}
+
+void private_chat(int roleid, char channel, const void * buf, unsigned int len, const void * aux_data, unsigned int dsize)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(pPlayer && pPlayer->imp)
+	{
+		spin_autolock keeper(pPlayer->spinlock);
+		gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+		pImp->PrivateChat(roleid, channel, buf, len, aux_data, dsize);
+	}
+}
+
+void player_teleport(int roleid, int tag, float x, float y, float z)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(pPlayer && pPlayer->imp)
+	{
+		spin_autolock keeper(pPlayer->spinlock);
+		gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+		A3DVECTOR pos(x,y,z);
+		pImp->LongJump(pos,tag,0);
+	}
+}
+
+void set_player_hwid(int roleid, unsigned long long hwid)
+{
+	int index;
+	gplayer *pPlayer = world_manager::GetInstance()->FindPlayer(roleid,index);
+	if(pPlayer && pPlayer->imp)
+	{
+		spin_autolock keeper(pPlayer->spinlock);
+		gplayer_imp * pImp = (gplayer_imp*)pPlayer->imp;
+		pImp->SetHwid(hwid);
+	}
+	printf("set_player_hwid: roleid=%d , hwid = %lld \n", roleid, hwid);
+}
+
+/*156+*/
+void EC_GSArenaBattleStart( GMSV::EC_GSArena & arena )
+{
+	if (world_manager::GetInstance()->CreateArenaOfAurora(arena))
+	{
+		GMSV::EC_SendArenaBattleStart_Re(arena.arena_id, world_manager::GetWorldTag(), 0);
+	}
+	else
+	{
+		GMSV::EC_SendArenaBattleStart_Re(arena.arena_id, world_manager::GetWorldTag(), -1);
+	}
+}
+
+void player_enter_arenabattle(int role, int world_tag, int arena_id)
+{
+	int index;
+	gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(role, index);
+	if (!pPlayer)
+	{
+		return;
+	}
+
+	spin_autolock keeper(pPlayer->spinlock);
+
+	if (pPlayer->ID.id != role || !pPlayer->IsActived() || !pPlayer->imp || pPlayer->login_state != gplayer::LOGIN_OK)
+	{
+		return;
+	}
+
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->EnterArenaOfAuroraStep1(world_tag, arena_id);
+}
+
+void EC_RecvArenaTeamInviteRequest_Re(int invited_roleid, int roleid, int team_type)
+{
+	int index;
+	gplayer* pPlayer = world_manager::GetInstance()->FindPlayer(invited_roleid, index);
+	if (!pPlayer || !pPlayer->imp)
+	{
+		return;
+	}
+
+	spin_autolock keeper(pPlayer->spinlock);
+	
+	gplayer_imp* pImp = (gplayer_imp*)pPlayer->imp;
+	pImp->EC_ArenaTeamInviteRequest_Re(roleid, team_type);
+	
+}

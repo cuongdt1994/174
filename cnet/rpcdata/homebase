@@ -1,0 +1,108 @@
+#ifndef __GNET_HOMEBASE_RPCDATA
+#define __GNET_HOMEBASE_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class HomeBase : public GNET::Rpc::Data
+	{
+	public:
+		Octets name;
+		char factorytype;
+		char factorylevel;
+		char purchaselevel;
+		char privilege;
+		int praise;
+		int64_t land;
+		int foundry_reward;
+		int praise_next_clean_time;
+		int reserved2;
+
+	public:
+		HomeBase (const Octets& l_name = Octets(),int64_t l_land = 0)
+			: name(l_name),land(l_land)
+		{
+		}
+
+		HomeBase(const HomeBase &rhs)
+			: name(rhs.name),factorytype(rhs.factorytype),factorylevel(rhs.factorylevel),
+			purchaselevel(rhs.purchaselevel),privilege(rhs.privilege),praise(rhs.praise),
+			land(rhs.land),foundry_reward(rhs.foundry_reward),praise_next_clean_time(rhs.praise_next_clean_time),
+			reserved2(rhs.reserved2) { }
+
+		Rpc::Data *Clone() const { return new HomeBase(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeBase *r = dynamic_cast<const HomeBase *>(&rhs);
+			if (r && r != this)
+			{
+				name = r->name;
+				factorytype = r->factorytype;
+				factorylevel = r->factorylevel;
+				purchaselevel = r->purchaselevel;
+				privilege = r->privilege;
+				praise = r->praise;
+				land = r->land;
+				foundry_reward = r->foundry_reward;
+				praise_next_clean_time = r->praise_next_clean_time;
+				reserved2 = r->reserved2;
+			}
+			return *this;
+		}
+
+		HomeBase& operator = (const HomeBase &rhs)
+		{
+			const HomeBase *r = &rhs;
+			if (r && r != this)
+			{
+				name = r->name;
+				factorytype = r->factorytype;
+				factorylevel = r->factorylevel;
+				purchaselevel = r->purchaselevel;
+				privilege = r->privilege;
+				praise = r->praise;
+				land = r->land;
+				foundry_reward = r->foundry_reward;
+				praise_next_clean_time = r->praise_next_clean_time;
+				reserved2 = r->reserved2;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << name;
+			os << factorytype;
+			os << factorylevel;
+			os << purchaselevel;
+			os << privilege;
+			os << praise;
+			os << land;
+			os << foundry_reward;
+			os << praise_next_clean_time;
+			os << reserved2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> name;
+			os >> factorytype;
+			os >> factorylevel;
+			os >> purchaselevel;
+			os >> privilege;
+			os >> praise;
+			os >> land;
+			os >> foundry_reward;
+			os >> praise_next_clean_time;
+			os >> reserved2;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeBase>	HomeBaseVector;
+};
+#endif

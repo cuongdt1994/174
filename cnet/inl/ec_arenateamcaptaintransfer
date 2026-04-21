@@ -1,0 +1,44 @@
+	public:
+		int idx;
+		int roleid;
+		int transfer_id;
+		int team_type;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMCAPTAINTRANSFER };
+	public:
+		EC_ArenaTeamCaptainTransfer() { type = PROTOCOL_EC_ARENATEAMCAPTAINTRANSFER; }
+		EC_ArenaTeamCaptainTransfer(void*) : Protocol(PROTOCOL_EC_ARENATEAMCAPTAINTRANSFER) { }
+		EC_ArenaTeamCaptainTransfer (int l_idx = 0,int l_roleid = 0,int l_transfer_id = 0,
+			int l_team_type = 0)
+			 : idx(l_idx),roleid(l_roleid),transfer_id(l_transfer_id)
+			,team_type(l_team_type)
+		{
+			type = PROTOCOL_EC_ARENATEAMCAPTAINTRANSFER;
+		}
+
+		EC_ArenaTeamCaptainTransfer(const EC_ArenaTeamCaptainTransfer &rhs)
+			: Protocol(rhs),idx(rhs.idx),roleid(rhs.roleid),transfer_id(rhs.transfer_id)
+			,team_type(rhs.team_type) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamCaptainTransfer(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << idx;
+			os << roleid;
+			os << transfer_id;
+			os << team_type;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> idx;
+			os >> roleid;
+			os >> transfer_id;
+			os >> team_type;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

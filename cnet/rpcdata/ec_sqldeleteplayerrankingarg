@@ -1,0 +1,59 @@
+#ifndef __GNET_EC_SQLDELETEPLAYERRANKINGARG_RPCDATA
+#define __GNET_EC_SQLDELETEPLAYERRANKINGARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLDeletePlayerRankingArg : public GNET::Rpc::Data
+	{
+	public:
+		int roleid;
+
+	public:
+		EC_SQLDeletePlayerRankingArg (int l_roleid = 0)
+			: roleid(l_roleid)
+		{
+		}
+
+		EC_SQLDeletePlayerRankingArg(const EC_SQLDeletePlayerRankingArg &rhs)
+			: roleid(rhs.roleid) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLDeletePlayerRankingArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLDeletePlayerRankingArg *r = dynamic_cast<const EC_SQLDeletePlayerRankingArg *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		EC_SQLDeletePlayerRankingArg& operator = (const EC_SQLDeletePlayerRankingArg &rhs)
+		{
+			const EC_SQLDeletePlayerRankingArg *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			return os;
+		}
+
+	};
+};
+#endif

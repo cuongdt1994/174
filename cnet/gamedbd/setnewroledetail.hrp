@@ -1,0 +1,95 @@
+
+#ifndef __GNET_SETNEWROLEDETAIL_HPP
+#define __GNET_SETNEWROLEDETAIL_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "setnewroledetailarg"
+#include "setnewroledetailres"
+
+namespace GNET
+{
+
+class SetNewRoleDetail : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "setnewroledetail"
+#undef	RPC_BASECLASS
+
+	bool SaveData(SetNewRoleDetailArg *arg, SetNewRoleDetailRes *res)
+	{
+		try
+		{
+			StorageEnv::Storage * pserver= StorageEnv::GetStorage("newroleinfo");
+			StorageEnv::CommonTransaction txn;
+			Marshal::OctetsStream key;
+
+			try
+			{
+				key << arg->roleid;
+				arg->detail.roleid = arg->roleid;
+				pserver->insert(key, Marshal::OctetsStream() << arg->detail, txn);
+				res->retcode = ERR_SUCCESS;
+			}
+			catch ( DbException e ) { throw; }
+			catch ( ... )
+			{
+				DbException ee( DB_OLD_VERSION );
+				txn.abort( ee );
+				throw ee;
+			}
+		}
+		catch ( DbException e )
+		{
+			res->retcode = ERR_EXCEPTION;
+			if(e.get_errno()==DB_LOCK_DEADLOCK)
+				return false;
+			else
+				Log::log( LOG_ERR, "SetNewRoleDetail, roleid=%d, what=%s\n", arg->roleid, e.what() );
+		}
+		return true;
+	}
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		SetNewRoleDetailArg *arg = (SetNewRoleDetailArg *)argument;
+		SetNewRoleDetailRes *res = (SetNewRoleDetailRes *)result;
+		
+		LOG_TRACE( "SetNewRoleDetail, roleid=%d.", arg->roleid );
+
+		int extend = 100000;
+		int retry = 1;
+
+		do
+		{
+			if(SaveData(arg,res) || retry<=0)
+				break;
+			usleep(extend);
+			extend += 900000;
+			retry--;
+		}while(true);
+
+		if(res->retcode != ERR_SUCCESS)
+		{
+			Log::log(LOG_ERR, "SetNewRoleDetail, roleid=%d retry failed.", arg->roleid);
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// SetNewRoleDetailArg *arg = (SetNewRoleDetailArg *)argument;
+		// SetNewRoleDetailRes *res = (SetNewRoleDetailRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif

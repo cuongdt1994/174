@@ -1,0 +1,107 @@
+#ifndef __GNET_GHOMESYNCDATA_RPCDATA
+#define __GNET_GHOMESYNCDATA_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "homecropper"
+#include "homeitem"
+#include "homemodule"
+
+namespace GNET
+{
+	class GHomeSyncData : public GNET::Rpc::Data
+	{
+	public:
+		int home_id;
+		int serial_id;
+		Octets homebase;
+		Octets homeproperty;
+		HomeCropperVector homecroppers;
+		HomeItemVector homeitems;
+		HomeModuleVector homemodules;
+		Octets map1;
+		Octets map2;
+
+	public:
+		GHomeSyncData (const Octets& l_homebase = Octets(),const Octets& l_homeproperty = Octets(),const Octets& l_map1 = Octets()
+			,const Octets& l_map2 = Octets())
+			: homebase(l_homebase),homeproperty(l_homeproperty),map1(l_map1)
+			,map2(l_map2)
+		{
+		}
+
+		GHomeSyncData(const GHomeSyncData &rhs)
+			: home_id(rhs.home_id),serial_id(rhs.serial_id),homebase(rhs.homebase),
+			homeproperty(rhs.homeproperty),homecroppers(rhs.homecroppers),homeitems(rhs.homeitems),
+			homemodules(rhs.homemodules),map1(rhs.map1),map2(rhs.map2) { }
+
+		Rpc::Data *Clone() const { return new GHomeSyncData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GHomeSyncData *r = dynamic_cast<const GHomeSyncData *>(&rhs);
+			if (r && r != this)
+			{
+				home_id = r->home_id;
+				serial_id = r->serial_id;
+				homebase = r->homebase;
+				homeproperty = r->homeproperty;
+				homecroppers = r->homecroppers;
+				homeitems = r->homeitems;
+				homemodules = r->homemodules;
+				map1 = r->map1;
+				map2 = r->map2;
+			}
+			return *this;
+		}
+
+		GHomeSyncData& operator = (const GHomeSyncData &rhs)
+		{
+			const GHomeSyncData *r = &rhs;
+			if (r && r != this)
+			{
+				home_id = r->home_id;
+				serial_id = r->serial_id;
+				homebase = r->homebase;
+				homeproperty = r->homeproperty;
+				homecroppers = r->homecroppers;
+				homeitems = r->homeitems;
+				homemodules = r->homemodules;
+				map1 = r->map1;
+				map2 = r->map2;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << home_id;
+			os << serial_id;
+			os << homebase;
+			os << homeproperty;
+			os << homecroppers;
+			os << homeitems;
+			os << homemodules;
+			os << map1;
+			os << map2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> home_id;
+			os >> serial_id;
+			os >> homebase;
+			os >> homeproperty;
+			os >> homecroppers;
+			os >> homeitems;
+			os >> homemodules;
+			os >> map1;
+			os >> map2;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GHomeSyncData>	GHomeSyncDataVector;
+};
+#endif

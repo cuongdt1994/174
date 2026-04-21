@@ -1,0 +1,32 @@
+	public:
+		int roleid;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAACCEPTBATTLE };
+	public:
+		EC_ArenaAcceptBattle() { type = PROTOCOL_EC_ARENAACCEPTBATTLE; }
+		EC_ArenaAcceptBattle(void*) : Protocol(PROTOCOL_EC_ARENAACCEPTBATTLE) { }
+		EC_ArenaAcceptBattle (int l_roleid)
+			 : roleid(l_roleid)
+		{
+			type = PROTOCOL_EC_ARENAACCEPTBATTLE;
+		}
+
+		EC_ArenaAcceptBattle(const EC_ArenaAcceptBattle &rhs)
+			: Protocol(rhs),roleid(rhs.roleid) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaAcceptBattle(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

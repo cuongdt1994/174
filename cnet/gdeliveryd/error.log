@@ -1,0 +1,2075 @@
+g++ -w -std=gnu++20 -DPRAGMA_PACK=4 -fpermissive -Wno-write-strings -Wno-parentheses -Wno-deprecated  -c -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64  -D_DEBUGINFO -D_DEBUG -g -ggdb -O0 -DUSE_EPOLL -DUSE_HASH_MAP -DUSE_EPOLL -DUSE_LOGCLIENT -g -ggdb  -D__USER__=\"root\" -I. -I.. -I../lua/src -I../lua/LuaBridge -I../lua/LuaBridge/detail -I../io -I../common -I../licenseclient/vm -I../rpc -I../inl -I../rpcdata -I/usr/include/libxml2 -I../iolib/inc -I/usr/include/openssl -I../logclient -I../log_inl -I../include  arenaofauroramanager.cpp -o arenaofauroramanager.o
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::SendArenaInfoToPlayer(int)’:
+arenaofauroramanager.cpp:825:8: error: ‘class GNET::EC_ArenaQuery_Re’ has no member named ‘members’
+  825 |  proto.members.push_back(*GetArenaPlayerByRoleID(pTeam->captain_idx));
+      |        ^~~~~~~
+arenaofauroramanager.cpp:837:9: error: ‘class GNET::EC_ArenaQuery_Re’ has no member named ‘members’
+  837 |   proto.members.push_back(ec_ps);
+      |         ^~~~~~~
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::OnCreateTeam(int, int, int, GNET::Octets)’:
+arenaofauroramanager.cpp:866:11: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  866 |   newTeam.team_id = team_id;
+      |           ^~~~~~~
+      |           team_idx
+arenaofauroramanager.cpp:867:11: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘captain_id’; did you mean ‘captain_idx’?
+  867 |   newTeam.captain_id = captain_id;
+      |           ^~~~~~~~~~
+      |           captain_idx
+arenaofauroramanager.cpp:892:14: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘player_id’
+  892 |    newPlayer.player_id = captain_id;
+      |              ^~~~~~~~~
+arenaofauroramanager.cpp:893:14: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  893 |    newPlayer.team_id = team_id;
+      |              ^~~~~~~
+      |              team_idx
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::OnLoadTeam(GNET::EC_ArenaTeam)’:
+arenaofauroramanager.cpp:929:11: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  929 |  if (data.team_id == 0)
+      |           ^~~~~~~
+      |           team_idx
+arenaofauroramanager.cpp:932:32: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  932 |  if (GetArenaTeamByTeamID(data.team_id))
+      |                                ^~~~~~~
+      |                                team_idx
+arenaofauroramanager.cpp:934:74: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  934 |   Log::log(LOG_ERR, "ArenaOfAuroraManager OnLoadTeam duplicate %d", data.team_id);
+      |                                                                          ^~~~~~~
+      |                                                                          team_idx
+arenaofauroramanager.cpp:940:40: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘members’
+  940 |   std::vector<int>::iterator it = data.members.begin();
+      |                                        ^~~~~~~
+arenaofauroramanager.cpp:942:21: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘members’
+  942 |   for (; it != data.members.end(); it++)
+      |                     ^~~~~~~
+arenaofauroramanager.cpp:948:41: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  948 |    _roleid_teamid_map[member_id] = data.team_id;
+      |                                         ^~~~~~~
+      |                                         team_idx
+arenaofauroramanager.cpp:953:27: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘captain_id’; did you mean ‘captain_idx’?
+  953 |   _roleid_teamid_map[data.captain_id] = data.team_id;
+      |                           ^~~~~~~~~~
+      |                           captain_idx
+arenaofauroramanager.cpp:953:46: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  953 |   _roleid_teamid_map[data.captain_id] = data.team_id;
+      |                                              ^~~~~~~
+      |                                              team_idx
+arenaofauroramanager.cpp:956:17: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  956 |  _team_map[data.team_id] = data;
+      |                 ^~~~~~~
+      |                 team_idx
+arenaofauroramanager.cpp:959:20: error: ‘class GNET::EC_ArenaTeam’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  959 |  TeamFullLoad(data.team_id);
+      |                    ^~~~~~~
+      |                    team_idx
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::OnLoadPlayer(GNET::EC_ArenaPlayer)’:
+arenaofauroramanager.cpp:980:11: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘player_id’
+  980 |  if (data.player_id == 0)
+      |           ^~~~~~~~~
+arenaofauroramanager.cpp:983:34: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘player_id’
+  983 |  if (GetArenaPlayerByRoleID(data.player_id))
+      |                                  ^~~~~~~~~
+arenaofauroramanager.cpp:985:76: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘player_id’
+  985 |   Log::log(LOG_ERR, "ArenaOfAuroraManager OnLoadPlayer duplicate %d", data.player_id);
+      |                                                                            ^~~~~~~~~
+arenaofauroramanager.cpp:989:19: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘player_id’
+  989 |  _player_map[data.player_id] = data;
+      |                   ^~~~~~~~~
+arenaofauroramanager.cpp:991:16: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘team_id’; did you mean ‘team_idx’?
+  991 |  LoadTeam(data.team_id);
+      |                ^~~~~~~
+      |                team_idx
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::OnApplyInvite(int, int, int)’:
+arenaofauroramanager.cpp:1055:10: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘player_id’
+ 1055 |   player.player_id = invited_roleid;
+      |          ^~~~~~~~~
+arenaofauroramanager.cpp:1056:10: error: ‘class GNET::EC_ArenaPlayer’ has no member named ‘team_id’; did you mean ‘team_idx’?
+ 1056 |   player.team_id = teamInfo->team_idx;
+      |          ^~~~~~~
+      |          team_idx
+arenaofauroramanager.cpp:1071:49: error: cannot convert ‘GNET::EC_ArenaTeamMember’ to ‘int’
+ 1071 |   SendArenaInfoToPlayer(teamInfo->members_idx[i]);
+      |                                                 ^
+arenaofauroramanager.cpp:757:54: note:   initializing argument 1 of ‘void GNET::ArenaOfAuroraManager::SendArenaInfoToPlayer(int)’
+  757 | void ArenaOfAuroraManager::SendArenaInfoToPlayer(int roleid)
+      |                                                  ~~~~^~~~~~
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::ChangeLeader(int, int)’:
+arenaofauroramanager.cpp:1124:62: error: conversion from ‘__normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>’ to non-scalar type ‘__normal_iterator<int*,vector<int,allocator<int>>>’ requested
+ 1124 |  std::vector<int>::iterator it = arenaTeam->members_idx.begin();
+      |                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+arenaofauroramanager.cpp:1125:12: error: no match for ‘operator!=’ (operand types are ‘std::vector<int, std::allocator<int> >::iterator’ and ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’})
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |         ~~ ^~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |         |                               |
+      |         |                               __normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>
+      |         __normal_iterator<int*,vector<int,allocator<int>>>
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:1073:5: note: candidate: ‘template<class _IteratorL, class _IteratorR, class _Container>  requires requires(_IteratorL __lhs, _IteratorR __rhs) {{__lhs == __rhs} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];} constexpr bool __gnu_cxx::operator==(const __gnu_cxx::__normal_iterator<_IteratorL, _Container>&, const __gnu_cxx::__normal_iterator<_IteratorR, _Container>&)’ (reversed)
+ 1073 |     operator==(const __normal_iterator<_IteratorL, _Container>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:1073:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   deduced conflicting types for parameter ‘_Container’ (‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >’ and ‘std::vector<int, std::allocator<int> >’)
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:459:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator==(const std::reverse_iterator<_IteratorL>&, const std::reverse_iterator<_IteratorR>&) requires requires{{std::operator==::__x->base() == std::operator==::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’ (reversed)
+  459 |     operator==(const reverse_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:459:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::reverse_iterator<_IteratorL>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:1460:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator==(const std::move_iterator<_IteratorL>&, const std::move_iterator<_IteratorR>&) requires requires{{std::operator==::__x->base() == std::operator==::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’ (reversed)
+ 1460 |     operator==(const move_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:1460:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::move_iterator<_IteratorL>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/allocator.h:206:5: note: candidate: ‘template<class _T1, class _T2> constexpr bool std::operator==(const std::allocator<_CharT>&, const std::allocator<_T2>&)’ (reversed)
+  206 |     operator==(const allocator<_T1>&, const allocator<_T2>&)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:206:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::allocator<_CharT>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/basic_string.h:48,
+                 from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/string_view:493:5: note: candidate: ‘template<class _CharT, class _Traits> constexpr bool std::operator==(std::basic_string_view<_CharT, _Traits>, std::__type_identity_t<std::basic_string_view<_CharT, _Traits> >)’ (reversed)
+  493 |     operator==(basic_string_view<_CharT, _Traits> __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/string_view:493:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘__gnu_cxx::__normal_iterator<GNET::EC_ArenaTeamMember*, std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> > >’ is not derived from ‘std::basic_string_view<_CharT, _Traits>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6185:5: note: candidate: ‘template<class _CharT, class _Traits, class _Alloc> bool std::operator==(const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&, const _CharT*)’ (reversed)
+ 6185 |     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6185:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/ios_base.h:46,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/system_error:349:3: note: candidate: ‘bool std::operator==(const std::error_code&, const std::error_condition&)’ (reversed)
+  349 |   operator==(const error_code& __lhs, const error_condition& __rhs) noexcept
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:349:32: note:   no known conversion for argument 1 from ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} to ‘const std::error_code&’
+  349 |   operator==(const error_code& __lhs, const error_condition& __rhs) noexcept
+      |              ~~~~~~~~~~~~~~~~~~^~~~~
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1015:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Tp, _Up> std::operator==(const std::optional<_Tp>&, const std::optional<_Up>&)’ (reversed)
+ 1015 |     operator==(const optional<_Tp>& __lhs, const optional<_Up>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1015:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1075:5: note: candidate: ‘template<class _Tp> constexpr bool std::operator==(const std::optional<_Tp>&, std::nullopt_t)’ (reversed)
+ 1075 |     operator==(const optional<_Tp>& __lhs, nullopt_t) noexcept
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1075:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1143:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Tp, _Up> std::operator==(const std::optional<_Tp>&, const _Up&)’ (reversed)
+ 1143 |     operator==(const optional<_Tp>& __lhs, const _Up& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1143:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1149:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Up, _Tp> std::operator==(const _Up&, const std::optional<_Tp>&)’ (reversed)
+ 1149 |     operator==(const _Up& __lhs, const optional<_Tp>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1149:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_map.h:63,
+                 from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/tuple:1393:5: note: candidate: ‘template<class ... _TElements, class ... _UElements> constexpr bool std::operator==(const std::tuple<_Tps ...>&, const std::tuple<_Args2 ...>&)’ (reversed)
+ 1393 |     operator==(const tuple<_TElements...>& __t,
+      |     ^~~~~~~~
+/usr/include/c++/10/tuple:1393:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::tuple<_Tps ...>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/functional:59,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/std_function.h:680:5: note: candidate: ‘template<class _Res, class ... _Args> bool std::operator==(const std::function<_Res(_ArgTypes ...)>&, std::nullptr_t)’ (reversed)
+  680 |     operator==(const function<_Res(_Args...)>& __f, nullptr_t) noexcept
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/std_function.h:680:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::function<_Res(_ArgTypes ...)>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/x86_64-linux-gnu/c++/10/bits/c++allocator.h:33,
+                 from /usr/include/c++/10/bits/allocator.h:46,
+                 from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/ext/new_allocator.h:171:2: note: candidate: ‘template<class _Up> constexpr bool __gnu_cxx::operator==(const __gnu_cxx::new_allocator<int>&, const __gnu_cxx::new_allocator<_Tp>&)’ (reversed)
+  171 |  operator==(const new_allocator&, const new_allocator<_Up>&)
+      |  ^~~~~~~~
+/usr/include/c++/10/ext/new_allocator.h:171:2: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::new_allocator<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/x86_64-linux-gnu/c++/10/bits/c++allocator.h:33,
+                 from /usr/include/c++/10/bits/allocator.h:46,
+                 from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/ext/new_allocator.h:171:2: note: candidate: ‘template<class _Up> constexpr bool __gnu_cxx::operator==(const __gnu_cxx::new_allocator<GNET::EC_ArenaTeamMember>&, const __gnu_cxx::new_allocator<_Tp>&)’ (reversed)
+  171 |  operator==(const new_allocator&, const new_allocator<_Up>&)
+      |  ^~~~~~~~
+/usr/include/c++/10/ext/new_allocator.h:171:2: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::new_allocator<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/ext/hash_map:64,
+                 from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/backward/hashtable.h:704:5: note: candidate: ‘template<class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All> bool __gnu_cxx::operator==(const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&, const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&)’ (rewritten)
+  704 |     operator==(const hashtable<_Val, _Key, _HF, _Ex, _Eq, _All>& __ht1,
+      |     ^~~~~~~~
+/usr/include/c++/10/backward/hashtable.h:704:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:270:5: note: candidate: ‘template<class _Key, class _Tp, class _HashFn, class _EqlKey, class _Alloc> bool __gnu_cxx::operator==(const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&, const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&)’ (rewritten)
+  270 |     operator==(const hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:270:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:485:5: note: candidate: ‘template<class _Key, class _Tp, class _HF, class _EqKey, class _Alloc> bool __gnu_cxx::operator==(const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&, const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&)’ (rewritten)
+  485 |     operator==(const hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:485:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/iosfwd:40,
+                 from /usr/include/c++/10/ios:38,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/postypes.h:222:5: note: candidate: ‘template<class _StateT> bool std::operator==(const std::fpos<_StateT>&, const std::fpos<_StateT>&)’ (rewritten)
+  222 |     operator==(const fpos<_StateT>& __lhs, const fpos<_StateT>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/postypes.h:222:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::fpos<_StateT>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:64,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_pair.h:466:5: note: candidate: ‘template<class _T1, class _T2> constexpr bool std::operator==(const std::pair<_T1, _T2>&, const std::pair<_T1, _T2>&)’ (rewritten)
+  466 |     operator==(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_pair.h:466:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::pair<_T1, _T2>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/basic_string.h:48,
+                 from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/string_view:487:5: note: candidate: ‘template<class _CharT, class _Traits> constexpr bool std::operator==(std::basic_string_view<_CharT, _Traits>, std::basic_string_view<_CharT, _Traits>)’ (rewritten)
+  487 |     operator==(basic_string_view<_CharT, _Traits> __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/string_view:487:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘__gnu_cxx::__normal_iterator<int*, std::vector<int, std::allocator<int> > >’ is not derived from ‘std::basic_string_view<_CharT, _Traits>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6163:5: note: candidate: ‘template<class _CharT, class _Traits, class _Alloc> bool std::operator==(const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&, const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&)’ (rewritten)
+ 6163 |     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6163:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6171:5: note: candidate: ‘template<class _CharT> typename __gnu_cxx::__enable_if<std::__is_char<_Tp>::__value, bool>::__type std::operator==(const std::__cxx11::basic_string<_CharT>&, const std::__cxx11::basic_string<_CharT>&)’ (rewritten)
+ 6171 |     operator==(const basic_string<_CharT>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6171:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::basic_string<_CharT>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/ios_base.h:46,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/system_error:342:3: note: candidate: ‘bool std::operator==(const std::error_code&, const std::error_code&)’ (rewritten)
+  342 |   operator==(const error_code& __lhs, const error_code& __rhs) noexcept
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:342:32: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::error_code&’
+  342 |   operator==(const error_code& __lhs, const error_code& __rhs) noexcept
+      |              ~~~~~~~~~~~~~~~~~~^~~~~
+/usr/include/c++/10/system_error:357:3: note: candidate: ‘bool std::operator==(const std::error_condition&, const std::error_condition&)’ (rewritten)
+  357 |   operator==(const error_condition& __lhs,
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:357:37: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::error_condition&’
+  357 |   operator==(const error_condition& __lhs,
+      |              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+In file included from /usr/include/c++/10/bits/locale_facets.h:48,
+                 from /usr/include/c++/10/bits/basic_ios.h:37,
+                 from /usr/include/c++/10/ios:44,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/streambuf_iterator.h:227:5: note: candidate: ‘template<class _CharT, class _Traits> bool std::operator==(const std::istreambuf_iterator<_CharT, _Traits>&, const std::istreambuf_iterator<_CharT, _Traits>&)’ (rewritten)
+  227 |     operator==(const istreambuf_iterator<_CharT, _Traits>& __a,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/streambuf_iterator.h:227:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::istreambuf_iterator<_CharT, _Traits>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/tuple:39,
+                 from /usr/include/c++/10/bits/stl_map.h:63,
+                 from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/array:253:5: note: candidate: ‘template<class _Tp, long unsigned int _Nm> constexpr bool std::operator==(const std::array<_Tp, _Nm>&, const std::array<_Tp, _Nm>&)’ (rewritten)
+  253 |     operator==(const array<_Tp, _Nm>& __one, const array<_Tp, _Nm>& __two)
+      |     ^~~~~~~~
+/usr/include/c++/10/array:253:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::array<_Tp, _Nm>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_map.h:1463:5: note: candidate: ‘template<class _Key, class _Tp, class _Compare, class _Alloc> bool std::operator==(const std::map<_Key, _Tp, _Compare, _Allocator>&, const std::map<_Key, _Tp, _Compare, _Allocator>&)’ (rewritten)
+ 1463 |     operator==(const map<_Key, _Tp, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_map.h:1463:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::map<_Key, _Tp, _Compare, _Allocator>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/map:62,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_multimap.h:1128:5: note: candidate: ‘template<class _Key, class _Tp, class _Compare, class _Alloc> bool std::operator==(const std::multimap<_Key, _Tp, _Compare, _Allocator>&, const std::multimap<_Key, _Tp, _Compare, _Allocator>&)’ (rewritten)
+ 1128 |     operator==(const multimap<_Key, _Tp, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_multimap.h:1128:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::multimap<_Key, _Tp, _Compare, _Allocator>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/vector:67,
+                 from ../common/thread.h:6,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_vector.h:1892:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::vector<_Tp, _Alloc>&, const std::vector<_Tp, _Alloc>&)’ (rewritten)
+ 1892 |     operator==(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_vector.h:1892:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::vector<_Tp, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/deque:67,
+                 from /usr/include/c++/10/queue:60,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_deque.h:2241:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::deque<_Tp, _Alloc>&, const std::deque<_Tp, _Alloc>&)’ (rewritten)
+ 2241 |     operator==(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_deque.h:2241:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::deque<_Tp, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/queue:64,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_queue.h:344:5: note: candidate: ‘template<class _Tp, class _Seq> bool std::operator==(const std::queue<_Tp, _Seq>&, const std::queue<_Tp, _Seq>&)’ (rewritten)
+  344 |     operator==(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_queue.h:344:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::queue<_Tp, _Seq>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/list:63,
+                 from ../common/thread.h:9,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_list.h:1995:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::__cxx11::list<_Tp, _Alloc>&, const std::__cxx11::list<_Tp, _Alloc>&)’ (rewritten)
+ 1995 |     operator==(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_list.h:1995:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::list<_Tp, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/unordered_map:47,
+                 from /usr/include/c++/10/functional:61,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/unordered_map.h:2090:5: note: candidate: ‘template<class _Key1, class _Tp1, class _Hash1, class _Pred1, class _Alloc1> bool std::operator==(const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&, const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&)’ (rewritten)
+ 2090 |     operator==(const unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/unordered_map.h:2090:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/unordered_map:47,
+                 from /usr/include/c++/10/functional:61,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/unordered_map.h:2104:5: note: candidate: ‘template<class _Key1, class _Tp1, class _Hash1, class _Pred1, class _Alloc1> bool std::operator==(const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&, const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&)’ (rewritten)
+ 2104 |     operator==(const unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/unordered_map.h:2104:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/set:61,
+                 from ../io/protocol.h:5,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/bits/stl_set.h:985:5: note: candidate: ‘template<class _Key, class _Compare, class _Alloc> bool std::operator==(const std::set<_Key, _Compare, _Allocator>&, const std::set<_Key, _Compare, _Allocator>&)’ (rewritten)
+  985 |     operator==(const set<_Key, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_set.h:985:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::set<_Key, _Compare, _Allocator>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/set:62,
+                 from ../io/protocol.h:5,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/bits/stl_multiset.h:971:5: note: candidate: ‘template<class _Key, class _Compare, class _Alloc> bool std::operator==(const std::multiset<_Key, _Compare, _Allocator>&, const std::multiset<_Key, _Compare, _Allocator>&)’ (rewritten)
+  971 |     operator==(const multiset<_Key, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_multiset.h:971:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::multiset<_Key, _Compare, _Allocator>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/allocator.h:192:7: note: candidate: ‘constexpr bool std::operator==(const std::allocator<GNET::EC_ArenaTeamMember>&, const std::allocator<GNET::EC_ArenaTeamMember>&)’ (rewritten)
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |       ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:18: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::allocator<GNET::EC_ArenaTeamMember>&’
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |                  ^~~~~~~~~~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:7: note: candidate: ‘constexpr bool std::operator==(const std::allocator<int>&, const std::allocator<int>&)’ (rewritten)
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |       ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:18: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::allocator<int>&’
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |                  ^~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/10/ext/hash_map:64,
+                 from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/backward/hashtable.h:745:5: note: candidate: ‘template<class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All> bool __gnu_cxx::operator!=(const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&, const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&)’
+  745 |     operator!=(const hashtable<_Val, _Key, _HF, _Ex, _Eq, _All>& __ht1,
+      |     ^~~~~~~~
+/usr/include/c++/10/backward/hashtable.h:745:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:276:5: note: candidate: ‘template<class _Key, class _Tp, class _HashFn, class _EqlKey, class _Alloc> bool __gnu_cxx::operator!=(const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&, const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&)’
+  276 |     operator!=(const hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:276:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:491:5: note: candidate: ‘template<class _Key, class _Tp, class _HF, class _EqKey, class _Alloc> bool __gnu_cxx::operator!=(const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&, const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&)’
+  491 |     operator!=(const hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:491:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/iosfwd:40,
+                 from /usr/include/c++/10/ios:38,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/postypes.h:227:5: note: candidate: ‘template<class _StateT> bool std::operator!=(const std::fpos<_StateT>&, const std::fpos<_StateT>&)’
+  227 |     operator!=(const fpos<_StateT>& __lhs, const fpos<_StateT>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/postypes.h:227:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::fpos<_StateT>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:466:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator!=(const std::reverse_iterator<_IteratorL>&, const std::reverse_iterator<_IteratorR>&) requires requires{{std::operator!=::__x->base() != std::operator!=::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’
+  466 |     operator!=(const reverse_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:466:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::reverse_iterator<_IteratorL>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/locale_facets.h:48,
+                 from /usr/include/c++/10/bits/basic_ios.h:37,
+                 from /usr/include/c++/10/ios:44,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/streambuf_iterator.h:233:5: note: candidate: ‘template<class _CharT, class _Traits> bool std::operator!=(const std::istreambuf_iterator<_CharT, _Traits>&, const std::istreambuf_iterator<_CharT, _Traits>&)’
+  233 |     operator!=(const istreambuf_iterator<_CharT, _Traits>& __a,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/streambuf_iterator.h:233:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::istreambuf_iterator<_CharT, _Traits>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1024:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Tp, _Up> std::operator!=(const std::optional<_Tp>&, const std::optional<_Up>&)’
+ 1024 |     operator!=(const optional<_Tp>& __lhs, const optional<_Up>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1024:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1155:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Tp, _Up> std::operator!=(const std::optional<_Tp>&, const _Up&)’
+ 1155 |     operator!=(const optional<_Tp>& __lhs, const _Up& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1155:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1161:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Up, _Tp> std::operator!=(const _Up&, const std::optional<_Tp>&)’
+ 1161 |     operator!=(const _Up& __lhs, const optional<_Tp>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1161:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/queue:64,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_queue.h:368:5: note: candidate: ‘template<class _Tp, class _Seq> bool std::operator!=(const std::queue<_Tp, _Seq>&, const std::queue<_Tp, _Seq>&)’
+  368 |     operator!=(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_queue.h:368:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1125:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::queue<_Tp, _Seq>’
+ 1125 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+arenaofauroramanager.cpp:1139:33: error: no matching function for call to ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::erase(std::vector<int, std::allocator<int> >::iterator&)’
+ 1139 |  arenaTeam->members_idx.erase(it);
+      |                                 ^
+In file included from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+../rpc/rpcdefs.h:101:12: note: candidate: ‘GNET::RpcDataVector<T>::iterator GNET::RpcDataVector<T>::erase(GNET::RpcDataVector<T>::iterator) [with T = GNET::EC_ArenaTeamMember; GNET::RpcDataVector<T>::iterator = std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator]’
+  101 |   iterator erase(iterator __position) { return m_data.erase(__position); }
+      |            ^~~~~
+../rpc/rpcdefs.h:101:27: note:   no known conversion for argument 1 from ‘__normal_iterator<int*,vector<int,allocator<int>>>’ to ‘__normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>’
+  101 |   iterator erase(iterator __position) { return m_data.erase(__position); }
+      |                  ~~~~~~~~~^~~~~~~~~~
+../rpc/rpcdefs.h:102:12: note: candidate: ‘GNET::RpcDataVector<T>::iterator GNET::RpcDataVector<T>::erase(GNET::RpcDataVector<T>::iterator, GNET::RpcDataVector<T>::iterator) [with T = GNET::EC_ArenaTeamMember; GNET::RpcDataVector<T>::iterator = std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator]’
+  102 |   iterator erase(iterator __first, iterator __last) { return m_data.erase(__first, __last); }
+      |            ^~~~~
+../rpc/rpcdefs.h:102:12: note:   candidate expects 2 arguments, 1 provided
+arenaofauroramanager.cpp:1153:69: error: cannot convert ‘GNET::EC_ArenaTeamMember’ to ‘int’
+ 1153 |   SendTeamChangeRe(arenaTeam->members_idx[i], arenaTeam->captain_idx);
+      |                                                                     ^
+In file included from arenaofauroramanager.cpp:17:
+arenaofauroramanager.h:312:28: note:   initializing argument 1 of ‘void GNET::ArenaOfAuroraManager::SendTeamChangeRe(int, int)’
+  312 |  void SendTeamChangeRe(int roleid, int new_leader);
+      |                        ~~~~^~~~~~
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::KickoutTeam(int, int)’:
+arenaofauroramanager.cpp:1206:62: error: conversion from ‘__normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>’ to non-scalar type ‘__normal_iterator<int*,vector<int,allocator<int>>>’ requested
+ 1206 |  std::vector<int>::iterator it = arenaTeam->members_idx.begin();
+      |                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+arenaofauroramanager.cpp:1207:12: error: no match for ‘operator!=’ (operand types are ‘std::vector<int, std::allocator<int> >::iterator’ and ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’})
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |         ~~ ^~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |         |                               |
+      |         |                               __normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>
+      |         __normal_iterator<int*,vector<int,allocator<int>>>
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:1073:5: note: candidate: ‘template<class _IteratorL, class _IteratorR, class _Container>  requires requires(_IteratorL __lhs, _IteratorR __rhs) {{__lhs == __rhs} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];} constexpr bool __gnu_cxx::operator==(const __gnu_cxx::__normal_iterator<_IteratorL, _Container>&, const __gnu_cxx::__normal_iterator<_IteratorR, _Container>&)’ (reversed)
+ 1073 |     operator==(const __normal_iterator<_IteratorL, _Container>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:1073:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   deduced conflicting types for parameter ‘_Container’ (‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >’ and ‘std::vector<int, std::allocator<int> >’)
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:459:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator==(const std::reverse_iterator<_IteratorL>&, const std::reverse_iterator<_IteratorR>&) requires requires{{std::operator==::__x->base() == std::operator==::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’ (reversed)
+  459 |     operator==(const reverse_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:459:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::reverse_iterator<_IteratorL>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:1460:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator==(const std::move_iterator<_IteratorL>&, const std::move_iterator<_IteratorR>&) requires requires{{std::operator==::__x->base() == std::operator==::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’ (reversed)
+ 1460 |     operator==(const move_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:1460:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::move_iterator<_IteratorL>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/allocator.h:206:5: note: candidate: ‘template<class _T1, class _T2> constexpr bool std::operator==(const std::allocator<_CharT>&, const std::allocator<_T2>&)’ (reversed)
+  206 |     operator==(const allocator<_T1>&, const allocator<_T2>&)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:206:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::allocator<_CharT>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/basic_string.h:48,
+                 from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/string_view:493:5: note: candidate: ‘template<class _CharT, class _Traits> constexpr bool std::operator==(std::basic_string_view<_CharT, _Traits>, std::__type_identity_t<std::basic_string_view<_CharT, _Traits> >)’ (reversed)
+  493 |     operator==(basic_string_view<_CharT, _Traits> __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/string_view:493:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘__gnu_cxx::__normal_iterator<GNET::EC_ArenaTeamMember*, std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> > >’ is not derived from ‘std::basic_string_view<_CharT, _Traits>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6185:5: note: candidate: ‘template<class _CharT, class _Traits, class _Alloc> bool std::operator==(const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&, const _CharT*)’ (reversed)
+ 6185 |     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6185:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/ios_base.h:46,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/system_error:349:3: note: candidate: ‘bool std::operator==(const std::error_code&, const std::error_condition&)’ (reversed)
+  349 |   operator==(const error_code& __lhs, const error_condition& __rhs) noexcept
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:349:32: note:   no known conversion for argument 1 from ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} to ‘const std::error_code&’
+  349 |   operator==(const error_code& __lhs, const error_condition& __rhs) noexcept
+      |              ~~~~~~~~~~~~~~~~~~^~~~~
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1015:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Tp, _Up> std::operator==(const std::optional<_Tp>&, const std::optional<_Up>&)’ (reversed)
+ 1015 |     operator==(const optional<_Tp>& __lhs, const optional<_Up>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1015:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1075:5: note: candidate: ‘template<class _Tp> constexpr bool std::operator==(const std::optional<_Tp>&, std::nullopt_t)’ (reversed)
+ 1075 |     operator==(const optional<_Tp>& __lhs, nullopt_t) noexcept
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1075:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1143:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Tp, _Up> std::operator==(const std::optional<_Tp>&, const _Up&)’ (reversed)
+ 1143 |     operator==(const optional<_Tp>& __lhs, const _Up& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1143:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1149:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Up, _Tp> std::operator==(const _Up&, const std::optional<_Tp>&)’ (reversed)
+ 1149 |     operator==(const _Up& __lhs, const optional<_Tp>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1149:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_map.h:63,
+                 from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/tuple:1393:5: note: candidate: ‘template<class ... _TElements, class ... _UElements> constexpr bool std::operator==(const std::tuple<_Tps ...>&, const std::tuple<_Args2 ...>&)’ (reversed)
+ 1393 |     operator==(const tuple<_TElements...>& __t,
+      |     ^~~~~~~~
+/usr/include/c++/10/tuple:1393:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::tuple<_Tps ...>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/functional:59,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/std_function.h:680:5: note: candidate: ‘template<class _Res, class ... _Args> bool std::operator==(const std::function<_Res(_ArgTypes ...)>&, std::nullptr_t)’ (reversed)
+  680 |     operator==(const function<_Res(_Args...)>& __f, nullptr_t) noexcept
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/std_function.h:680:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::function<_Res(_ArgTypes ...)>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/x86_64-linux-gnu/c++/10/bits/c++allocator.h:33,
+                 from /usr/include/c++/10/bits/allocator.h:46,
+                 from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/ext/new_allocator.h:171:2: note: candidate: ‘template<class _Up> constexpr bool __gnu_cxx::operator==(const __gnu_cxx::new_allocator<int>&, const __gnu_cxx::new_allocator<_Tp>&)’ (reversed)
+  171 |  operator==(const new_allocator&, const new_allocator<_Up>&)
+      |  ^~~~~~~~
+/usr/include/c++/10/ext/new_allocator.h:171:2: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::new_allocator<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/x86_64-linux-gnu/c++/10/bits/c++allocator.h:33,
+                 from /usr/include/c++/10/bits/allocator.h:46,
+                 from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/ext/new_allocator.h:171:2: note: candidate: ‘template<class _Up> constexpr bool __gnu_cxx::operator==(const __gnu_cxx::new_allocator<GNET::EC_ArenaTeamMember>&, const __gnu_cxx::new_allocator<_Tp>&)’ (reversed)
+  171 |  operator==(const new_allocator&, const new_allocator<_Up>&)
+      |  ^~~~~~~~
+/usr/include/c++/10/ext/new_allocator.h:171:2: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::new_allocator<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/ext/hash_map:64,
+                 from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/backward/hashtable.h:704:5: note: candidate: ‘template<class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All> bool __gnu_cxx::operator==(const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&, const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&)’ (rewritten)
+  704 |     operator==(const hashtable<_Val, _Key, _HF, _Ex, _Eq, _All>& __ht1,
+      |     ^~~~~~~~
+/usr/include/c++/10/backward/hashtable.h:704:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:270:5: note: candidate: ‘template<class _Key, class _Tp, class _HashFn, class _EqlKey, class _Alloc> bool __gnu_cxx::operator==(const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&, const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&)’ (rewritten)
+  270 |     operator==(const hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:270:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:485:5: note: candidate: ‘template<class _Key, class _Tp, class _HF, class _EqKey, class _Alloc> bool __gnu_cxx::operator==(const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&, const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&)’ (rewritten)
+  485 |     operator==(const hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:485:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/iosfwd:40,
+                 from /usr/include/c++/10/ios:38,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/postypes.h:222:5: note: candidate: ‘template<class _StateT> bool std::operator==(const std::fpos<_StateT>&, const std::fpos<_StateT>&)’ (rewritten)
+  222 |     operator==(const fpos<_StateT>& __lhs, const fpos<_StateT>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/postypes.h:222:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::fpos<_StateT>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:64,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_pair.h:466:5: note: candidate: ‘template<class _T1, class _T2> constexpr bool std::operator==(const std::pair<_T1, _T2>&, const std::pair<_T1, _T2>&)’ (rewritten)
+  466 |     operator==(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_pair.h:466:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::pair<_T1, _T2>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/basic_string.h:48,
+                 from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/string_view:487:5: note: candidate: ‘template<class _CharT, class _Traits> constexpr bool std::operator==(std::basic_string_view<_CharT, _Traits>, std::basic_string_view<_CharT, _Traits>)’ (rewritten)
+  487 |     operator==(basic_string_view<_CharT, _Traits> __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/string_view:487:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘__gnu_cxx::__normal_iterator<int*, std::vector<int, std::allocator<int> > >’ is not derived from ‘std::basic_string_view<_CharT, _Traits>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6163:5: note: candidate: ‘template<class _CharT, class _Traits, class _Alloc> bool std::operator==(const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&, const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&)’ (rewritten)
+ 6163 |     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6163:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6171:5: note: candidate: ‘template<class _CharT> typename __gnu_cxx::__enable_if<std::__is_char<_Tp>::__value, bool>::__type std::operator==(const std::__cxx11::basic_string<_CharT>&, const std::__cxx11::basic_string<_CharT>&)’ (rewritten)
+ 6171 |     operator==(const basic_string<_CharT>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6171:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::basic_string<_CharT>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/ios_base.h:46,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/system_error:342:3: note: candidate: ‘bool std::operator==(const std::error_code&, const std::error_code&)’ (rewritten)
+  342 |   operator==(const error_code& __lhs, const error_code& __rhs) noexcept
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:342:32: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::error_code&’
+  342 |   operator==(const error_code& __lhs, const error_code& __rhs) noexcept
+      |              ~~~~~~~~~~~~~~~~~~^~~~~
+/usr/include/c++/10/system_error:357:3: note: candidate: ‘bool std::operator==(const std::error_condition&, const std::error_condition&)’ (rewritten)
+  357 |   operator==(const error_condition& __lhs,
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:357:37: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::error_condition&’
+  357 |   operator==(const error_condition& __lhs,
+      |              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+In file included from /usr/include/c++/10/bits/locale_facets.h:48,
+                 from /usr/include/c++/10/bits/basic_ios.h:37,
+                 from /usr/include/c++/10/ios:44,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/streambuf_iterator.h:227:5: note: candidate: ‘template<class _CharT, class _Traits> bool std::operator==(const std::istreambuf_iterator<_CharT, _Traits>&, const std::istreambuf_iterator<_CharT, _Traits>&)’ (rewritten)
+  227 |     operator==(const istreambuf_iterator<_CharT, _Traits>& __a,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/streambuf_iterator.h:227:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::istreambuf_iterator<_CharT, _Traits>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/tuple:39,
+                 from /usr/include/c++/10/bits/stl_map.h:63,
+                 from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/array:253:5: note: candidate: ‘template<class _Tp, long unsigned int _Nm> constexpr bool std::operator==(const std::array<_Tp, _Nm>&, const std::array<_Tp, _Nm>&)’ (rewritten)
+  253 |     operator==(const array<_Tp, _Nm>& __one, const array<_Tp, _Nm>& __two)
+      |     ^~~~~~~~
+/usr/include/c++/10/array:253:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::array<_Tp, _Nm>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_map.h:1463:5: note: candidate: ‘template<class _Key, class _Tp, class _Compare, class _Alloc> bool std::operator==(const std::map<_Key, _Tp, _Compare, _Allocator>&, const std::map<_Key, _Tp, _Compare, _Allocator>&)’ (rewritten)
+ 1463 |     operator==(const map<_Key, _Tp, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_map.h:1463:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::map<_Key, _Tp, _Compare, _Allocator>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/map:62,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_multimap.h:1128:5: note: candidate: ‘template<class _Key, class _Tp, class _Compare, class _Alloc> bool std::operator==(const std::multimap<_Key, _Tp, _Compare, _Allocator>&, const std::multimap<_Key, _Tp, _Compare, _Allocator>&)’ (rewritten)
+ 1128 |     operator==(const multimap<_Key, _Tp, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_multimap.h:1128:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::multimap<_Key, _Tp, _Compare, _Allocator>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/vector:67,
+                 from ../common/thread.h:6,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_vector.h:1892:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::vector<_Tp, _Alloc>&, const std::vector<_Tp, _Alloc>&)’ (rewritten)
+ 1892 |     operator==(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_vector.h:1892:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::vector<_Tp, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/deque:67,
+                 from /usr/include/c++/10/queue:60,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_deque.h:2241:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::deque<_Tp, _Alloc>&, const std::deque<_Tp, _Alloc>&)’ (rewritten)
+ 2241 |     operator==(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_deque.h:2241:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::deque<_Tp, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/queue:64,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_queue.h:344:5: note: candidate: ‘template<class _Tp, class _Seq> bool std::operator==(const std::queue<_Tp, _Seq>&, const std::queue<_Tp, _Seq>&)’ (rewritten)
+  344 |     operator==(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_queue.h:344:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::queue<_Tp, _Seq>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/list:63,
+                 from ../common/thread.h:9,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_list.h:1995:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::__cxx11::list<_Tp, _Alloc>&, const std::__cxx11::list<_Tp, _Alloc>&)’ (rewritten)
+ 1995 |     operator==(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_list.h:1995:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::list<_Tp, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/unordered_map:47,
+                 from /usr/include/c++/10/functional:61,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/unordered_map.h:2090:5: note: candidate: ‘template<class _Key1, class _Tp1, class _Hash1, class _Pred1, class _Alloc1> bool std::operator==(const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&, const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&)’ (rewritten)
+ 2090 |     operator==(const unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/unordered_map.h:2090:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/unordered_map:47,
+                 from /usr/include/c++/10/functional:61,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/unordered_map.h:2104:5: note: candidate: ‘template<class _Key1, class _Tp1, class _Hash1, class _Pred1, class _Alloc1> bool std::operator==(const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&, const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&)’ (rewritten)
+ 2104 |     operator==(const unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/unordered_map.h:2104:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/set:61,
+                 from ../io/protocol.h:5,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/bits/stl_set.h:985:5: note: candidate: ‘template<class _Key, class _Compare, class _Alloc> bool std::operator==(const std::set<_Key, _Compare, _Allocator>&, const std::set<_Key, _Compare, _Allocator>&)’ (rewritten)
+  985 |     operator==(const set<_Key, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_set.h:985:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::set<_Key, _Compare, _Allocator>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/set:62,
+                 from ../io/protocol.h:5,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/bits/stl_multiset.h:971:5: note: candidate: ‘template<class _Key, class _Compare, class _Alloc> bool std::operator==(const std::multiset<_Key, _Compare, _Allocator>&, const std::multiset<_Key, _Compare, _Allocator>&)’ (rewritten)
+  971 |     operator==(const multiset<_Key, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_multiset.h:971:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::multiset<_Key, _Compare, _Allocator>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/allocator.h:192:7: note: candidate: ‘constexpr bool std::operator==(const std::allocator<GNET::EC_ArenaTeamMember>&, const std::allocator<GNET::EC_ArenaTeamMember>&)’ (rewritten)
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |       ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:18: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::allocator<GNET::EC_ArenaTeamMember>&’
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |                  ^~~~~~~~~~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:7: note: candidate: ‘constexpr bool std::operator==(const std::allocator<int>&, const std::allocator<int>&)’ (rewritten)
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |       ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:18: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::allocator<int>&’
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |                  ^~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/10/ext/hash_map:64,
+                 from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/backward/hashtable.h:745:5: note: candidate: ‘template<class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All> bool __gnu_cxx::operator!=(const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&, const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&)’
+  745 |     operator!=(const hashtable<_Val, _Key, _HF, _Ex, _Eq, _All>& __ht1,
+      |     ^~~~~~~~
+/usr/include/c++/10/backward/hashtable.h:745:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:276:5: note: candidate: ‘template<class _Key, class _Tp, class _HashFn, class _EqlKey, class _Alloc> bool __gnu_cxx::operator!=(const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&, const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&)’
+  276 |     operator!=(const hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:276:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:491:5: note: candidate: ‘template<class _Key, class _Tp, class _HF, class _EqKey, class _Alloc> bool __gnu_cxx::operator!=(const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&, const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&)’
+  491 |     operator!=(const hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:491:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/iosfwd:40,
+                 from /usr/include/c++/10/ios:38,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/postypes.h:227:5: note: candidate: ‘template<class _StateT> bool std::operator!=(const std::fpos<_StateT>&, const std::fpos<_StateT>&)’
+  227 |     operator!=(const fpos<_StateT>& __lhs, const fpos<_StateT>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/postypes.h:227:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::fpos<_StateT>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:466:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator!=(const std::reverse_iterator<_IteratorL>&, const std::reverse_iterator<_IteratorR>&) requires requires{{std::operator!=::__x->base() != std::operator!=::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’
+  466 |     operator!=(const reverse_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:466:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::reverse_iterator<_IteratorL>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/locale_facets.h:48,
+                 from /usr/include/c++/10/bits/basic_ios.h:37,
+                 from /usr/include/c++/10/ios:44,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/streambuf_iterator.h:233:5: note: candidate: ‘template<class _CharT, class _Traits> bool std::operator!=(const std::istreambuf_iterator<_CharT, _Traits>&, const std::istreambuf_iterator<_CharT, _Traits>&)’
+  233 |     operator!=(const istreambuf_iterator<_CharT, _Traits>& __a,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/streambuf_iterator.h:233:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::istreambuf_iterator<_CharT, _Traits>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1024:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Tp, _Up> std::operator!=(const std::optional<_Tp>&, const std::optional<_Up>&)’
+ 1024 |     operator!=(const optional<_Tp>& __lhs, const optional<_Up>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1024:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1155:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Tp, _Up> std::operator!=(const std::optional<_Tp>&, const _Up&)’
+ 1155 |     operator!=(const optional<_Tp>& __lhs, const _Up& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1155:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1161:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Up, _Tp> std::operator!=(const _Up&, const std::optional<_Tp>&)’
+ 1161 |     operator!=(const _Up& __lhs, const optional<_Tp>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1161:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/queue:64,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_queue.h:368:5: note: candidate: ‘template<class _Tp, class _Seq> bool std::operator!=(const std::queue<_Tp, _Seq>&, const std::queue<_Tp, _Seq>&)’
+  368 |     operator!=(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_queue.h:368:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1207:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::queue<_Tp, _Seq>’
+ 1207 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+arenaofauroramanager.cpp:1221:33: error: no matching function for call to ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::erase(std::vector<int, std::allocator<int> >::iterator&)’
+ 1221 |  arenaTeam->members_idx.erase(it);
+      |                                 ^
+In file included from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+../rpc/rpcdefs.h:101:12: note: candidate: ‘GNET::RpcDataVector<T>::iterator GNET::RpcDataVector<T>::erase(GNET::RpcDataVector<T>::iterator) [with T = GNET::EC_ArenaTeamMember; GNET::RpcDataVector<T>::iterator = std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator]’
+  101 |   iterator erase(iterator __position) { return m_data.erase(__position); }
+      |            ^~~~~
+../rpc/rpcdefs.h:101:27: note:   no known conversion for argument 1 from ‘__normal_iterator<int*,vector<int,allocator<int>>>’ to ‘__normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>’
+  101 |   iterator erase(iterator __position) { return m_data.erase(__position); }
+      |                  ~~~~~~~~~^~~~~~~~~~
+../rpc/rpcdefs.h:102:12: note: candidate: ‘GNET::RpcDataVector<T>::iterator GNET::RpcDataVector<T>::erase(GNET::RpcDataVector<T>::iterator, GNET::RpcDataVector<T>::iterator) [with T = GNET::EC_ArenaTeamMember; GNET::RpcDataVector<T>::iterator = std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator]’
+  102 |   iterator erase(iterator __first, iterator __last) { return m_data.erase(__first, __last); }
+      |            ^~~~~
+../rpc/rpcdefs.h:102:12: note:   candidate expects 2 arguments, 1 provided
+arenaofauroramanager.cpp:1234:52: error: cannot convert ‘GNET::EC_ArenaTeamMember’ to ‘int’
+ 1234 |   SendTeamKickRe(arenaTeam->members_idx[i], kickout);
+      |                                                    ^
+In file included from arenaofauroramanager.cpp:17:
+arenaofauroramanager.h:313:26: note:   initializing argument 1 of ‘void GNET::ArenaOfAuroraManager::SendTeamKickRe(int, int)’
+  313 |  void SendTeamKickRe(int roleid, int kicked);
+      |                      ~~~~^~~~~~
+arenaofauroramanager.cpp: In member function ‘void GNET::ArenaOfAuroraManager::LeaveTeam(int)’:
+arenaofauroramanager.cpp:1268:62: error: conversion from ‘__normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>’ to non-scalar type ‘__normal_iterator<int*,vector<int,allocator<int>>>’ requested
+ 1268 |  std::vector<int>::iterator it = arenaTeam->members_idx.begin();
+      |                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+arenaofauroramanager.cpp:1269:12: error: no match for ‘operator!=’ (operand types are ‘std::vector<int, std::allocator<int> >::iterator’ and ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’})
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |         ~~ ^~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |         |                               |
+      |         |                               __normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>
+      |         __normal_iterator<int*,vector<int,allocator<int>>>
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:1073:5: note: candidate: ‘template<class _IteratorL, class _IteratorR, class _Container>  requires requires(_IteratorL __lhs, _IteratorR __rhs) {{__lhs == __rhs} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];} constexpr bool __gnu_cxx::operator==(const __gnu_cxx::__normal_iterator<_IteratorL, _Container>&, const __gnu_cxx::__normal_iterator<_IteratorR, _Container>&)’ (reversed)
+ 1073 |     operator==(const __normal_iterator<_IteratorL, _Container>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:1073:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   deduced conflicting types for parameter ‘_Container’ (‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >’ and ‘std::vector<int, std::allocator<int> >’)
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:459:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator==(const std::reverse_iterator<_IteratorL>&, const std::reverse_iterator<_IteratorR>&) requires requires{{std::operator==::__x->base() == std::operator==::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’ (reversed)
+  459 |     operator==(const reverse_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:459:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::reverse_iterator<_IteratorL>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:1460:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator==(const std::move_iterator<_IteratorL>&, const std::move_iterator<_IteratorR>&) requires requires{{std::operator==::__x->base() == std::operator==::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’ (reversed)
+ 1460 |     operator==(const move_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:1460:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::move_iterator<_IteratorL>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/allocator.h:206:5: note: candidate: ‘template<class _T1, class _T2> constexpr bool std::operator==(const std::allocator<_CharT>&, const std::allocator<_T2>&)’ (reversed)
+  206 |     operator==(const allocator<_T1>&, const allocator<_T2>&)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:206:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::allocator<_CharT>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/basic_string.h:48,
+                 from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/string_view:493:5: note: candidate: ‘template<class _CharT, class _Traits> constexpr bool std::operator==(std::basic_string_view<_CharT, _Traits>, std::__type_identity_t<std::basic_string_view<_CharT, _Traits> >)’ (reversed)
+  493 |     operator==(basic_string_view<_CharT, _Traits> __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/string_view:493:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘__gnu_cxx::__normal_iterator<GNET::EC_ArenaTeamMember*, std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> > >’ is not derived from ‘std::basic_string_view<_CharT, _Traits>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6185:5: note: candidate: ‘template<class _CharT, class _Traits, class _Alloc> bool std::operator==(const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&, const _CharT*)’ (reversed)
+ 6185 |     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6185:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/ios_base.h:46,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/system_error:349:3: note: candidate: ‘bool std::operator==(const std::error_code&, const std::error_condition&)’ (reversed)
+  349 |   operator==(const error_code& __lhs, const error_condition& __rhs) noexcept
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:349:32: note:   no known conversion for argument 1 from ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} to ‘const std::error_code&’
+  349 |   operator==(const error_code& __lhs, const error_condition& __rhs) noexcept
+      |              ~~~~~~~~~~~~~~~~~~^~~~~
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1015:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Tp, _Up> std::operator==(const std::optional<_Tp>&, const std::optional<_Up>&)’ (reversed)
+ 1015 |     operator==(const optional<_Tp>& __lhs, const optional<_Up>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1015:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1075:5: note: candidate: ‘template<class _Tp> constexpr bool std::operator==(const std::optional<_Tp>&, std::nullopt_t)’ (reversed)
+ 1075 |     operator==(const optional<_Tp>& __lhs, nullopt_t) noexcept
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1075:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1143:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Tp, _Up> std::operator==(const std::optional<_Tp>&, const _Up&)’ (reversed)
+ 1143 |     operator==(const optional<_Tp>& __lhs, const _Up& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1143:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1149:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_eq_t<_Up, _Tp> std::operator==(const _Up&, const std::optional<_Tp>&)’ (reversed)
+ 1149 |     operator==(const _Up& __lhs, const optional<_Tp>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1149:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_map.h:63,
+                 from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/tuple:1393:5: note: candidate: ‘template<class ... _TElements, class ... _UElements> constexpr bool std::operator==(const std::tuple<_Tps ...>&, const std::tuple<_Args2 ...>&)’ (reversed)
+ 1393 |     operator==(const tuple<_TElements...>& __t,
+      |     ^~~~~~~~
+/usr/include/c++/10/tuple:1393:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::tuple<_Tps ...>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/functional:59,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/std_function.h:680:5: note: candidate: ‘template<class _Res, class ... _Args> bool std::operator==(const std::function<_Res(_ArgTypes ...)>&, std::nullptr_t)’ (reversed)
+  680 |     operator==(const function<_Res(_Args...)>& __f, nullptr_t) noexcept
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/std_function.h:680:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::function<_Res(_ArgTypes ...)>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/x86_64-linux-gnu/c++/10/bits/c++allocator.h:33,
+                 from /usr/include/c++/10/bits/allocator.h:46,
+                 from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/ext/new_allocator.h:171:2: note: candidate: ‘template<class _Up> constexpr bool __gnu_cxx::operator==(const __gnu_cxx::new_allocator<int>&, const __gnu_cxx::new_allocator<_Tp>&)’ (reversed)
+  171 |  operator==(const new_allocator&, const new_allocator<_Up>&)
+      |  ^~~~~~~~
+/usr/include/c++/10/ext/new_allocator.h:171:2: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::new_allocator<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/x86_64-linux-gnu/c++/10/bits/c++allocator.h:33,
+                 from /usr/include/c++/10/bits/allocator.h:46,
+                 from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/ext/new_allocator.h:171:2: note: candidate: ‘template<class _Up> constexpr bool __gnu_cxx::operator==(const __gnu_cxx::new_allocator<GNET::EC_ArenaTeamMember>&, const __gnu_cxx::new_allocator<_Tp>&)’ (reversed)
+  171 |  operator==(const new_allocator&, const new_allocator<_Up>&)
+      |  ^~~~~~~~
+/usr/include/c++/10/ext/new_allocator.h:171:2: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::new_allocator<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/ext/hash_map:64,
+                 from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/backward/hashtable.h:704:5: note: candidate: ‘template<class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All> bool __gnu_cxx::operator==(const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&, const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&)’ (rewritten)
+  704 |     operator==(const hashtable<_Val, _Key, _HF, _Ex, _Eq, _All>& __ht1,
+      |     ^~~~~~~~
+/usr/include/c++/10/backward/hashtable.h:704:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:270:5: note: candidate: ‘template<class _Key, class _Tp, class _HashFn, class _EqlKey, class _Alloc> bool __gnu_cxx::operator==(const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&, const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&)’ (rewritten)
+  270 |     operator==(const hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:270:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:485:5: note: candidate: ‘template<class _Key, class _Tp, class _HF, class _EqKey, class _Alloc> bool __gnu_cxx::operator==(const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&, const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&)’ (rewritten)
+  485 |     operator==(const hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:485:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/iosfwd:40,
+                 from /usr/include/c++/10/ios:38,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/postypes.h:222:5: note: candidate: ‘template<class _StateT> bool std::operator==(const std::fpos<_StateT>&, const std::fpos<_StateT>&)’ (rewritten)
+  222 |     operator==(const fpos<_StateT>& __lhs, const fpos<_StateT>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/postypes.h:222:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::fpos<_StateT>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:64,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_pair.h:466:5: note: candidate: ‘template<class _T1, class _T2> constexpr bool std::operator==(const std::pair<_T1, _T2>&, const std::pair<_T1, _T2>&)’ (rewritten)
+  466 |     operator==(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_pair.h:466:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::pair<_T1, _T2>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/basic_string.h:48,
+                 from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/string_view:487:5: note: candidate: ‘template<class _CharT, class _Traits> constexpr bool std::operator==(std::basic_string_view<_CharT, _Traits>, std::basic_string_view<_CharT, _Traits>)’ (rewritten)
+  487 |     operator==(basic_string_view<_CharT, _Traits> __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/string_view:487:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘__gnu_cxx::__normal_iterator<int*, std::vector<int, std::allocator<int> > >’ is not derived from ‘std::basic_string_view<_CharT, _Traits>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6163:5: note: candidate: ‘template<class _CharT, class _Traits, class _Alloc> bool std::operator==(const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&, const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&)’ (rewritten)
+ 6163 |     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6163:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:55,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/basic_string.h:6171:5: note: candidate: ‘template<class _CharT> typename __gnu_cxx::__enable_if<std::__is_char<_Tp>::__value, bool>::__type std::operator==(const std::__cxx11::basic_string<_CharT>&, const std::__cxx11::basic_string<_CharT>&)’ (rewritten)
+ 6171 |     operator==(const basic_string<_CharT>& __lhs,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/basic_string.h:6171:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::basic_string<_CharT>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/ios_base.h:46,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/system_error:342:3: note: candidate: ‘bool std::operator==(const std::error_code&, const std::error_code&)’ (rewritten)
+  342 |   operator==(const error_code& __lhs, const error_code& __rhs) noexcept
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:342:32: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::error_code&’
+  342 |   operator==(const error_code& __lhs, const error_code& __rhs) noexcept
+      |              ~~~~~~~~~~~~~~~~~~^~~~~
+/usr/include/c++/10/system_error:357:3: note: candidate: ‘bool std::operator==(const std::error_condition&, const std::error_condition&)’ (rewritten)
+  357 |   operator==(const error_condition& __lhs,
+      |   ^~~~~~~~
+/usr/include/c++/10/system_error:357:37: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::error_condition&’
+  357 |   operator==(const error_condition& __lhs,
+      |              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+In file included from /usr/include/c++/10/bits/locale_facets.h:48,
+                 from /usr/include/c++/10/bits/basic_ios.h:37,
+                 from /usr/include/c++/10/ios:44,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/streambuf_iterator.h:227:5: note: candidate: ‘template<class _CharT, class _Traits> bool std::operator==(const std::istreambuf_iterator<_CharT, _Traits>&, const std::istreambuf_iterator<_CharT, _Traits>&)’ (rewritten)
+  227 |     operator==(const istreambuf_iterator<_CharT, _Traits>& __a,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/streambuf_iterator.h:227:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::istreambuf_iterator<_CharT, _Traits>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/tuple:39,
+                 from /usr/include/c++/10/bits/stl_map.h:63,
+                 from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/array:253:5: note: candidate: ‘template<class _Tp, long unsigned int _Nm> constexpr bool std::operator==(const std::array<_Tp, _Nm>&, const std::array<_Tp, _Nm>&)’ (rewritten)
+  253 |     operator==(const array<_Tp, _Nm>& __one, const array<_Tp, _Nm>& __two)
+      |     ^~~~~~~~
+/usr/include/c++/10/array:253:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::array<_Tp, _Nm>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/map:61,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_map.h:1463:5: note: candidate: ‘template<class _Key, class _Tp, class _Compare, class _Alloc> bool std::operator==(const std::map<_Key, _Tp, _Compare, _Allocator>&, const std::map<_Key, _Tp, _Compare, _Allocator>&)’ (rewritten)
+ 1463 |     operator==(const map<_Key, _Tp, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_map.h:1463:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::map<_Key, _Tp, _Compare, _Allocator>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/map:62,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_multimap.h:1128:5: note: candidate: ‘template<class _Key, class _Tp, class _Compare, class _Alloc> bool std::operator==(const std::multimap<_Key, _Tp, _Compare, _Allocator>&, const std::multimap<_Key, _Tp, _Compare, _Allocator>&)’ (rewritten)
+ 1128 |     operator==(const multimap<_Key, _Tp, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_multimap.h:1128:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::multimap<_Key, _Tp, _Compare, _Allocator>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/vector:67,
+                 from ../common/thread.h:6,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_vector.h:1892:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::vector<_Tp, _Alloc>&, const std::vector<_Tp, _Alloc>&)’ (rewritten)
+ 1892 |     operator==(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_vector.h:1892:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::vector<_Tp, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/deque:67,
+                 from /usr/include/c++/10/queue:60,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_deque.h:2241:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::deque<_Tp, _Alloc>&, const std::deque<_Tp, _Alloc>&)’ (rewritten)
+ 2241 |     operator==(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_deque.h:2241:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::deque<_Tp, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/queue:64,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_queue.h:344:5: note: candidate: ‘template<class _Tp, class _Seq> bool std::operator==(const std::queue<_Tp, _Seq>&, const std::queue<_Tp, _Seq>&)’ (rewritten)
+  344 |     operator==(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_queue.h:344:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::queue<_Tp, _Seq>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/list:63,
+                 from ../common/thread.h:9,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_list.h:1995:5: note: candidate: ‘template<class _Tp, class _Alloc> bool std::operator==(const std::__cxx11::list<_Tp, _Alloc>&, const std::__cxx11::list<_Tp, _Alloc>&)’ (rewritten)
+ 1995 |     operator==(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_list.h:1995:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::__cxx11::list<_Tp, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/unordered_map:47,
+                 from /usr/include/c++/10/functional:61,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/unordered_map.h:2090:5: note: candidate: ‘template<class _Key1, class _Tp1, class _Hash1, class _Pred1, class _Alloc1> bool std::operator==(const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&, const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&)’ (rewritten)
+ 2090 |     operator==(const unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/unordered_map.h:2090:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/unordered_map:47,
+                 from /usr/include/c++/10/functional:61,
+                 from ../common/timer.h:5,
+                 from ../common/thread.h:13,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/unordered_map.h:2104:5: note: candidate: ‘template<class _Key1, class _Tp1, class _Hash1, class _Pred1, class _Alloc1> bool std::operator==(const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&, const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&)’ (rewritten)
+ 2104 |     operator==(const unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/unordered_map.h:2104:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::unordered_multimap<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/set:61,
+                 from ../io/protocol.h:5,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/bits/stl_set.h:985:5: note: candidate: ‘template<class _Key, class _Compare, class _Alloc> bool std::operator==(const std::set<_Key, _Compare, _Allocator>&, const std::set<_Key, _Compare, _Allocator>&)’ (rewritten)
+  985 |     operator==(const set<_Key, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_set.h:985:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::set<_Key, _Compare, _Allocator>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/set:62,
+                 from ../io/protocol.h:5,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/bits/stl_multiset.h:971:5: note: candidate: ‘template<class _Key, class _Compare, class _Alloc> bool std::operator==(const std::multiset<_Key, _Compare, _Allocator>&, const std::multiset<_Key, _Compare, _Allocator>&)’ (rewritten)
+  971 |     operator==(const multiset<_Key, _Compare, _Alloc>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_multiset.h:971:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::multiset<_Key, _Compare, _Allocator>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/string:41,
+                 from /usr/include/c++/10/bits/locale_classes.h:40,
+                 from /usr/include/c++/10/bits/ios_base.h:41,
+                 from /usr/include/c++/10/ios:42,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/allocator.h:192:7: note: candidate: ‘constexpr bool std::operator==(const std::allocator<GNET::EC_ArenaTeamMember>&, const std::allocator<GNET::EC_ArenaTeamMember>&)’ (rewritten)
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |       ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:18: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::allocator<GNET::EC_ArenaTeamMember>&’
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |                  ^~~~~~~~~~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:7: note: candidate: ‘constexpr bool std::operator==(const std::allocator<int>&, const std::allocator<int>&)’ (rewritten)
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |       ^~~~~~~~
+/usr/include/c++/10/bits/allocator.h:192:18: note:   no known conversion for argument 1 from ‘std::vector<int, std::allocator<int> >::iterator’ to ‘const std::allocator<int>&’
+  192 |       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+      |                  ^~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/10/ext/hash_map:64,
+                 from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/backward/hashtable.h:745:5: note: candidate: ‘template<class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All> bool __gnu_cxx::operator!=(const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&, const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>&)’
+  745 |     operator!=(const hashtable<_Val, _Key, _HF, _Ex, _Eq, _All>& __ht1,
+      |     ^~~~~~~~
+/usr/include/c++/10/backward/hashtable.h:745:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hashtable<_Val, _Key, _HashFcn, _ExtractKey, _EqualKey, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:276:5: note: candidate: ‘template<class _Key, class _Tp, class _HashFn, class _EqlKey, class _Alloc> bool __gnu_cxx::operator!=(const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&, const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>&)’
+  276 |     operator!=(const hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:276:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_map<_Key, _Tp, _HashFn, _EqlKey, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from ../common/map.h:11,
+                 from ../io/pollio.h:18,
+                 from ../io/passiveio.h:14,
+                 from ../io/protocol.h:10,
+                 from ../io/rpc.h:8,
+                 from ../rpc/rpcdefs.h:9,
+                 from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+/usr/include/c++/10/ext/hash_map:491:5: note: candidate: ‘template<class _Key, class _Tp, class _HF, class _EqKey, class _Alloc> bool __gnu_cxx::operator!=(const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&, const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>&)’
+  491 |     operator!=(const hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>& __hm1,
+      |     ^~~~~~~~
+/usr/include/c++/10/ext/hash_map:491:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const __gnu_cxx::hash_multimap<_Key, _Tp, _HF, _EqKey, _Alloc>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/iosfwd:40,
+                 from /usr/include/c++/10/ios:38,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/postypes.h:227:5: note: candidate: ‘template<class _StateT> bool std::operator!=(const std::fpos<_StateT>&, const std::fpos<_StateT>&)’
+  227 |     operator!=(const fpos<_StateT>& __lhs, const fpos<_StateT>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/postypes.h:227:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::fpos<_StateT>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,
+                 from /usr/include/c++/10/bits/char_traits.h:39,
+                 from /usr/include/c++/10/ios:40,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/stl_iterator.h:466:5: note: candidate: ‘template<class _IteratorL, class _IteratorR> constexpr bool std::operator!=(const std::reverse_iterator<_IteratorL>&, const std::reverse_iterator<_IteratorR>&) requires requires{{std::operator!=::__x->base() != std::operator!=::__y->base()} -> decltype(auto) [requires std::convertible_to<<placeholder>, bool>];}’
+  466 |     operator!=(const reverse_iterator<_IteratorL>& __x,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_iterator.h:466:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::reverse_iterator<_IteratorL>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/locale_facets.h:48,
+                 from /usr/include/c++/10/bits/basic_ios.h:37,
+                 from /usr/include/c++/10/ios:44,
+                 from /usr/include/c++/10/istream:38,
+                 from /usr/include/c++/10/sstream:38,
+                 from arenaofauroramanager.cpp:1:
+/usr/include/c++/10/bits/streambuf_iterator.h:233:5: note: candidate: ‘template<class _CharT, class _Traits> bool std::operator!=(const std::istreambuf_iterator<_CharT, _Traits>&, const std::istreambuf_iterator<_CharT, _Traits>&)’
+  233 |     operator!=(const istreambuf_iterator<_CharT, _Traits>& __a,
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/streambuf_iterator.h:233:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::istreambuf_iterator<_CharT, _Traits>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1024:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Tp, _Up> std::operator!=(const std::optional<_Tp>&, const std::optional<_Up>&)’
+ 1024 |     operator!=(const optional<_Tp>& __lhs, const optional<_Up>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1024:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1155:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Tp, _Up> std::operator!=(const std::optional<_Tp>&, const _Up&)’
+ 1155 |     operator!=(const optional<_Tp>& __lhs, const _Up& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1155:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/bits/node_handle.h:39,
+                 from /usr/include/c++/10/bits/stl_tree.h:72,
+                 from /usr/include/c++/10/map:60,
+                 from ../common/conf.h:7,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/optional:1161:5: note: candidate: ‘template<class _Tp, class _Up> constexpr std::__optional_ne_t<_Up, _Tp> std::operator!=(const _Up&, const std::optional<_Tp>&)’
+ 1161 |     operator!=(const _Up& __lhs, const optional<_Tp>& __rhs)
+      |     ^~~~~~~~
+/usr/include/c++/10/optional:1161:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::iterator’ {aka ‘std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator’} is not derived from ‘const std::optional<_Tp>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+In file included from /usr/include/c++/10/queue:64,
+                 from ../common/thread.h:8,
+                 from ../common/conf.h:11,
+                 from arenaofauroramanager.cpp:4:
+/usr/include/c++/10/bits/stl_queue.h:368:5: note: candidate: ‘template<class _Tp, class _Seq> bool std::operator!=(const std::queue<_Tp, _Seq>&, const std::queue<_Tp, _Seq>&)’
+  368 |     operator!=(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)
+      |     ^~~~~~~~
+/usr/include/c++/10/bits/stl_queue.h:368:5: note:   template argument deduction/substitution failed:
+arenaofauroramanager.cpp:1269:42: note:   ‘std::vector<int, std::allocator<int> >::iterator’ is not derived from ‘const std::queue<_Tp, _Seq>’
+ 1269 |  for (; it != arenaTeam->members_idx.end(); it++)
+      |                                          ^
+arenaofauroramanager.cpp:1283:33: error: no matching function for call to ‘GNET::RpcDataVector<GNET::EC_ArenaTeamMember>::erase(std::vector<int, std::allocator<int> >::iterator&)’
+ 1283 |  arenaTeam->members_idx.erase(it);
+      |                                 ^
+In file included from ../rpcdata/groleinventory:4,
+                 from ../include/localmacro.h:4,
+                 from arenaofauroramanager.cpp:9:
+../rpc/rpcdefs.h:101:12: note: candidate: ‘GNET::RpcDataVector<T>::iterator GNET::RpcDataVector<T>::erase(GNET::RpcDataVector<T>::iterator) [with T = GNET::EC_ArenaTeamMember; GNET::RpcDataVector<T>::iterator = std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator]’
+  101 |   iterator erase(iterator __position) { return m_data.erase(__position); }
+      |            ^~~~~
+../rpc/rpcdefs.h:101:27: note:   no known conversion for argument 1 from ‘__normal_iterator<int*,vector<int,allocator<int>>>’ to ‘__normal_iterator<GNET::EC_ArenaTeamMember*,vector<GNET::EC_ArenaTeamMember,allocator<GNET::EC_ArenaTeamMember>>>’
+  101 |   iterator erase(iterator __position) { return m_data.erase(__position); }
+      |                  ~~~~~~~~~^~~~~~~~~~
+../rpc/rpcdefs.h:102:12: note: candidate: ‘GNET::RpcDataVector<T>::iterator GNET::RpcDataVector<T>::erase(GNET::RpcDataVector<T>::iterator, GNET::RpcDataVector<T>::iterator) [with T = GNET::EC_ArenaTeamMember; GNET::RpcDataVector<T>::iterator = std::vector<GNET::EC_ArenaTeamMember, std::allocator<GNET::EC_ArenaTeamMember> >::iterator]’
+  102 |   iterator erase(iterator __first, iterator __last) { return m_data.erase(__first, __last); }
+      |            ^~~~~
+../rpc/rpcdefs.h:102:12: note:   candidate expects 2 arguments, 1 provided
+arenaofauroramanager.cpp:1295:52: error: cannot convert ‘GNET::EC_ArenaTeamMember’ to ‘int’
+ 1295 |   SendTeamLeaveRe(arenaTeam->members_idx[i], roleid);
+      |                                                    ^
+In file included from arenaofauroramanager.cpp:17:
+arenaofauroramanager.h:314:27: note:   initializing argument 1 of ‘void GNET::ArenaOfAuroraManager::SendTeamLeaveRe(int, int)’
+  314 |  void SendTeamLeaveRe(int roleid, int leaved);
+      |                       ~~~~^~~~~~
+make: *** [../mk/gcc.rules.mk:39: arenaofauroramanager.o] Ошибка 1

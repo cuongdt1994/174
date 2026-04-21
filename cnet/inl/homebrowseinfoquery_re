@@ -1,0 +1,56 @@
+	public:
+		int home_id;
+		int role_id;
+		int localsid;
+		int retcode;
+		HomeItemVector homeitems;
+		HomeEquipmentVector homeequipments;
+		HomeCropperVector homecroppers;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEBROWSEINFOQUERY_RE };
+	public:
+		HomeBrowseInfoQuery_Re() { type = PROTOCOL_HOMEBROWSEINFOQUERY_RE; }
+		HomeBrowseInfoQuery_Re(void*) : Protocol(PROTOCOL_HOMEBROWSEINFOQUERY_RE) { }
+		HomeBrowseInfoQuery_Re (int l_home_id,int l_role_id,int l_localsid,
+			int l_retcode,HomeItemVector l_homeitems,HomeEquipmentVector l_homeequipments,
+			HomeCropperVector l_homecroppers)
+			 : home_id(l_home_id),role_id(l_role_id),localsid(l_localsid)
+			,retcode(l_retcode),homeitems(l_homeitems),homeequipments(l_homeequipments)
+			,homecroppers(l_homecroppers)
+		{
+			type = PROTOCOL_HOMEBROWSEINFOQUERY_RE;
+		}
+
+		HomeBrowseInfoQuery_Re(const HomeBrowseInfoQuery_Re &rhs)
+			: Protocol(rhs),home_id(rhs.home_id),role_id(rhs.role_id),localsid(rhs.localsid)
+			,retcode(rhs.retcode),homeitems(rhs.homeitems),homeequipments(rhs.homeequipments)
+			,homecroppers(rhs.homecroppers) { }
+
+		GNET::Protocol *Clone() const { return new HomeBrowseInfoQuery_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << home_id;
+			os << role_id;
+			os << localsid;
+			os << retcode;
+			os << homeitems;
+			os << homeequipments;
+			os << homecroppers;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> home_id;
+			os >> role_id;
+			os >> localsid;
+			os >> retcode;
+			os >> homeitems;
+			os >> homeequipments;
+			os >> homecroppers;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

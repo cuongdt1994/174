@@ -1,0 +1,44 @@
+
+#ifndef __GNET_EC_SQLGETARENAPLAYER_HPP
+#define __GNET_EC_SQLGETARENAPLAYER_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "ec_sqlgetarenaplayerarg"
+#include "ec_sqlgetarenaplayerres"
+
+#include "ec_arenamanager.h"
+
+namespace GNET
+{
+
+class EC_SQLGetArenaPlayer : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "ec_sqlgetarenaplayer"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// EC_SQLGetArenaPlayerArg *arg = (EC_SQLGetArenaPlayerArg *)argument;
+		// EC_SQLGetArenaPlayerRes *res = (EC_SQLGetArenaPlayerRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		EC_SQLGetArenaPlayerArg *arg = (EC_SQLGetArenaPlayerArg *)argument;
+		EC_SQLGetArenaPlayerRes *res = (EC_SQLGetArenaPlayerRes *)result;
+		ArenaOfAuroraManager::GetInstance()->EC_GetArenaPlayer_Re(arg->roleid, res->retcode, res->player);
+	}
+
+	void OnTimeout()
+	{
+		Log::log(LOG_ERR,"EC_SQLGetArenaPlayer: timeout.\n");
+	}
+
+};
+
+};
+#endif

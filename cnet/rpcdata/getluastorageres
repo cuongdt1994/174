@@ -1,0 +1,70 @@
+#ifndef __GNET_GETLUASTORAGERES_RPCDATA
+#define __GNET_GETLUASTORAGERES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gluastorage"
+
+namespace GNET
+{
+	class GetLuaStorageRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		int data_mask;
+		GLuaStorage value;
+
+	public:
+		GetLuaStorageRes (int l_retcode = -1,int l_data_mask = 0)
+			: retcode(l_retcode),data_mask(l_data_mask)
+		{
+		}
+
+		GetLuaStorageRes(const GetLuaStorageRes &rhs)
+			: retcode(rhs.retcode),data_mask(rhs.data_mask),value(rhs.value) { }
+
+		Rpc::Data *Clone() const { return new GetLuaStorageRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GetLuaStorageRes *r = dynamic_cast<const GetLuaStorageRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				data_mask = r->data_mask;
+				value = r->value;
+			}
+			return *this;
+		}
+
+		GetLuaStorageRes& operator = (const GetLuaStorageRes &rhs)
+		{
+			const GetLuaStorageRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				data_mask = r->data_mask;
+				value = r->value;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << data_mask;
+			os << value;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> data_mask;
+			os >> value;
+			return os;
+		}
+
+	};
+};
+#endif

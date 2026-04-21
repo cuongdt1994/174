@@ -1,0 +1,32 @@
+	public:
+		int result;
+		enum { PROTOCOL_TYPE = PROTOCOL_PANELRESPONSE_RE };
+	public:
+		PanelResponse_Re() { type = PROTOCOL_PANELRESPONSE_RE; }
+		PanelResponse_Re(void*) : Protocol(PROTOCOL_PANELRESPONSE_RE) { }
+		PanelResponse_Re (int l_result = 0)
+			 : result(l_result)
+		{
+			type = PROTOCOL_PANELRESPONSE_RE;
+		}
+
+		PanelResponse_Re(const PanelResponse_Re &rhs)
+			: Protocol(rhs),result(rhs.result) { }
+
+		GNET::Protocol *Clone() const { return new PanelResponse_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << result;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> result;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

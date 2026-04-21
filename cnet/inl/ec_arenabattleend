@@ -1,0 +1,71 @@
+	public:
+		int arena_id;
+		int world_tag;
+		int result;
+		int red_alive;
+		int blue_alive;
+		int red_damage;
+		int blue_damage;
+		EC_SQLArenaTeam red_team;
+		EC_SQLArenaPlayerVector red_members;
+		EC_SQLArenaTeam blue_team;
+		EC_SQLArenaPlayerVector blue_members;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENABATTLEEND };
+	public:
+		EC_ArenaBattleEnd() { type = PROTOCOL_EC_ARENABATTLEEND; }
+		EC_ArenaBattleEnd(void*) : Protocol(PROTOCOL_EC_ARENABATTLEEND) { }
+		EC_ArenaBattleEnd (int l_arena_id,int l_world_tag,int l_result,
+			int l_red_alive,int l_blue_alive,int l_red_damage,
+			int l_blue_damage,const EC_SQLArenaTeam& l_red_team = EC_SQLArenaTeam(),const EC_SQLArenaPlayerVector& l_red_members = EC_SQLArenaPlayerVector(),
+			const EC_SQLArenaTeam& l_blue_team = EC_SQLArenaTeam(),const EC_SQLArenaPlayerVector& l_blue_members = EC_SQLArenaPlayerVector())
+			 : arena_id(l_arena_id),world_tag(l_world_tag),result(l_result)
+			,red_alive(l_red_alive),blue_alive(l_blue_alive),red_damage(l_red_damage)
+			,blue_damage(l_blue_damage),red_team(l_red_team),red_members(l_red_members)
+			,blue_team(l_blue_team),blue_members(l_blue_members)
+		{
+			type = PROTOCOL_EC_ARENABATTLEEND;
+		}
+
+		EC_ArenaBattleEnd(const EC_ArenaBattleEnd &rhs)
+			: Protocol(rhs),arena_id(rhs.arena_id),world_tag(rhs.world_tag),result(rhs.result)
+			,red_alive(rhs.red_alive),blue_alive(rhs.blue_alive),red_damage(rhs.red_damage)
+			,blue_damage(rhs.blue_damage),red_team(rhs.red_team),red_members(rhs.red_members)
+			,blue_team(rhs.blue_team),blue_members(rhs.blue_members) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaBattleEnd(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << arena_id;
+			os << world_tag;
+			os << result;
+			os << red_alive;
+			os << blue_alive;
+			os << red_damage;
+			os << blue_damage;
+			os << red_team;
+			os << red_members;
+			os << blue_team;
+			os << blue_members;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> arena_id;
+			os >> world_tag;
+			os >> result;
+			os >> red_alive;
+			os >> blue_alive;
+			os >> red_damage;
+			os >> blue_damage;
+			os >> red_team;
+			os >> red_members;
+			os >> blue_team;
+			os >> blue_members;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

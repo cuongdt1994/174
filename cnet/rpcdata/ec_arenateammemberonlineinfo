@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_ARENATEAMMEMBERONLINEINFO_RPCDATA
+#define __GNET_EC_ARENATEAMMEMBERONLINEINFO_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaTeamMemberOnlineInfo : public GNET::Rpc::Data
+	{
+	public:
+		long long player_id;
+		unsigned char online;
+
+	public:
+		EC_ArenaTeamMemberOnlineInfo (long long l_player_id = 0,unsigned char l_online = 0)
+			: player_id(l_player_id),online(l_online)
+		{
+		}
+
+		EC_ArenaTeamMemberOnlineInfo(const EC_ArenaTeamMemberOnlineInfo &rhs)
+			: player_id(rhs.player_id),online(rhs.online) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaTeamMemberOnlineInfo(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaTeamMemberOnlineInfo *r = dynamic_cast<const EC_ArenaTeamMemberOnlineInfo *>(&rhs);
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				online = r->online;
+			}
+			return *this;
+		}
+
+		EC_ArenaTeamMemberOnlineInfo& operator = (const EC_ArenaTeamMemberOnlineInfo &rhs)
+		{
+			const EC_ArenaTeamMemberOnlineInfo *r = &rhs;
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				online = r->online;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << player_id;
+			os << online;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> player_id;
+			os >> online;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaTeamMemberOnlineInfo>	EC_ArenaTeamMemberOnlineInfoVector;
+};
+#endif

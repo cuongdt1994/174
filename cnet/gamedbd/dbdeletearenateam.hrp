@@ -1,0 +1,42 @@
+
+#ifndef __GNET_DBDELETEARENATEAM_HPP
+#define __GNET_DBDELETEARENATEAM_HPP
+
+#include "rpcdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbdeletearenateamarg"
+#include "dbdeletearenateamres"
+
+namespace GNET
+{
+
+class DBDeleteArenaTeam : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbdeletearenateam"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBDeleteArenaTeamArg *arg = (DBDeleteArenaTeamArg *)argument;
+		// DBDeleteArenaTeamRes *res = (DBDeleteArenaTeamRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// TODO
+		// DBDeleteArenaTeamArg *arg = (DBDeleteArenaTeamArg *)argument;
+		// DBDeleteArenaTeamRes *res = (DBDeleteArenaTeamRes *)result;
+	}
+
+	void OnTimeout()
+	{
+		// TODO Client Only
+	}
+
+};
+
+};
+#endif
