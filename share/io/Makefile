@@ -18,7 +18,7 @@ all : $(EXES)
 
 #$(OUTEROBJS_M) $(OBJS_M)
 
-lib:  FORCE
+lib: FORCE
 	$(AR) crs libgsio.a $(OUTEROBJS_M) $(OBJS_M)
 
 server: $(OUTEROBJS) $(OBJS) server.o
