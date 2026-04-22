@@ -267,6 +267,7 @@ case "$1" in
     gs)
         # Build game server (cgame/gs).
         # Requires: lua, skill (libskill.a for iolib), and all cnet libs.
+		setup_env
         build_lua "$NET"
         build_lua "$SKILL"
         build_skill          # libskill.a → iolib/libskill.a (symlink)
