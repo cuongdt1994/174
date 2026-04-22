@@ -32873,7 +32873,8 @@ int gplayer_imp::KidGetSuitePoints()
 
 	points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
 
-	return points_recv;
+	// Trả về tổng điểm tích lũy + điểm hiện tại từ courses
+	return points_now + points_recv;
 }
 
 bool gplayer_imp::KidAwakeningNewDay2()
@@ -33233,11 +33234,12 @@ gplayer_imp::KidAwakeningNewDay3()
 	return true;
 }
 
-void 
+void
 gplayer_imp::KidCelestialActivityProtocol()
 {
-	if(_kid.GetActivity()->reserved != -1) return;
-
+	// Luôn gửi trạng thái về client (kể cả new char) để client biết chính xác
+	// reserved == -1: có tiểu tiên đồng đang active tại active_slot
+	// reserved != -1 (vd: 0): không có tiểu tiên đồng active
 	_runner->kid_active_info(_kid.GetActivity()->active_slot, _kid.GetActivity()->reserved);
 }
 
