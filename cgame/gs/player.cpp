@@ -32750,17 +32750,10 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 
 	_kid.SetType(type);
 
-	// Gửi toàn bộ data trước để client có đủ thông tin
+	_runner->kid_created_info_dialog();
+	
 	KidAwakeningNameProtocol();
 	KidAwakeningInfoProtocol();
-	KidCelestialInfoProtocol(0);
-	KidCelestialActivityProtocol();
-	KidAwakeningCashProtocol();
-	_kid_addon.UpdateKidsAddonsProtocol(_parent->ID.id);
-	_runner->kid_system_points_notify(KidGetSuitePoints());
-
-	// Trigger animation/UI CUỐI CÙNG sau khi client đã nhận đủ data
-	_runner->kid_created_info_dialog();
 
 	return true;
 }
