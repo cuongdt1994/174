@@ -29,6 +29,8 @@ install_deps() {
     apt-get install -y libmysqlcppconn-dev libjsoncpp-dev libmariadb-dev-compat curl libcurl4:i386 pkg-config libcurl4-openssl-dev
 }
 
+# Generic: clean + parallel build of a directory.
+# Optional second arg = make target (e.g. "lib").
 build_dir() {
     local dir=$1
     local target=${2:-}
@@ -39,7 +41,7 @@ build_dir() {
         make -j"$CORES" $target
         popd > /dev/null
     else
-        echo "WARNING: Directory $dir not found!"
+        echo "WARNING: Directory $dir not found, skipping."
     fi
 }
 
@@ -58,8 +60,11 @@ setup_env() {
 
     print_msg "Setting up $GS"
     pushd "$GS" > /dev/null
-    rm -f lua
+    rm -f lua liblua.a
     ln -sf ~/share/lua/ .
+    # Rules.make references $(BASEPATH)/liblua.a — create a direct symlink
+    # so cgame/gs can find liblua.a without knowing the lua/src/ sub-path.
+    ln -sf lua/src/liblua.a liblua.a
     popd > /dev/null
 
     print_msg "Setting up $SKILL"
@@ -108,8 +113,8 @@ setup_env() {
     ln -sf ../../$SKILL/libskill.so "$GS/gs/libskill.so"
 }
 
-# Build liblua.a for the given base directory (cnet or cskill).
-# Must run before any module that links against SHARE_SOBJ.
+# Build liblua.a for a given base directory (cnet or cskill).
+# Must be called before any module that links against SHARE_SOBJ.
 build_lua() {
     local base_dir=$1
     local lua_src="$base_dir/lua/src"
@@ -135,18 +140,52 @@ build_rpcgen() {
     popd > /dev/null
 }
 
+# Build all cnet/cskill libraries that cgame needs via iolib, then
+# extract them into cgame/libgs/ and build cgame/libcm.
+#
+# Dependency chain for libgsio.a (the tricky one):
+#   cnet/io "lib" target just does:  ar crs libgsio.a $(OUTEROBJS_M) $(OBJS_M)
+#   It does NOT compile the _m.o files — it only archives pre-existing ones.
+#   cnet/gamed "lib" depends on $(SHAREOBJ) = *_m.o  →  it DOES compile them.
+#   Therefore the correct order is:
+#     1. gdbclient lib  (cleans _m.o, builds its own objects — no SHAREOBJ dep)
+#     2. gamed    lib  (cleans then COMPILES _m.o as prerequisites → they exist)
+#     3. cnet/io  "make lib" WITHOUT clean → ar picks up the freshly compiled _m.o
 build_gslib() {
-    print_msg "Building liblogCli.a"
+    # ── logclient (SINGLE_THREAD=true → uses Makefile.gs, does not touch _m.o) ──
+    print_msg "Building $NET/logclient lib → liblogCli.a"
     pushd "$NET/logclient" > /dev/null
     make clean > /dev/null 2>&1 || true
     make -f Makefile.gs clean > /dev/null 2>&1 || true
     make -f Makefile.gs -j"$CORES"
     popd > /dev/null
 
-    build_dir "$NET/gamed" "lib"
+    # ── gdbclient lib → libdbCli.a ──────────────────────────────────────────────
+    # lib: $(LIBOBJS)  — no SHAREOBJ dep, so _m.o files get cleaned but not rebuilt
     build_dir "$NET/gdbclient" "lib"
 
-    print_msg "Making libgs"
+    # ── gamed lib → libgsPro2.a  (also compiles *_m.o as prerequisite) ──────────
+    # lib: $(LIBOBJS) $(SHAREOBJ) $(OUTEROBJS)
+    # $(SHAREOBJ) = *_m.o  →  make compiles all _m.o into cnet/io/ and cnet/common/
+    build_dir "$NET/gamed" "lib"
+
+    # ── cnet/io lib → libgsio.a  (archive the _m.o files gamed just compiled) ───
+    # Do NOT use build_dir here — that would clean _m.o before archiving.
+    print_msg "Building $NET/io lib → libgsio.a"
+    pushd "$NET/io" > /dev/null
+    make lib
+    popd > /dev/null
+
+    # ── cgame/libcm → cgame/libcm.a ─────────────────────────────────────────────
+    # Referenced in Rules.make CMLIB but NOT built by cgame/Makefile — must be
+    # built explicitly. cgame/Makefile clean does not remove libcm.a (libcm is not
+    # in CLEAN_SUBDIR), so libcm.a survives the make clean inside build_game.
+    build_dir "$GS/libcm"
+
+    # ── Extract all iolib archives into cgame/libgs/{io,gs,db,sk,log}/ ──────────
+    # cgame/Makefile "all" also does this via the gslib target, but doing it here
+    # lets us catch missing archives early (before the long gs compile).
+    print_msg "Extracting iolib into $GS/libgs"
     mkdir -p "$GS/libgs/"{io,gs,db,sk,log}
     pushd "$GS/libgs" > /dev/null
     make -j"$CORES"
@@ -157,6 +196,12 @@ build_skill() {
     build_dir "$SKILL/skill"
 }
 
+# Build the game server binary.
+# cgame/Makefile "all":  lib → collision → solib → gs
+#   lib:      builds cgame/io/pollio.o, re-extracts libgs/, creates libonline.a
+#   collision: builds libTrace.a
+#   solib:    builds libtask.so
+#   gs:       links everything (needs libcm.a, libonline.a, libgs/*.o, liblua.a, libTrace.a)
 build_game() {
     build_dir "$GS"
 }
@@ -209,30 +254,41 @@ install_protect_func() {
 
 case "$1" in
     deliver|deliveryd)
+        # Build cnet daemons (gauthd, logservice, glinkd, etc.)
         build_lua "$NET"
         build_rpcgen
         build_deliver
         ;;
     skill)
+        # Build cskill shared library
         build_lua "$SKILL"
         build_skill
         ;;
     gs)
+        # Build game server (cgame/gs).
+        # Requires: lua, skill (libskill.a for iolib), and all cnet libs.
         build_lua "$NET"
-        build_gslib
-        build_game
+        build_lua "$SKILL"
+        build_skill          # libskill.a → iolib/libskill.a (symlink)
+        build_gslib          # cnet libs + cgame/libcm + libgs extraction
+        build_game           # cgame/Makefile all → gs binary
         ;;
     all)
         print_msg "Starting Build All process"
         install_deps
         setup_env
+        # 1. Build shared lua library (cnet/lua → ~/share/lua)
         build_lua "$NET"
+        # 2. Build cnet delivery daemons
         build_rpcgen
         build_deliver
+        # 3. Build cskill and its lua
         build_lua "$SKILL"
-        build_skill
+        build_skill          # libskill.a must exist before build_gslib
+        # 4. Build cgame prerequisites and game server
         build_gslib
         build_game
+        # 5. Deploy
         install_func
         install_protect_func
         ;;
