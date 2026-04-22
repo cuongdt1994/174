@@ -10,16 +10,3 @@
 *.exe
 *.pdb
 *.ilk
-
-# local editor/cache
-.cache/
-.vscode/
-.vscode-server/
-
-# linux home junk accidentally copied
-.bash_history
-.bashrc
-.profile
-.gitconfig
-.wget-hsts
-.dotnet/
