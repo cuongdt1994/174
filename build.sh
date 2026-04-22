@@ -24,7 +24,7 @@ install_deps() {
     dpkg --add-architecture i386
     apt-get update -y && apt-get upgrade -y
 
-    apt-get install -y mc screen htop openjdk-11-jre mono-complete exim4 p7zip-full p7zip-rar libpcap-dev curl wget ipset net-tools tzdata ntpdate mariadb-server mariadb-client
+    apt-get install -y mc screen htop openjdk-11-jre mono-complete exim4 p7zip-full libpcap-dev curl wget ipset net-tools tzdata ntpdate mariadb-server mariadb-client
     apt-get install -y make gcc g++ libssl-dev:i386 libssl-dev libcrypto++-dev libpcre3 libpcre3-dev libpcre3:i386 libpcre3-dev:i386 libtesseract-dev libx11-dev:i386 libx11-dev gcc-multilib libc6-dev:i386 build-essential g++-multilib libtemplate-plugin-xml-perl libxml2-dev libxml2-dev:i386 libxml2:i386 libstdc++6:i386 libmariadb-dev-compat:i386 libmariadb-dev:i386
     apt-get install -y libdb++-dev:i386 libdb-dev:i386 libdb5.3:i386 libdb5.3++:i386 libdb5.3++-dev:i386 libdb5.3-dbg:i386 libdb5.3-dev:i386
     apt-get install -y libdb++-dev libdb-dev libdb5.3 libdb5.3++ libdb5.3++-dev libdb5.3-dbg libdb5.3-dev
