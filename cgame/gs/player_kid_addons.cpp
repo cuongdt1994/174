@@ -13,7 +13,6 @@
 #include "public_quest.h"
 #include "luamanager.h"
 #include "player_kid_addons.h"
-#include "emulate_settings.h"
 #include <glog.h>
 
 void gplayer_kid_addons::GenerateKidsAddons(int roleid)
@@ -53,17 +52,9 @@ void gplayer_kid_addons::GenerateKidsAddons(int roleid)
 		if(addons[i].pos == -1)
 			continue;
 
-		int count = addons[i].addons_count;
-		if (count > 8) count = 8;
-
-		for (int j = 0; j < count; j++)
+		for (int j = 0; j < addons[i].addons_count; j++)
 		{
 			int addon_pos = addons[i].addons_pos[j];
-			if (addon_pos < 0 || addon_pos >= 64)
-			{
-				GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: addon_pos %d out of range", addon_pos);
-				continue;
-			}
 			addon_data new_data;
 			if (!world_manager::GetDataMan().generate_addon(pCfg->reward[addon_pos].addon_id, new_data))
 			{
@@ -196,18 +187,6 @@ void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int addon_pos, int pos)
 		return;
 	}
 
-	if (pos < 0 || pos >= 6)
-	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: pos %d out of range", pos);
-		return;
-	}
-
-	if (addon_pos < 0 || addon_pos >= 64)
-	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: addon_pos %d out of range", addon_pos);
-		return;
-	}
-
 	const int IDXS[] = {6878, 6977, 6979, 6978, 6980, 6981};
 	DATA_TYPE dt;
 	KID_LEVEL_REWARD_CONFIG *pCfg = (KID_LEVEL_REWARD_CONFIG *)world_manager::GetDataMan().get_data_ptr(IDXS[pos], ID_SPACE_CONFIG, dt);
@@ -225,11 +204,6 @@ void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int addon_pos, int pos)
 	{
 		if (addons[i].pos == pos)
 		{
-			if (addons[i].addons_count >= 8)
-			{
-				GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: addons_count at max for pos %d", pos);
-				break;
-			}
 			addons[i].addons_pos[addons[i].addons_count] = addon_pos;
 			addons[i].addons_count++;
 			break;
@@ -278,11 +252,13 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 	int currentl = pImp->GetKid()->GetCelestial(pos)->level;
 	int newl = currentl + level;
 
-	if (currentl < 0 || newl > gplayer_kid::MAX_KID_LEVEL)
+	if (currentl < 0 || newl >= 150)
 	{
 		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: invalid level");
 		return;
 	}
+
+
 
 	int totalmoneycost = 0;
 	for (int i = currentl; i < newl; ++i)
@@ -290,17 +266,14 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 		totalmoneycost += pCfg->exp[i];
 	}
 
-	if (!EmulateSettings::GetInstance()->GetKidFreeCelestialLevel())
+	if (pImp->GetAllMoney() < totalmoneycost)
 	{
-		if (pImp->GetAllMoney() < totalmoneycost)
-		{
-			pImp->_runner->error_message(S2C::ERR_OUT_OF_FUND);
-			return;
-		}
-
-		pImp->SpendAllMoney(totalmoneycost, true);
-		pImp->SelfPlayerMoney();
+		pImp->_runner->error_message(S2C::ERR_OUT_OF_FUND);
+		return;
 	}
+
+	pImp->SpendAllMoney(totalmoneycost, true);
+	pImp->SelfPlayerMoney();
 
 	int set_new_level = pImp->GetKid()->GetCelestial(pos)->level + level;
 	if(set_new_level > gplayer_kid::MAX_KID_LEVEL)
@@ -337,11 +310,6 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 			return;
 		}
 
-		const unsigned int required_rank[] = {9, 90, 900, 1000, 2000, 4000, 8000, 16000, 32000};
-		const int MAX_RANK = (int)(sizeof(required_rank) / sizeof(required_rank[0]));
-		const unsigned int item_id[] = {67573, 67577, 67585, 67581, 67589, 67593};
-		const int MAX_ITEM_TYPE = (int)(sizeof(item_id) / sizeof(item_id[0]));
-
 		for (unsigned int i = 0; i < gplayer_kid::MAX_CELESTIAL; i++)
 		{
 			int idx = pImp->GetKid()->GetCelestial(i)->idx;
@@ -351,11 +319,13 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 				int rank_level = pImp->GetKid()->GetCelestial(i)->rank;
 				int count_itens = 0;
 
+				unsigned int required_rank[] = {9, 90, 900, 1000, 2000, 4000, 8000, 16000, 32000};
+				unsigned int item_id[] = {67573, 67577, 67585, 67581, 67589, 67593};
+
 				if (rank_level > 0)
 				{
-					int safe_rank = rank_level < MAX_RANK ? rank_level : MAX_RANK;
 					unsigned int total_exp = pImp->GetKid()->GetCelestial(i)->exp;
-					for (int j = 0; j < safe_rank; j++)
+					for (int j = 0; j < rank_level; j++)
 					{
 						total_exp += required_rank[j];
 					}
@@ -379,15 +349,8 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 
 						if (count_itens > 0)
 						{
-							if (config2->kid_debri_type < 0 || config2->kid_debri_type >= MAX_ITEM_TYPE)
-							{
-								GLog::log(GLOG_ERR, "gplayer_kid_addons::SetKidsWipe: kid_debri_type %d out of range", config2->kid_debri_type);
-							}
-							else
-							{
-								pImp->InvPlayerGiveItem(item_id[config2->kid_debri_type], count_itens);
-							}
-						}
+							pImp->InvPlayerGiveItem(item_id[config2->kid_debri_type], count_itens);
+						}						
 					}
 				}
 			}
