@@ -71,6 +71,8 @@ setup_env() {
     pushd "$SKILL" > /dev/null
     rm -f mk
     ln -sf ~/share/mk/ .
+	ln -sf ~/share/io/ .
+	ln -sf ~/share/common/ .
     popd > /dev/null
 
     print_msg "Setting up iolib"
