@@ -32738,7 +32738,7 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		return false;		
 	}
 
-	if(type > 2) type = 0;	
+	if(type > 2) type = 0;
 
 	// Init
 	_kid.SetNameLength(name_len);
@@ -32750,10 +32750,20 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 
 	_kid.SetType(type);
 
+	// Activate first awakening day — without this, client receives
+	// enabled_day=0 and never opens the awakening interface
+	_kid.SetBlockDay(false);
+	_kid.SetAwakening(true);
+	_kid.SetAwakeningDayCount(1);
+	_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
+	_kid.SetCheckDay(true);
+
 	_runner->kid_created_info_dialog();
 
-	KidAwakeningNameProtocol ();
-	KidAwakeningInfoProtocol ();
+	KidAwakeningNameProtocol();
+	KidAwakeningInfoProtocol();
+	KidAwakeningPercProtocol();
+	KidAwakeningCashProtocol();
 	return true;
 }
 
