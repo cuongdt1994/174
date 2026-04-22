@@ -73,8 +73,6 @@ setup_env() {
     ln -sf ~/share/mk/ .
     ln -sf ~/share/io/ .
     ln -sf ~/share/common/ .
-    rm -f skill/attack.h
-    ln -sf "../../$GS/gs/attack.h" skill/attack.h
     popd > /dev/null
 
     print_msg "Setting up iolib"
@@ -197,8 +195,6 @@ build_gslib() {
 }
 
 build_skill() {
-    rm -f "$SKILL/skill/attack.h"
-    ln -sf "../../$GS/gs/attack.h" "$SKILL/skill/attack.h"
     build_dir "$SKILL/skill"
     build_dir "$SKILL"
 }
