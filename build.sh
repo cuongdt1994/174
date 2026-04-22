@@ -22,7 +22,7 @@ install_deps() {
     dpkg --add-architecture i386
     apt-get update -y && apt-get upgrade -y
 
-    apt-get install -y mc screen htop openjdk-11-jre mono-complete exim4 p7zip-full p7zip-rar libpcap-dev curl wget ipset net-tools tzdata ntpdate mariadb-server mariadb-client
+    apt-get install -y mc screen htop openjdk-11-jre mono-complete exim4 p7zip-full libpcap-dev curl wget ipset net-tools tzdata ntpdate mariadb-server mariadb-client
     apt-get install -y make gcc g++ libssl-dev:i386 libssl-dev libcrypto++-dev libpcre3 libpcre3-dev libpcre3:i386 libpcre3-dev:i386 libtesseract-dev libx11-dev:i386 libx11-dev gcc-multilib libc6-dev:i386 build-essential g++-multilib libtemplate-plugin-xml-perl libxml2-dev libxml2-dev:i386 libxml2:i386 libstdc++6:i386 libmariadb-dev-compat:i386 libmariadb-dev:i386
     apt-get install -y libdb++-dev:i386 libdb-dev:i386 libdb5.3:i386 libdb5.3++:i386 libdb5.3++-dev:i386 libdb5.3-dbg:i386 libdb5.3-dev:i386
     apt-get install -y libdb++-dev libdb-dev libdb5.3 libdb5.3++ libdb5.3++-dev libdb5.3-dbg libdb5.3-dev
@@ -255,6 +255,12 @@ install_protect_func() {
     print_msg "Success"
 }
 
+clean_obj_files() {
+	print_msg "Cleaning up object (.o) files"
+	find "$GS" "$NET" "$SKILL" iolib -type f -name "*.o" -delete 2>/dev/null
+	print_msg "Cleanup complete"
+}
+
 case "$1" in
     deliver|deliveryd)
         # Build cnet daemons (gauthd, logservice, glinkd, etc.)
@@ -276,6 +282,7 @@ case "$1" in
         build_skill          # libskill.a → iolib/libskill.a (symlink)
         build_gslib          # cnet libs + cgame/libcm + libgs extraction
         build_game           # cgame/Makefile all → gs binary
+		clean_obj_files
         ;;
     all)
         print_msg "Starting Build All process"
@@ -295,6 +302,7 @@ case "$1" in
         # 5. Deploy
         install_func
         install_protect_func
+		clean_obj_files
         ;;
     install)
         install_func
@@ -302,6 +310,9 @@ case "$1" in
         ;;
     deps)
         install_deps
+        ;;
+	clean)
+		clean_obj_files
         ;;
     *)
         echo "Invalid command!"
