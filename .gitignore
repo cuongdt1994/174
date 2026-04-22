@@ -1,3 +1,40 @@
-*.so
-*.a
+# build objects
 *.o
+*.a
+*.so
+*.so.*
+*.d
+*.obj
+*.lib
+*.dll
+*.exe
+*.pdb
+*.ilk
+
+# build outputs / binaries
+cgame/gs/gs
+cnet/gacd/gacd
+cnet/gamedbd/gamedbd
+cnet/gauthd/gauthd
+cnet/gdeliveryd/gdeliveryd
+cnet/gfaction/gfactiond
+cnet/glinkd/glinkd
+cnet/logservice/logservice
+cnet/uniquenamed/uniquenamed
+cskill/lua/src/lua
+cskill/lua/src/luac
+share/lua/src/lua
+share/lua/src/luac
+
+# local editor/cache
+.cache/
+.vscode/
+.vscode-server/
+
+# linux home junk accidentally copied
+.bash_history
+.bashrc
+.profile
+.gitconfig
+.wget-hsts
+.dotnet/
