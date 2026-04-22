@@ -52,7 +52,7 @@ STUBOBJS += ./skills/stubs36.o
 
 CLEAN += ./skills/*.o 
 
-INCLUDES += -I./skill -I./header -I./header/include -I./lua/src -I./lua/LuaBridge -I../../cgame/gs
+INCLUDES += -I./skill -I./header -I./header/include -I./lua/src -I./lua/LuaBridge
 DEFINES	+=-D_SKILL_SERVER 
 CFLAGS += -fPIC
 
