@@ -196,6 +196,7 @@ build_gslib() {
 
 build_skill() {
     build_dir "$SKILL/skill"
+	build_dir "$SKILL"
 }
 
 # Build the game server binary.
