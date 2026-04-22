@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 GS=$(ls -d *game 2>/dev/null | head -n 1)
 NET=$(ls -d *net 2>/dev/null | head -n 1)
 SKILL=$(ls -d *skill 2>/dev/null | head -n 1)
@@ -44,6 +46,15 @@ build_dir() {
         echo "WARNING: Directory $dir not found, skipping."
     fi
 }
+
+require_file() {
+    local file=$1
+    if [ ! -f "$file" ]; then
+        echo "ERROR: Required file not found: $file"
+        exit 1
+    fi
+}
+
 
 setup_env() {
     print_msg "Setting up $NET"
@@ -185,6 +196,12 @@ build_gslib() {
     # ── Extract all iolib archives into cgame/libgs/{io,gs,db,sk,log}/ ──────────
     # cgame/Makefile "all" also does this via the gslib target, but doing it here
     # lets us catch missing archives early (before the long gs compile).
+    require_file "iolib/libgsPro2.a"
+    require_file "iolib/libgsio.a"
+    require_file "iolib/libdbCli.a"
+    require_file "iolib/libskill.a"
+    require_file "iolib/liblogCli.a"
+
     print_msg "Extracting iolib into $GS/libgs"
     mkdir -p "$GS/libgs/"{io,gs,db,sk,log}
     pushd "$GS/libgs" > /dev/null
@@ -193,7 +210,17 @@ build_gslib() {
 }
 
 build_skill() {
-    build_dir "$SKILL/skill"
+    if [ -d "$SKILL/skill" ]; then
+        print_msg "Building $SKILL/skill (libskill.a + libskill.so)"
+        pushd "$SKILL/skill" > /dev/null
+        make clean > /dev/null 2>&1 || true
+        make lib
+        make dlib
+        popd > /dev/null
+        require_file "$SKILL/skill/libskill.a"
+    else
+        echo "WARNING: Directory $SKILL/skill not found, skipping."
+    fi
 }
 
 # Build the game server binary.
@@ -203,7 +230,18 @@ build_skill() {
 #   solib:    builds libtask.so
 #   gs:       links everything (needs libcm.a, libonline.a, libgs/*.o, liblua.a, libTrace.a)
 build_game() {
-    build_dir "$GS"
+    if [ -d "$GS" ]; then
+        print_msg "Building $GS (sequential targets to avoid top-level -j races)"
+        pushd "$GS" > /dev/null
+        make clean > /dev/null 2>&1 || true
+        make lib
+        make collision
+        make solib
+        make gs
+        popd > /dev/null
+    else
+        echo "WARNING: Directory $GS not found, skipping."
+    fi
 }
 
 build_deliver() {
