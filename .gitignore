@@ -1,4 +1,3 @@
-# build objects
 *.o
 *.a
 *.so
