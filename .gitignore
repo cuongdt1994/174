@@ -11,21 +11,6 @@
 *.pdb
 *.ilk
 
-# build outputs / binaries
-cgame/gs/gs
-cnet/gacd/gacd
-cnet/gamedbd/gamedbd
-cnet/gauthd/gauthd
-cnet/gdeliveryd/gdeliveryd
-cnet/gfaction/gfactiond
-cnet/glinkd/glinkd
-cnet/logservice/logservice
-cnet/uniquenamed/uniquenamed
-cskill/lua/src/lua
-cskill/lua/src/luac
-share/lua/src/lua
-share/lua/src/luac
-
 # local editor/cache
 .cache/
 .vscode/
