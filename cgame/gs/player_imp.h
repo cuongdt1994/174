@@ -1529,6 +1529,7 @@ public:
 	virtual void reward_interface_notify(unsigned int mode, unsigned int value_index, int count);
 	virtual void activity_event_spend_cash(unsigned int roleid, unsigned int cash);
 	virtual void activity_event_shop(int count, char unk6, unsigned int * values);
+	virtual void activity_event_buy_bar(unsigned int time_end, unsigned int silver_used, int awards_pos);
 
 	// Memorial Celestial
 	virtual void celestial_memorial_info(bool type, unsigned int size, const void * info,unsigned int size2, const void * info2, unsigned int size3, const void * info3);
