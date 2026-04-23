@@ -700,6 +700,8 @@ gplayer_imp::PlayerEnterWorld()
 	if (EmulateSettings::GetInstance()->GetEnabledChild())
 	{
 		KidAwakeningInfoProtocol ();
+		KidAwakeningCashProtocol ();
+		KidAwakeningPercProtocol ();
 		KidCelestialInfoProtocol (0);
 		KidCelestialActivityProtocol ();
 		_kid_addon.UpdateKidsAddonsProtocol(_parent->ID.id);
@@ -33197,6 +33199,9 @@ gplayer_imp::KidAwakeningNewDay3()
 		if (!config2 || data2 != DT_KID_PROPERTY_CONFIG)
 			return false;
 
+		if (config2->kid_debri_type < 0 || config2->kid_debri_type >= (int)gplayer_kid::MAX_CELESTIAL)
+			return false;
+
 		if (_kid.GetCelestial(config2->kid_debri_type)->idx > 0)
 		{
 			if (_kid.GetCelestial(config2->kid_debri_type)->idx < idx_item)
@@ -33246,7 +33251,7 @@ gplayer_imp::KidCelestialActivityProtocol()
 bool 
 gplayer_imp::KidCelestialActivity(int val1, int val2, int val3)
 {
-	if(val1 < 0 && val2 > 5) return false;
+	if(val1 < 0 || val1 >= (int)gplayer_kid::MAX_CELESTIAL) return false;
 
 	_kid.SetActivity(val1, -1);
 	KidCelestialActivityProtocol();
@@ -33388,22 +33393,18 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	{
 		if (configskill->skill[i].id > 0)
 		{
+			int best_level = -1;
 			for (unsigned int j = 0; j < 10; j++)
 			{
-				if(level >= configskill->skill[i].level[j])
-				{
-					_skills_shape[i].id = configskill->skill[i].id;
-					_skills_shape[i].level = j;
-				}
+				if (level >= configskill->skill[i].level[j])
+					best_level = (int)j;
 			}
-		}
-	}
-
-	for (unsigned int i = 0; i < 16; i++)
-	{
-		if (_skills_shape[i].id > 0)
-		{
-			skills_count++;
+			if (best_level >= 0)
+			{
+				_skills_shape[skills_count].id = configskill->skill[i].id;
+				_skills_shape[skills_count].level = best_level;
+				skills_count++;
+			}
 		}
 	}
 
