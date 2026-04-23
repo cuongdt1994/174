@@ -15,6 +15,5 @@ KidManager* KidManager::instance = NULL;
 void KidManager::Init()
 {
 	memset(this,0x00,sizeof(KidManager));
-				
 }
 
