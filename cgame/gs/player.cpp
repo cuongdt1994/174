@@ -5860,11 +5860,14 @@ gplayer_imp::OnHeartbeat(unsigned int tick)
 
 	if (_kid_transformation)
 	{
-		_kid_transformation_time--;
-
-		if(_kid_transformation_time <= 0)
+		if (!(_write_timer % 15))
 		{
-			KidCelestialTransformation(0);
+			_kid_transformation_time--;
+
+			if(_kid_transformation_time <= 0)
+			{
+				KidCelestialTransformation(0);
+			}
 		}
 	}
 	
@@ -33374,6 +33377,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	int skills_count = 0;
 	int slot = _kid.GetActivity()->active_slot;
+	if (slot < 0 || slot >= (int)gplayer_kid::MAX_CELESTIAL) return;
 	int idx = _kid.GetCelestial(slot)->idx;
 	int level = _kid.GetCelestial(slot)->level;
 	int now = g_timer.get_systime();
@@ -33397,9 +33401,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			for (unsigned int j = 0; j < 10; j++)
 			{
 				if (level >= configskill->skill[i].level[j])
-					best_level = (int)j;
+					best_level = (int)j + 1; // 1-based skill level
 			}
-			if (best_level >= 0)
+			if (best_level > 0)
 			{
 				_skills_shape[skills_count].id = configskill->skill[i].id;
 				_skills_shape[skills_count].level = best_level;
@@ -33431,10 +33435,24 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		}
 		SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 
-		_skill.AddFilterKidIncTransformation(obj_if, 2);
+		_skill.AddFilterKidIncTransformation(obj_if, 30);
+
+		// Add transformation skills to player's skill map so they can be executed
+		for (int i = 0; i < skills_count; i++)
+		{
+			if (_skills_shape[i].id > 0)
+				_skill.ActivateDynSkill((unsigned int)_skills_shape[i].id, 1);
+		}
 	}
 	else
 	{
+		// Remove transformation skills from skill map before ending
+		for (int i = 0; i < skills_count; i++)
+		{
+			if (_skills_shape[i].id > 0)
+				_skill.DeactivateDynSkill((unsigned int)_skills_shape[i].id, 1);
+		}
+
 		if(_kid_transformation_time > 0)
 		{
 			_skill.AddFilterKidDecTransformation(obj_if, 1800);

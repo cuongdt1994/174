@@ -361,7 +361,7 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 						pImp->GetKid()->SetCelestial(i, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, newexp, idx);
 						pImp->KidCelestialInfoProtocol(0);
 
-						if (count_itens > 0)
+						if (count_itens > 0 && config2->kid_debri_type >= 0 && config2->kid_debri_type < 6)
 						{
 							pImp->InvPlayerGiveItem(item_id[config2->kid_debri_type], count_itens);
 						}						

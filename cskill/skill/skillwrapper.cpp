@@ -1596,10 +1596,7 @@ void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int bu
 		PlayerWrapper		w_player(player, 0, 0, 0, 0);
 		w_player.InsertTeamVisibleState(HSTATE_530, true);
 
-		w_player.SetProbability (1.0 * 100);
-		w_player.SetCleardebuff(1);
-
-		// Stat boost during transformation (mirrors dec-transformation penalties)
+		// SetTime must come before any SetXxx filter calls
 		w_player.SetTime(1000.0f * buff_period);
 		w_player.SetProbability(100.0);
 		w_player.SetRatio(1.5f);
@@ -1614,6 +1611,10 @@ void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int bu
 		w_player.SetInchp(1);
 		w_player.SetRatio(1.5f);
 		w_player.SetIronshield(1);
+
+		// Clear debuffs after stat boosts
+		w_player.SetProbability(1.0 * 100);
+		w_player.SetCleardebuff(1);
 	}
 }
 
