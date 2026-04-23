@@ -1595,9 +1595,25 @@ void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int bu
 	{
 		PlayerWrapper		w_player(player, 0, 0, 0, 0);
 		w_player.InsertTeamVisibleState(HSTATE_530, true);
-		
+
 		w_player.SetProbability (1.0 * 100);
 		w_player.SetCleardebuff(1);
+
+		// Stat boost during transformation (mirrors dec-transformation penalties)
+		w_player.SetTime(1000.0f * buff_period);
+		w_player.SetProbability(100.0);
+		w_player.SetRatio(1.5f);
+		w_player.SetGiant(1);
+		w_player.SetRatio(1.5f);
+		w_player.SetBlessmagic(1);
+		w_player.SetRatio(1.5f);
+		w_player.SetStoneskin(1);
+		w_player.SetRatio(1.5f);
+		w_player.SetIncresist(1);
+		w_player.SetRatio(1.5f);
+		w_player.SetInchp(1);
+		w_player.SetRatio(1.5f);
+		w_player.SetIronshield(1);
 	}
 }
 
