@@ -53,6 +53,8 @@ setup_skill_env() {
     ln -sf ~/share/lua/ .
     ln -sf ~/share/io/ .
     ln -sf ~/share/common/ .
+    ln -sf ../"$GS"/gs/attack.h header/attack.h
+    ln -sf ../"$GS"/gs/obj_interface.h header/obj_interface.h
     popd > /dev/null
 }
 
@@ -79,8 +81,6 @@ setup_env() {
     popd > /dev/null
 
     setup_skill_env
-    pushd "$SKILL" > /dev/null
-    popd > /dev/null
 
     print_msg "Setting up iolib"
     mkdir -p iolib/inc
