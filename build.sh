@@ -73,6 +73,7 @@ setup_env() {
     ln -sf ~/share/mk/ .
     ln -sf ~/share/io/ .
     ln -sf ~/share/common/ .
+	ln -sf ../../"$GS"/gs/attack.h header/attack.h
     popd > /dev/null
 
     print_msg "Setting up iolib"
