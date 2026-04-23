@@ -22326,8 +22326,7 @@ void gplayer_imp::PlayerRandMallPay(int eid)
 		_runner->player_cash(GetMallCash());
 		//�����Ѽ�¼���͸�gdelivery,�������ӿ��Ը������ߵĺ������������ѻ���
 		GMSV::SendRefCashUsed(_parent->ID.id, cash_used, _basic.level);
-		_runner->activity_event_buy_bar(GetKidAddons()->GetTimeEnd(), GetKidAddons()->GetCashHistoryUsed(), GetKidAddons()->GetAwardsPos());
-
+		
 
 		GLog::log(GLOG_INFO,"�û�%d������̳�%d����%d����Ʒ%d������%d��ʣ��%d��",self_id,eid,ocount,id,cash_used,GetMallCash());
 

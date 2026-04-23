@@ -5006,15 +5006,6 @@ void gplayer_dispatcher::activity_event_shop(int count, char unk6, unsigned int 
 	send_ls_msg(pPlayer, _tbuf);
 }
 
-void gplayer_dispatcher::activity_event_buy_bar(unsigned int time_end, unsigned int silver_used, int awards_pos)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::activity_event_buy_bar>::From(_tbuf, time_end, silver_used, awards_pos);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
 // Memorial Celestial
 
 void gplayer_dispatcher::celestial_memorial_info(bool type, unsigned int size, const void * info,unsigned int size2, const void * info2, unsigned int size3, const void * info3)
