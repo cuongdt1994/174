@@ -5222,7 +5222,8 @@ public:	//lgc
 	bool SetLockCrystal(unsigned int idx_inv, int lock);
 	bool SetDevourCrystal(unsigned int count_cystals, int * pos_crystal_consum);
 
-	void RefreshInventoryNewArmorEnter(bool trade = false);
+	void RefreshInventoryNewArmorEnter(bool trade = false, bool equip = false);
+	void UpdateInventoryType(item_list& itemList, int inventoryType, bool refreshEquipment);
 
 	// Novas cargas do mercenário
 	virtual void EnhanceChargeMerc(int val); 

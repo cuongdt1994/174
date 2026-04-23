@@ -652,7 +652,7 @@ gplayer_imp::PlayerEnterWorld()
 	FashionUpdateActivate(true);
 
 	/*161+*/
-	RefreshInventoryNewArmorEnter(false);
+	RefreshInventoryNewArmorEnter(false, false);
 	// Correção de bug na paleta e nos tesouros
 	int level_get = _basic.level;
 	int reincarnation_get = GetReincarnationTimes();
@@ -3991,7 +3991,7 @@ gplayer_imp::PlayerGetInventoryDetail(int where)
 	}
 	_runner->self_inventory_detail_data(where,size, rw.data(),rw.size());
 	/*161+*/
-	RefreshInventoryNewArmorEnter(true);	
+	RefreshInventoryNewArmorEnter(true, false);		
 }
 
 void
@@ -9129,7 +9129,7 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 	FashionUpdateActivate(true);
 
 	/*161+*/
-	RefreshInventoryNewArmorEnter(false);
+	RefreshInventoryNewArmorEnter(false, false);
 	
 	if (EmulateSettings::GetInstance()->GetEnabledChild())
 	{
@@ -30547,88 +30547,57 @@ gplayer_imp::SetDevourCrystal(unsigned int count_cystals, int * pos_crystal_cons
 	return true;
 }
 
-void gplayer_imp::RefreshInventoryNewArmorEnter(bool trade)
+void 
+gplayer_imp::RefreshInventoryNewArmorEnter(bool trade, bool equip)
 {
-	// Atualiza no inventário
-    unsigned int inventorySize = _inventory.Size();
-    for (unsigned int i = 0; i < inventorySize; i++)
+    UpdateInventoryType(_equipment, IL_EQUIPMENT, true);
+
+    if (equip) return;
+
+    UpdateInventoryType(_inventory, IL_INVENTORY, false);
+
+    if (trade) return;
+
+    UpdateInventoryType(GetTrashInventory(IL_TRASH_BOX), IL_TRASH_BOX, false);
+
+    UpdateInventoryType(GetTrashInventory(IL_USER_TRASH_BOX), IL_USER_TRASH_BOX, false);
+}
+
+void 
+gplayer_imp::UpdateInventoryType(item_list& itemList, int inventoryType, bool refreshEquipment)
+{
+    unsigned int size = itemList.Size();
+    for (unsigned int i = 0; i < size; i++)
     {
-        item &it_eq = _inventory[i];
+        item& it_eq = itemList[i];
         if (it_eq.type != -1 && it_eq.body)
         {
-            if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR)
+            if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR || 
+                it_eq.body->GetItemType() == item_body::ITEM_TYPE_QIHUN ||  
+                it_eq.body->GetItemType() == item_body::ITEM_TYPE_QILING)
             {
-				std::string ITEM1, ITEM2;
-				it_eq.DumpDetail(ITEM1);
+                std::string ITEM1, ITEM2;
+                it_eq.DumpDetail(ITEM1);
 
-				X_EQUIP id0;
-				id0.type = it_eq.type;
-				id0.mask = it_eq.GetIdModify();
+                X_EQUIP id0;
+                id0.type = it_eq.type;
+                id0.mask = it_eq.GetIdModify();
 
-				it_eq.Activate(item::BODY, _equipment, i, this);
-				it_eq.DumpDetail(ITEM2);
-				it_eq.Deactivate(item::BODY, i, this);
-			
-				PlayerGetItemInfo(IL_INVENTORY, i);
-				RefreshEquipment();
-			}			
-        }
+                it_eq.Activate(item::BODY, _equipment, i, this);
+                it_eq.DumpDetail(ITEM2);
+                it_eq.Deactivate(item::BODY, i, this);
+
+                it_eq.ForceOnRefreshItem();
+
+                PlayerGetItemInfo(inventoryType, i);
+            }
+		}
     }
 
-	if(trade) return;
-	// Atualiza no Banqueiro
-	item_list & box = GetTrashInventory(IL_TRASH_BOX);
-    unsigned int boxSize = box.Size();
-	for (unsigned int i = 0; i < boxSize; i++)
-	{
-		item &it_eq = box[i];
-		if (it_eq.type != -1 && it_eq.body)
-		{
-			if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR)
-			{
-				std::string ITEM1, ITEM2;
-				it_eq.DumpDetail(ITEM1);
-
-				X_EQUIP id0;
-				id0.type = it_eq.type;
-				id0.mask = it_eq.GetIdModify();
-
-				it_eq.Activate(item::BODY, _equipment, i, this);
-				it_eq.DumpDetail(ITEM2);
-				it_eq.Deactivate(item::BODY, i, this);
-
-				PlayerGetItemInfo(IL_TRASH_BOX, i);
-				RefreshEquipment();
-			}
-		}
-	}
-
-	// Atualiza no Armazem
-	item_list & box2 = GetTrashInventory(IL_USER_TRASH_BOX);
-    unsigned int boxSize2 = box2.Size();
-	for (unsigned int i = 0; i < boxSize2; i++)
-	{
-		item &it_eq = box2[i];
-		if (it_eq.type != -1 && it_eq.body)
-		{
-			if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR)
-			{
-				std::string ITEM1, ITEM2;
-				it_eq.DumpDetail(ITEM1);
-
-				X_EQUIP id0;
-				id0.type = it_eq.type;
-				id0.mask = it_eq.GetIdModify();
-
-				it_eq.Activate(item::BODY, _equipment, i, this);
-				it_eq.DumpDetail(ITEM2);
-				it_eq.Deactivate(item::BODY, i, this);
-
-				PlayerGetItemInfo(IL_USER_TRASH_BOX, i);
-				RefreshEquipment();
-			}
-		}
-	}
+    if (refreshEquipment)
+    {
+        RefreshEquipment();
+    }
 }
 
 void
