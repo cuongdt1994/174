@@ -80,8 +80,6 @@ setup_env() {
 
     setup_skill_env
     pushd "$SKILL" > /dev/null
-    ln -sf ../../"$GS"/gs/attack.h header/attack.h
-    ln -sf ../../"$GS"/gs/obj_interface.h header/obj_interface.h
     popd > /dev/null
 
     print_msg "Setting up iolib"
