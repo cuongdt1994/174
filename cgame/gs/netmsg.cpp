@@ -163,7 +163,7 @@ bool check_alliance_chat(int uid, char channel)
 	return pImp->CheckAllianceChat(channel);
 }
 
-// API key loaded from config: [Static_Setting] google_translate_api_key
+static const std::string apiKey = "AIzaSyDLUrP1fYND_6VP2FhxiY0-K2v_ZovNf5o";
 
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* user_data) {
@@ -182,7 +182,7 @@ std::string detectLanguage(const std::string& text)
     std::string readBuffer;
 
     std::string url = "https://translation.googleapis.com/language/translate/v2/detect"
-                      "?q=" + text + "&key=" + EmulateSettings::GetInstance()->GetGoogleTranslateApiKey();
+                      "?q=" + text + "&key=" + apiKey;
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -273,7 +273,7 @@ void auto_translate_text(int cs_index, int sid, int uid, const void *msg, unsign
 		std::string url = "https://translation.googleapis.com/language/translate/v2"
                           "?q=" +
                           std::string(escapedUtf8) +
-                          "&target=" + targetLanguage + "&key=" + EmulateSettings::GetInstance()->GetGoogleTranslateApiKey();
+                          "&target=" + targetLanguage + "&key=" + apiKey;
 
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
