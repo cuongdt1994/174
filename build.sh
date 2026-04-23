@@ -45,6 +45,17 @@ build_dir() {
     fi
 }
 
+setup_skill_env() {
+    print_msg "Setting up $SKILL"
+    pushd "$SKILL" > /dev/null
+    rm -f mk lua io common
+    ln -sf ~/share/mk/ .
+    ln -sf ~/share/lua/ .
+    ln -sf ~/share/io/ .
+    ln -sf ~/share/common/ .
+    popd > /dev/null
+}
+
 setup_env() {
     print_msg "Setting up $NET"
     pushd "$NET" > /dev/null
@@ -67,14 +78,10 @@ setup_env() {
     ln -sf lua/src/liblua.a liblua.a
     popd > /dev/null
 
-    print_msg "Setting up $SKILL"
+    setup_skill_env
     pushd "$SKILL" > /dev/null
-    rm -f mk
-    ln -sf ~/share/mk/ .
-    ln -sf ~/share/io/ .
-    ln -sf ~/share/common/ .
-	ln -sf ../../"$GS"/gs/attack.h header/attack.h
-	ln -sf ../../"$GS"/gs/obj_interface.h header/obj_interface.h
+    ln -sf ../../"$GS"/gs/attack.h header/attack.h
+    ln -sf ../../"$GS"/gs/obj_interface.h header/obj_interface.h
     popd > /dev/null
 
     print_msg "Setting up iolib"
@@ -258,9 +265,9 @@ install_protect_func() {
 }
 
 clean_obj_files() {
-	print_msg "Cleaning up object (.o) files"
-	find "$GS" "$NET" "$SKILL" iolib -type f -name "*.o" -delete 2>/dev/null
-	print_msg "Cleanup complete"
+    print_msg "Cleaning up object (.o) files"
+    find "$GS" "$NET" "$SKILL" iolib -type f -name "*.o" -delete 2>/dev/null
+    print_msg "Cleanup complete"
 }
 
 case "$1" in
@@ -272,19 +279,20 @@ case "$1" in
         ;;
     skill)
         # Build cskill shared library
+        setup_skill_env
         build_lua "$SKILL"
         build_skill
         ;;
     gs)
         # Build game server (cgame/gs).
         # Requires: lua, skill (libskill.a for iolib), and all cnet libs.
-		setup_env
+        setup_env
         build_lua "$NET"
         build_lua "$SKILL"
         build_skill          # libskill.a → iolib/libskill.a (symlink)
         build_gslib          # cnet libs + cgame/libcm + libgs extraction
         build_game           # cgame/Makefile all → gs binary
-		clean_obj_files
+        clean_obj_files
         ;;
     all)
         print_msg "Starting Build All process"
@@ -304,7 +312,7 @@ case "$1" in
         # 5. Deploy
         install_func
         install_protect_func
-		clean_obj_files
+        clean_obj_files
         ;;
     install)
         install_func
@@ -313,8 +321,8 @@ case "$1" in
     deps)
         install_deps
         ;;
-	clean)
-		clean_obj_files
+    clean)
+        clean_obj_files
         ;;
     *)
         echo "Invalid command!"
