@@ -30587,7 +30587,7 @@ gplayer_imp::UpdateInventoryType(item_list& itemList, int inventoryType, bool re
                 it_eq.DumpDetail(ITEM2);
                 it_eq.Deactivate(item::BODY, i, this);
 
-                it_eq.ForceOnRefreshItem();
+                //it_eq.ForceOnRefreshItem();
 
                 PlayerGetItemInfo(inventoryType, i);
             }
