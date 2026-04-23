@@ -705,15 +705,10 @@ gplayer_imp::PlayerEnterWorld()
 		_runner->kid_system_points_notify(KidGetSuitePoints());
 	}
 
-	PersonGlobalValueEnterWorld();
-
 	if (EmulateSettings::GetInstance()->GetEnabledChild())
 	{
 		_kid_addon.SetKidsWipe(_parent->ID.id);
-	}
-
-	EnterWorldResets();
-	EnterWorldCheckCodexTitles();	
+	}	
 
 }
 
@@ -33546,7 +33541,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		ChangeShape(0);
 		_runner->kid_celestial_transformation(0, _parent->ID.id, 0, 0);
 		_runner->player_world_speak_info((char)0, (char)1, (char)1, skills_count, (int*)_skills_shape);
-		obj_if.RemoveTeamVisibleState(HSTATE_530);
+		obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
 		return;
 	}
 		
