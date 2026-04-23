@@ -9340,7 +9340,7 @@ struct COURSE_ESSENCE
 	int		level;
 	char	file_icon[128];
 	int		unk3;
-	int		type;
+	int		course_mask;
 	int		score[3];
 	unsigned int		cost;
 	int		unk9;

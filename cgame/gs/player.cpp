@@ -25355,6 +25355,35 @@ bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 	return res;
 }
 
+bool gplayer_imp::SpendTrashBoxItem2(int where, int inv, int count)
+{
+	bool res = false;
+	
+	if ( inv >= 0 && count > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
+	{
+		if (inv >= 0)
+		{
+			item it = GetTrashInventory(where)[inv];
+			if(it.count >= count)
+			{
+				UpdateMallConsumptionDestroying(it.type, it.proc_type, count);
+				GetTrashInventory(where).DecAmount(inv, count);
+				_runner->player_drop_item(where,inv,it.type,count,S2C::DROP_TYPE_PRODUCE);
+				res = true;
+			}
+			else
+			{
+				UpdateMallConsumptionDestroying(it.type, it.proc_type, it.count);
+				GetTrashInventory(where).DecAmount(inv, it.count);
+				_runner->player_drop_item(gplayer_imp::IL_INVENTORY,inv,it.type,it.count,S2C::DROP_TYPE_PRODUCE);
+				res = true;
+			}
+		}
+	}
+	
+	return res;
+}
+
 void gplayer_imp::SetBodyScale(float scale)
 {
 	if ( scale >= 0.0 )

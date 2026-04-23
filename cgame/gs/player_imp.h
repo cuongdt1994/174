@@ -5128,6 +5128,7 @@ public:	//lgc
 	bool GetTrashBoxItemByTable(int where, int * table, int & id, int & pos);
 	bool GiveTrashBoxItem(int where, int id, int count=1, int time=0, int proctype=-1);
 	bool SpendTrashBoxItem(int where, int id, int count=1);
+	bool SpendTrashBoxItem2(int where, int inv, int count);
 
 	// Easy Produce
 	bool ProduceEasyItem(unsigned int recipe_id, int times);
