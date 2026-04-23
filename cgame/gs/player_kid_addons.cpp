@@ -21,14 +21,14 @@ void gplayer_kid_addons::GenerateKidsAddons(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
 		return;
 	}
 
@@ -72,14 +72,14 @@ void gplayer_kid_addons::ActivateKidsAddons(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::ActivateKidsAddons: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::ActivateKidsAddons: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
 		return;
 	}
 
@@ -107,14 +107,14 @@ void gplayer_kid_addons::DeactivateKidsAddons(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::DeactivateKidsAddons: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::DeactivateKidsAddons: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
 		return;
 	}
 
@@ -142,14 +142,14 @@ void gplayer_kid_addons::UpdateKidsAddonsProtocol(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::UpdateKidsAddonsProtocol: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::UpdateKidsAddonsProtocol: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
 		return;
 	}
 
@@ -176,14 +176,14 @@ void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int addon_pos, int pos)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
 		return;
 	}
 
@@ -249,36 +249,16 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 		return;
 	}
 
-	// Kiểm tra pos hợp lệ
-	if (pos < 0 || pos >= (int)gplayer_kid::MAX_CELESTIAL)
-	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: invalid pos");
-		return;
-	}
-
-	// Thiên trì phải tồn tại (idx > 0) mới được nâng cấp
-	if (pImp->GetKid()->GetCelestial(pos)->idx <= 0)
-	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: celestial does not exist");
-		return;
-	}
-
 	int currentl = pImp->GetKid()->GetCelestial(pos)->level;
 	int newl = currentl + level;
 
-	if (currentl < 0 || level <= 0)
+	if (currentl < 0 || newl >= 150)
 	{
 		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: invalid level");
 		return;
 	}
 
-	// Clamp trước khi tính tiền để tránh out-of-bounds và tính đúng cost
-	if (newl > gplayer_kid::MAX_KID_LEVEL)
-		newl = gplayer_kid::MAX_KID_LEVEL;
 
-	// Nếu đã ở level tối đa, không làm gì
-	if (newl <= currentl)
-		return;
 
 	int totalmoneycost = 0;
 	for (int i = currentl; i < newl; ++i)
@@ -295,7 +275,13 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 	pImp->SpendAllMoney(totalmoneycost, true);
 	pImp->SelfPlayerMoney();
 
-	pImp->GetKid()->SetCelestial(pos, newl, pImp->GetKid()->GetCelestial(pos)->rank, pImp->GetKid()->GetCelestial(pos)->exp, pImp->GetKid()->GetCelestial(pos)->idx);
+	int set_new_level = pImp->GetKid()->GetCelestial(pos)->level + level;	
+	if(set_new_level > gplayer_kid::MAX_KID_LEVEL)
+	{
+		set_new_level = gplayer_kid::MAX_KID_LEVEL;
+	}	
+
+	pImp->GetKid()->SetCelestial(pos, set_new_level, pImp->GetKid()->GetCelestial(pos)->rank, pImp->GetKid()->GetCelestial(pos)->exp, pImp->GetKid()->GetCelestial(pos)->idx);
 	pImp->KidCelestialInfoProtocol(0);
 }
 
@@ -315,12 +301,15 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetKidsWipe: failed to get player imp");
 		return;
 	}
-
+	
 	if (kids_wipe == 0)
 	{
-		if(pImp->GetReincarnationTimes() < 1)
+		if(kids_wipe != 0)
+			return;
+		
+		if(pImp->GetReincarnationTimes () < 1)
 		{
-			kids_wipe = 1;
+			kids_wipe = 1;			
 			return;
 		}
 
@@ -361,7 +350,7 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 						pImp->GetKid()->SetCelestial(i, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, newexp, idx);
 						pImp->KidCelestialInfoProtocol(0);
 
-						if (count_itens > 0 && config2->kid_debri_type >= 0 && config2->kid_debri_type < 6)
+						if(count_itens > 0)
 						{
 							pImp->InvPlayerGiveItem(item_id[config2->kid_debri_type], count_itens);
 						}						
