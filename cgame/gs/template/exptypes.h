@@ -9354,26 +9354,22 @@ struct COURSE_ESSENCE
 // NEW 162 > 171
 ///////////////////////////////////////////////////////////////////////////////////////
 
-struct COURSE_SUITE_ESSENCE
+struct COURSE_SUITE_ESSENCE 
 {
+	unsigned int id;
+	namechar name[32];
 
-	unsigned int	id;							// ID
-	namechar		name[32];				// Name
-	
-	unsigned int		type_mask;
-	int		unk2;
+	int suite_mask; // Mask de Courses somados dÃ£o esse valor e ativa
+	int suite_condition;
 
-
-	struct
+	struct 
 	{
+		int bonus_require_count; // Quantos Courses precisam ser aplicados para liberar o bonus
+		int bonus_area_type; //??
+		int bonus_trigger_probability; // Probabilidade de divisÃ£o do bonus
+		int bonus_percent_add; // Quantos porcento de bonus aumenta no exp final ( o valor vem em int, mas precisa ser transformador em float, exemplo 15000 (150%))
 
-		int		max_count;
-		unsigned int		type;
-		int		unk6;
-		int		increase;
-
-	}bonus[3];
-		
+	}bonus_info[3];
 };
 
 
