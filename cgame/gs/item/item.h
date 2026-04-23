@@ -477,7 +477,8 @@ public:
 	inline bool GetDecomposeElfExp(unsigned int & exp, int & exp_level);
 	inline bool IsElfItemExist(int mask);
 	inline int DestroyElfItem(int mask, int equip_type);
-
+	inline void ForceOnRefreshItem();
+	
 	inline bool AddCampTokenExp(unsigned int exp);
 	inline bool GenerateNewPoint(unsigned int pos_line_key, int item_id_key_bonus, int parent_key_bonus);
 	inline bool ActivateAddonLineKey(unsigned int pos_line_key, int addon_line_key_pos);
@@ -883,6 +884,7 @@ public:
 	{
 		return 0;
 	}
+	virtual void ForceOnRefreshItem(){}
 
     virtual int MakeSlot(gactive_imp*, int& count, unsigned int material_id = 0, int material_count = 0) { return -1; }
 	virtual bool Sign(unsigned short color, const char * signature, unsigned int signature_len) { return false; }
@@ -1423,6 +1425,12 @@ inline short item::GetRefineLevel()
 {
 	if(body) return body->GetRefineLevel();
 	return -1;
+}
+
+inline void item::ForceOnRefreshItem()
+{
+	if(body) return body->ForceOnRefreshItem();
+	return;
 }
 
 inline short item::SetRefineLevel(short level)
