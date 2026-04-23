@@ -23,6 +23,7 @@ public:
 	unsigned int Add(unsigned int id , unsigned int count);
 	unsigned int Del(unsigned int id);
 	unsigned int GetCleanSlot();
+	unsigned int GetFreeSlotsCount();
 	void GetInfo( unsigned int & cnt , void * buf );
 	
 };

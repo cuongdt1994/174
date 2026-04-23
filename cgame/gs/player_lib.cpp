@@ -101,3 +101,13 @@ void gplayer_lib_items::GetInfo( unsigned int & cnt , void * buf )
 	cnt = Rebuild();
 	memcpy(buf,item, (MAX_LOT * sizeof(ITEM)) );
 }
+
+unsigned int gplayer_lib_items::GetFreeSlotsCount()
+{
+	unsigned int res = 0;
+	for(unsigned int i = 0; i < MAX_LOT; i++)
+	{
+		if ( !item[i].id ) res++;
+	}
+	return res;
+}
