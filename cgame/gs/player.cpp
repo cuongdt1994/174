@@ -6,6 +6,9 @@
 #include <iostream>
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdio>
+#include <stdlib.h>
 
 #include <common/protocol.h>
 #include "obj_interface.h"
@@ -642,12 +645,6 @@ gplayer_imp::PlayerEnterWorld()
 
 	_real_weapon_class = _cur_item.weapon_class;
 
-	/*176+*/
-	if(EmulateSettings::GetInstance()->GetEmulateVersion() >= 176)
-	{
-		ProtocolPortatilPicture();		
-	}
-
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
 
@@ -700,8 +697,6 @@ gplayer_imp::PlayerEnterWorld()
 	if (EmulateSettings::GetInstance()->GetEnabledChild())
 	{
 		KidAwakeningInfoProtocol ();
-		KidAwakeningCashProtocol ();
-		KidAwakeningPercProtocol ();
 		KidCelestialInfoProtocol (0);
 		KidCelestialActivityProtocol ();
 		_kid_addon.UpdateKidsAddonsProtocol(_parent->ID.id);
@@ -710,10 +705,16 @@ gplayer_imp::PlayerEnterWorld()
 		_runner->kid_system_points_notify(KidGetSuitePoints());
 	}
 
+	PersonGlobalValueEnterWorld();
+
 	if (EmulateSettings::GetInstance()->GetEnabledChild())
 	{
 		_kid_addon.SetKidsWipe(_parent->ID.id);
 	}
+
+	EnterWorldResets();
+	EnterWorldCheckCodexTitles();	
+
 }
 
 void
@@ -5851,16 +5852,19 @@ gplayer_imp::OnHeartbeat(unsigned int tick)
 		_inviting_tm.time = 0;
 	}
 
-	_charge_merc_time++;
-
-	if (_charge_merc_time >= 15)
+	if (!(_write_timer % 1))
 	{
-		ChargeMercHeartBeat();
+		_charge_merc_time++;
+
+		if (_charge_merc_time >= 15)
+		{
+			ChargeMercHeartBeat();
+		}
 	}
 
 	if (_kid_transformation)
 	{
-		if (!(_write_timer % 15))
+		if (!(_write_timer % 1))
 		{
 			_kid_transformation_time--;
 
@@ -9123,12 +9127,6 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 
 	SetAnecdotePoints();
 
-	/*176+*/
-	if(EmulateSettings::GetInstance()->GetEmulateVersion() >= 176)
-	{
-		ProtocolPortatilPicture();
-	}
-
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
 
@@ -9137,6 +9135,13 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 
 	/*161+*/
 	RefreshInventoryNewArmorEnter(false);
+	
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.ActivateKidsAddons(_parent->ID.id);
+	}
+
+	FixExpHeartBeat();
 }
 
 void 
@@ -9159,13 +9164,14 @@ gplayer_imp::PlayerLeaveServer()
 	}
 
 	DeactivateRepositoryAddons();
+	_kid_addon.DeactivateKidsAddons(_parent->ID.id);
+
 
 }
 
 void 
 gplayer_imp::PlayerLeaveWorld()
 {
-	LuaManager::GetInstance()->PlayerLeaveWorld(_parent->ID.id);
 
 	if(_carrier.npcid > 0)
 	LeaveCarrier(_carrier.npcid, _carrier.pos);
@@ -9210,6 +9216,12 @@ gplayer_imp::PlayerLeaveWorld()
 	if(world_manager::GetIsSoloTowerChallengeInstance())
 	{
 		PlayerLeaveSoloChallengeInstance();
+	}
+	LuaManager * lua = LuaManager::GetInstance();
+	lua->PlayerLeaveWorld(_parent->ID.id);
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.DeactivateKidsAddons(_parent->ID.id);
 	}
 }
 
@@ -10973,6 +10985,11 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
+	
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.ActivateKidsAddons(_parent->ID.id);
+	}
 
 }
 
@@ -14248,7 +14265,7 @@ gplayer_imp::ProduceItem3(const recipe_template & rt,int materials[16], int idxs
 	{
 		eq_refine_level = eq_it.body->GetRefineLevel();
 
-		if(eq_refine_level > 12 || eq_refine_level < 0) eq_refine_level = 0;
+		if(eq_refine_level > 12 || eq_refine_level <= 0) eq_refine_level = 0;
 		if(eq_refine_level > 0)
 		{
 			ASSERT(eq_refine_level <= 12);
@@ -14554,6 +14571,9 @@ gplayer_imp::ProduceItem3(const recipe_template & rt,int materials[16], int idxs
 	{
 		_runner->produce_null(rt.recipe_id);
 	}
+
+	/*161+*/
+	RefreshInventoryNewArmorEnter(true, false);
 	return true;
 }
 
@@ -21880,6 +21900,8 @@ void gplayer_imp::ReceiveRealmExp(int exp, int daily_exp)
 	// Pontos diários
 	if(daily_exp > 0)
 	{
+		if(daily_exp > 4000 && daily_exp < 0) return;
+
 		int resultrealm = _diary_exp + (int)(daily_exp * (1.0f + _realm_exp_factor) + 0.1f);
 		_diary_exp = resultrealm;
 	}
@@ -22304,6 +22326,8 @@ void gplayer_imp::PlayerRandMallPay(int eid)
 		_runner->player_cash(GetMallCash());
 		//�����Ѽ�¼���͸�gdelivery,�������ӿ��Ը������ߵĺ������������ѻ���
 		GMSV::SendRefCashUsed(_parent->ID.id, cash_used, _basic.level);
+		_runner->activity_event_buy_bar(GetKidAddons()->GetTimeEnd(), GetKidAddons()->GetCashHistoryUsed(), GetKidAddons()->GetAwardsPos());
+
 
 		GLog::log(GLOG_INFO,"�û�%d������̳�%d����%d����Ʒ%d������%d��ʣ��%d��",self_id,eid,ocount,id,cash_used,GetMallCash());
 
@@ -22650,7 +22674,6 @@ bool gplayer_imp::IncAstrolabeExternExp(int exp)
  	if(_equipment.IsSlotEmpty(item::EQUIP_INDEX_ASTROLABE)) return S2C::ERR_NO_EQUAL_EQUIPMENT_FAIL;\
  	if(!IsItemExist(item_inv_idx,item_id,num)) return S2C::ERR_ITEM_NOT_IN_INVENTORY;\
  }
- 
  
 int gplayer_imp::GetAstrolabeLevelMax() 
 {
@@ -24652,6 +24675,7 @@ void gplayer_imp::LotteryAward()
 				FreeItem(data);
 			}
 			
+			_runner->lottery_reward_info( 14, score, 1, item);
 			_treasure_items.Add(item , count);
 		}
 	}
@@ -24671,21 +24695,23 @@ void gplayer_imp::Lottery2Init(unsigned int param)
 		if ( _lottery.IsStart() )
 		{
 			if (param == 2)
-			{
-				if ( !InvPlayerSpendItem(0 , 61729, 5) )
+			{		
+				if(!CheckItemExist(61729,5)) 
 				{
 					_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
-					return;
-				}
+					return;	
+				}	
+				RemoveItems(61729,5, S2C::DROP_TYPE_USE, true);							
 				_lottery.StartX5();
 			}
 			else
-			{
-				if ( !InvPlayerSpendItem(0 , 61729, 1) )
+			{				
+				if(!CheckItemExist(61729,1)) 
 				{
 					_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
-					return;
-				}
+					return;	
+				}	
+				RemoveItems(61729,1, S2C::DROP_TYPE_USE, true);	
 				_lottery.StartX1();
 			}
 			LotteryAward();
@@ -24759,6 +24785,7 @@ void gplayer_imp::Lottery2OpenBox(unsigned int param)
 						FreeItem(data);
 					}
 
+					_runner->lottery_reward_info( 14, _lottery.GetScore (), 0, 0);
 					_treasure_items.Add(pItem , pCount);
 					update = true;
 				}
@@ -24824,7 +24851,16 @@ void gplayer_imp::TreasureInit(unsigned int param)
 	{
 		unsigned int req_item = tc->GetReqItem();
 		unsigned int box_count = tc->GetReqCount();
-		if ( InvPlayerSpendItem(0 , req_item, box_count) )
+
+		bool check = true;
+		if(!CheckItemExist(req_item,box_count)) 
+		{
+			_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
+			check = false;
+		}	
+		RemoveItems(req_item,box_count, S2C::DROP_TYPE_USE, true);	
+
+		if (check)
 		{
 			if ( param && _treasure.GetScore() >= 20 )
 			{
@@ -24850,7 +24886,16 @@ void gplayer_imp::GetTreasureOpenBox(unsigned int lot)
 	{
 		unsigned int req_item = tc->GetReqItem();
 		unsigned int req_item_count = _treasure.GetFreeCount() ? 0 : tc->GetReqCost( _treasure.GetOpenLotCount() );
-		if ( !req_item_count || InvPlayerSpendItem(0 , req_item, req_item_count) )
+
+		bool check = true;
+		if(!CheckItemExist(req_item,req_item_count)) 
+		{
+			_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
+			check = false;
+		}	
+		RemoveItems(req_item,req_item_count, S2C::DROP_TYPE_USE, true);	
+
+		if ( !req_item_count || check)
 		{
 			unsigned int item_id, item_count;
 			item_id = item_count = 0;
@@ -25974,12 +26019,16 @@ gplayer_imp::SystemRealmExpDaily(unsigned int mobid)
 	int daily_exp = 0;
 	unsigned int daily_exp_max = 0;
 
+	if(mobid == 3218) return;
+
 	// Busca o monstro
 	DATA_TYPE dt;
 	const MONSTER_ESSENCE *mon = (const MONSTER_ESSENCE*)world_manager::GetDataMan().get_data_ptr(mobid,ID_SPACE_ESSENCE,dt);
 	if(!mon && dt != DT_MONSTER_ESSENCE) return;
 
 	daily_exp_max = GetTableDailyExp(_realm_level);
+
+	if(mon->vigour > 4000 || mon->vigour < 0) return;
 
 	if(daily_exp_max > _diary_exp && mon->vigour > 0)
 	{	
@@ -26048,7 +26097,7 @@ gplayer_imp::CheckRealmDay()
 
 			GLog::log(GLOG_ERR,"formatlog: reset child:roleid=%d:resetday=%d",GetParent()->ID.id,tm_now->tm_mday);
 		}	
-	}
+	}	
 }
 
 
@@ -29920,6 +29969,11 @@ gplayer_imp::SetPurificationChangeSpiritExec(unsigned int idx_inv, addon_data * 
 {
 	if(idx_inv >= _inventory.Size()) return false;
 	item & it = _inventory[idx_inv];
+
+	if ( it.type <= 0 )
+	{
+		return false;
+	}
 	
 	// Addons
 	for (int i = 0; i < it.body->GetAddonsSpiritCount(); i++)
@@ -29936,8 +29990,6 @@ bool
 gplayer_imp::SetIncSpiritArmor(unsigned int idx_pos_spirit, unsigned int idx_pos_armor, bool apply)
 {	
 	// Espírito
-	item& it = _inventory[idx_pos_spirit];
-	item& it_armor = _inventory[idx_pos_armor];
 	
 	if ( idx_pos_spirit >= _inventory.Size() )
 	{
@@ -29945,6 +29997,14 @@ gplayer_imp::SetIncSpiritArmor(unsigned int idx_pos_spirit, unsigned int idx_pos
 	}
 
 	if ( idx_pos_armor >= _inventory.Size() )
+	{
+		return false;
+	}
+
+	item& it = _inventory[idx_pos_spirit];
+	item& it_armor = _inventory[idx_pos_armor];
+
+	if ( it.type <= 0 || it_armor.type <= 0 )
 	{
 		return false;
 	}
@@ -31191,12 +31251,13 @@ void gplayer_imp::SetImperialSpirtActivate()
     {
         expire_date = now + (IMPERIAL_MAX_DAYS_ACUMULATE * IMPERIAL_SECOND_TIME);
     }
-
-	if (!InvPlayerSpendItem(0, IMPERIAL_SPIRIT_ITEM_ID, 1))
-    {
-        _runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
-        return;
-    }
+	
+	if(!CheckItemExist(IMPERIAL_SPIRIT_ITEM_ID,1)) 
+	{
+		_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
+		return;
+	}	
+	RemoveItems(IMPERIAL_SPIRIT_ITEM_ID,1, S2C::DROP_TYPE_USE, true);	
 
     _glua.SetImperialEnabled(1);
     _glua.SetImperialExpireTime(expire_date);
@@ -32499,7 +32560,10 @@ gplayer_imp::CodexChangePetName(unsigned int pet_id,const char name[] , unsigned
 bool 
 gplayer_imp::CheckProctypeCodexCondition(unsigned int index)
 {
+	if(index >= _inventory.Size()) return true;
 	const item & it = _inventory[index];
+	if(it.type <= 0) return true;
+	
 	if(it.proc_type == item::ITEM_PROC_NO_CODEX_USE_MASK ||
 	it.proc_type == item::ITEM_PROC_NO_CODEX_USE_MASK2)
 	{
@@ -32621,7 +32685,7 @@ gplayer_imp::KidCelestialInfoProtocol(int type)
 	
 	int count = gplayer_kid::MAX_CELESTIAL;
 
-	KID_INFO _kid_info[gplayer_kid::MAX_CELESTIAL];
+	KID_INFO _kid_info[gplayer_kid::MAX_CELESTIAL];	
 	for (unsigned int i = 0; i < gplayer_kid::MAX_CELESTIAL; i++)
 	{
 		_kid_info[i].level = _kid.GetCelestial(i)->level;
@@ -32634,30 +32698,35 @@ gplayer_imp::KidCelestialInfoProtocol(int type)
 
 		DATA_TYPE data;
 		const KID_PROPERTY_CONFIG *config = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(_kid_info[i].idx, ID_SPACE_CONFIG, data);
-		if (config && data == DT_KID_PROPERTY_CONFIG)
+		if (config || data == DT_KID_PROPERTY_CONFIG)
 		{
-			float mutiple_val = 0.0f;
+			float mutiple_val = 0.0f; 
 
 			DATA_TYPE data2;
 			const KID_UPGRADE_STAR_CONFIG *config2 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_STAR_CONFIG, ID_SPACE_CONFIG, data2);
-			if (config2 && data2 == DT_KID_UPGRADE_STAR_CONFIG)
+			if (config2 || data2 == DT_KID_UPGRADE_STAR_CONFIG)
 			{
-				if (rank > 0)
+				if(rank > 0)
+				{
 					mutiple_val += config2->upgrade_star_info[rank-1].star_param;
-				else
-					mutiple_val += config2->zero_star_param;
+				} else 
+				{
+					mutiple_val +=  config2->zero_star_param;
+				}	
 			}
 
-			_kid_info[i].atk     = ((config->damage * level) * mutiple_val);
+			_kid_info[i].atk = ((config->damage * level) * mutiple_val);
 			_kid_info[i].atk_mag = ((config->magic_damage * level) * mutiple_val);
-			_kid_info[i].def     = ((config->defence * level) * mutiple_val);
-
+			_kid_info[i].def = ((config->defence * level) * mutiple_val);
+	
 			for (unsigned int y = 0; y < 5; y++)
+			{
 				_kid_info[i].def_mag[y] = ((config->magic_defence * level) * mutiple_val);
+			}
 
-			_kid_info[i].hp   = ((config->hp * level) * mutiple_val);
-			_kid_info[i].crit = (static_cast<int>((config->crit_hit_probability * 100) * level) * mutiple_val);
-		}
+			_kid_info[i].hp = ((config->hp * level) * mutiple_val);
+			_kid_info[i].crit = (static_cast<int>((config->crit_hit_probability * 100) * level) * mutiple_val);					
+		}	
 	}
 
 	h1 << type << count;
@@ -32743,7 +32812,7 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		return false;		
 	}
 
-	if(type > 2) type = 0;
+	if(type > 2) type = 0;	
 
 	// Init
 	_kid.SetNameLength(name_len);
@@ -32756,10 +32825,9 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 	_kid.SetType(type);
 
 	_runner->kid_created_info_dialog();
-	
-	KidAwakeningNameProtocol();
-	KidAwakeningInfoProtocol();
 
+	KidAwakeningNameProtocol ();
+	KidAwakeningInfoProtocol ();
 	return true;
 }
 
@@ -32784,7 +32852,7 @@ gplayer_imp::KidAwakeningNewDay()
 		_kid.SetBlockDay(false);
 		_kid.SetAwakening(true);
 		_kid.SetAwakeningDayCount(_kid.GetAwakeningDayCount() + 1);
-		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
+		_kid.SetAwakeningCash(2000);
 		_kid.SetCourseRandomCost(false);
 		_kid.SetCheckDay(true);
 
@@ -32813,8 +32881,7 @@ int gplayer_imp::KidGetSuitePoints()
 		ess = (COURSE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(_kid.GetEquipedCourse(i)->course_id, ID_SPACE_ESSENCE, dt);
 		if (ess && dt == DT_COURSE_ESSENCE)
 		{
-			if (_kid.GetEquipedCourse(i)->course_level > 0)
-				points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
+			points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
 
 			for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265})
 			{
@@ -32823,7 +32890,7 @@ int gplayer_imp::KidGetSuitePoints()
 				suite_ess = (COURSE_SUITE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt2);
 				if (suite_ess && dt2 == DT_COURSE_SUITE_ESSENCE)
 				{
-					if ((ess->type & suite_ess->type_mask) == suite_ess->type_mask)
+					if ((ess->course_mask & suite_ess->suite_mask) == suite_ess->suite_mask)
 					{
 						suite_trigger_count[suite_id]++;
 					}
@@ -32847,12 +32914,12 @@ int gplayer_imp::KidGetSuitePoints()
 			float max_bonus_multiplier = 0.0f;
 			for (int level = 0; level < 3; level++)
 			{
-				if (count >= suite_ess->bonus[level].max_count)
+				if (count >= suite_ess->bonus_info[level].bonus_require_count)
 				{
 					float bonus_multiplier = 0.0f;
-					if (suite_ess->bonus[level].increase > 0)
+					if (suite_ess->bonus_info[level].bonus_percent_add > 0)
 					{
-						bonus_multiplier = (suite_ess->bonus[level].increase / suite_ess->bonus[level].unk6);
+						float bonus_multiplier = (suite_ess->bonus_info[level].bonus_percent_add / suite_ess->bonus_info[level].bonus_trigger_probability);
 					}
 
 					if (bonus_multiplier > max_bonus_multiplier)
@@ -32876,13 +32943,10 @@ int gplayer_imp::KidGetSuitePoints()
 	if (points_recv > 0)
 		points_recv *= (3.5f + (0.2f * _kid.GetAwakeningDayCount()));
 
-	points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
-
-	// Trả về tổng điểm tích lũy + điểm hiện tại từ courses
-	return points_now + points_recv;
+	return points_recv;
 }
 
-bool gplayer_imp::KidAwakeningNewDay2()
+bool gplayer_imp::KidAwakeningNewDay2() 
 {
     if (_kid.GetCheckDay()) 
 	{
@@ -32896,10 +32960,9 @@ bool gplayer_imp::KidAwakeningNewDay2()
             DATA_TYPE dt;
             COURSE_ESSENCE* ess;
             ess = (COURSE_ESSENCE*)world_manager::GetDataMan().get_data_ptr(_kid.GetEquipedCourse(i)->course_id, ID_SPACE_ESSENCE, dt);
-            if (ess && dt == DT_COURSE_ESSENCE)
+            if (ess && dt == DT_COURSE_ESSENCE) 
 			{
-				if (_kid.GetEquipedCourse(i)->course_level > 0)
-                	points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
+                points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
 
                 for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265}) 
 				{
@@ -32908,8 +32971,8 @@ bool gplayer_imp::KidAwakeningNewDay2()
                     suite_ess = (COURSE_SUITE_ESSENCE*)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt2);
                     if (suite_ess && dt2 == DT_COURSE_SUITE_ESSENCE)
 					{
-                        if ((ess->type & suite_ess->type_mask) == suite_ess->type_mask)
-						{
+                        if ((ess->course_mask & suite_ess->suite_mask) == suite_ess->suite_mask) 
+						{						
                             suite_trigger_count[suite_id]++;
                         }
                     }
@@ -32919,7 +32982,7 @@ bool gplayer_imp::KidAwakeningNewDay2()
 
 		float mutiple_add = 0.0f;
 
-        for (const auto& pair : suite_trigger_count)
+        for (const auto& pair : suite_trigger_count) 
 		{
             unsigned int suite_id = pair.first;
             int count = pair.second;
@@ -32927,20 +32990,20 @@ bool gplayer_imp::KidAwakeningNewDay2()
             COURSE_SUITE_ESSENCE* suite_ess;
             DATA_TYPE dt3;
             suite_ess = (COURSE_SUITE_ESSENCE*)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt3);
-            if (suite_ess && dt3 == DT_COURSE_SUITE_ESSENCE)
+            if (suite_ess && dt3 == DT_COURSE_SUITE_ESSENCE) 
 			{
                 float max_bonus_multiplier = 0.0f;
                 for (int level = 0; level < 3; level++)
 				{
-                    if (count >= suite_ess->bonus[level].max_count)
+                    if (count >= suite_ess->bonus_info[level].bonus_require_count) 
 					{
 						float bonus_multiplier = 0.0f;
-                        if(suite_ess->bonus[level].increase > 0)
+                        if(suite_ess->bonus_info[level].bonus_percent_add > 0)
 						{
-							bonus_multiplier = (suite_ess->bonus[level].increase / suite_ess->bonus[level].unk6);
+							float bonus_multiplier = (suite_ess->bonus_info[level].bonus_percent_add / suite_ess->bonus_info[level].bonus_trigger_probability);
 						}
 
-                        if (bonus_multiplier > max_bonus_multiplier)
+                        if (bonus_multiplier > max_bonus_multiplier) 
 						{
                             max_bonus_multiplier = bonus_multiplier;
                         }
@@ -32961,8 +33024,6 @@ bool gplayer_imp::KidAwakeningNewDay2()
 		// Bônus pela redução para 7 dias
 		if (points_recv > 0)
 			points_recv *= (3.5f + (0.2f * _kid.GetAwakeningDayCount()));
-
-		points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
 
         _kid.SetPointsAwakening(points_now + points_recv);
         _kid.SetAwakeningCash(0);
@@ -33066,8 +33127,14 @@ gplayer_imp::KidAwakeningCardPutInventory(char old_slot)
 	
 	if(new_slot < 0) return false;
 		
-	_kid.SetStorageCourse(new_slot, _kid.GetRandomCourse(old_slot), 1);
-	_kid.SetRandomCourse(old_slot, 0);
+	bool res = false;
+	int card_id = _kid.GetRandomCourse(old_slot);
+
+	if(!res)
+	{
+		_kid.SetStorageCourse(new_slot,_kid.GetRandomCourse(old_slot), 1);
+		_kid.SetRandomCourse(old_slot, 0);
+	}
 
 	_runner->kid_course_change(old_slot, new_slot+6);
 	KidAwakeningCashProtocol ();
@@ -33122,10 +33189,14 @@ gplayer_imp::KidAwakeningCardRemoveInventory(char old_slot)
 
 	_kid.SetAwakeningCash(cash_awakening+cash_cost);
 		
-	if(old_slot < 6)
-		_kid.SetEquipedCourse(old_slot, 0, 0);
-	else
-		_kid.SetStorageCourse(old_slot-6, 0, 0);
+	bool res = false;
+	if(!res)
+	{
+		if(old_slot < 6)
+			_kid.SetEquipedCourse(old_slot, 0, 0);
+		else
+			_kid.SetStorageCourse(old_slot-6, 0, 0);
+	}
 
 	_runner->kid_course_remove(old_slot);
 	KidAwakeningCashProtocol ();
@@ -33168,6 +33239,7 @@ gplayer_imp::KidAwakeningCardMoveEquipInventory(char old_slot, char new_slot)
 	_runner->kid_system_points_notify(KidGetSuitePoints());
 }
 
+
 bool 
 gplayer_imp::KidAwakeningNewDay3()
 {
@@ -33191,8 +33263,6 @@ gplayer_imp::KidAwakeningNewDay3()
 			}
 		}
 
-		if (get_pos < 0) return false;
-
 		int finish_idx = abase::RandSelect(&(config->list[get_pos].gender_list[gender].kid[0].probability), sizeof(config->list[get_pos].gender_list[gender].kid[0]), 8);
 		int idx_item = config->list[get_pos].gender_list[gender].kid[finish_idx].id;
 		bool item_get = false;
@@ -33202,24 +33272,21 @@ gplayer_imp::KidAwakeningNewDay3()
 		if (!config2 || data2 != DT_KID_PROPERTY_CONFIG)
 			return false;
 
-		if (config2->kid_debri_type < 0 || config2->kid_debri_type >= (int)gplayer_kid::MAX_CELESTIAL)
-			return false;
-
 		if (_kid.GetCelestial(config2->kid_debri_type)->idx > 0)
 		{
 			if (_kid.GetCelestial(config2->kid_debri_type)->idx < idx_item)
-			{
-				_kid.SetCelestial(config2->kid_debri_type, _kid.GetCelestial(config2->kid_debri_type)->level, _kid.GetCelestial(config2->kid_debri_type)->rank, _kid.GetCelestial(config2->kid_debri_type)->exp + config2->kid_debri_exp, idx_item);
+			{				
+				_kid.SetCelestial(config2->kid_debri_type, _kid.GetCelestial(config2->kid_debri_type)->level, _kid.GetCelestial(config2->kid_debri_type)->rank, _kid.GetCelestial(config2->kid_debri_type)->exp+config2->kid_debri_exp, idx_item);
 				item_get = true;
-			}
+			}						
 			InvPlayerGiveItem(config2->kid_debri_id, 1);
 		}
 		else
-		{
-			if (config2->broadcast > 0)
+		{		
+			if(config2->broadcast > 0)
 			{
 				SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), config2->kid_debri_type);
-			}
+			}			
 
 			DATA_TYPE data3;
 			const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)world_manager::GetDataMan().get_data_ptr(6877, ID_SPACE_CONFIG, data3);
@@ -33228,13 +33295,13 @@ gplayer_imp::KidAwakeningNewDay3()
 
 			int newlevel = 0;
 			newlevel += config3->level_max[config2->rahk];
-			int newexp = 0;
+			int newexp = 0;	
 
-			_kid.SetCelestial(config2->kid_debri_type, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, newexp, idx_item);
+			_kid.SetCelestial(config2->kid_debri_type, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, newexp, idx_item);	
 		}
-
+		
 		_kid.ClearAwakening();
-
+		
 		KidCelestialInfoProtocol(0);
 		_runner->kid_celestial_awakening(item_get ? _kid.GetCelestial(config2->kid_debri_type)->rank : 0, idx_item);
 
@@ -33242,131 +33309,128 @@ gplayer_imp::KidAwakeningNewDay3()
 	return true;
 }
 
-void
+void 
 gplayer_imp::KidCelestialActivityProtocol()
 {
-	// Luôn gửi trạng thái về client (kể cả new char) để client biết chính xác
-	// reserved == -1: có tiểu tiên đồng đang active tại active_slot
-	// reserved != -1 (vd: 0): không có tiểu tiên đồng active
+	if(_kid.GetActivity()->reserved != -1) return;
+
 	_runner->kid_active_info(_kid.GetActivity()->active_slot, _kid.GetActivity()->reserved);
 }
 
 bool 
 gplayer_imp::KidCelestialActivity(int val1, int val2, int val3)
 {
-	if(val1 < 0 || val1 >= (int)gplayer_kid::MAX_CELESTIAL) return false;
+	if(val1 < 0 && val2 > 5) return false;
 
 	_kid.SetActivity(val1, -1);
 	KidCelestialActivityProtocol();
 	return true;
 }
 
-bool
-gplayer_imp::KidCelestialUpgradeRank(int celestial_idx, int where, int inv_idx)
+bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx) 
 {
-	if (celestial_idx < 0 || celestial_idx >= (int)gplayer_kid::MAX_CELESTIAL) return false;
+    item_list & _trashbox = GetTrashInventory(IL_TRASH_BOX8);
 
-	item_list & _trashbox = GetTrashInventory(IL_TRASH_BOX8);
+    if(inv_idx >= _trashbox.Size()) 
+        return false;
 
-	if(inv_idx >= _trashbox.Size())
-		return false;
+    item & item_box = _trashbox[inv_idx];
 
-	item & item_box = _trashbox[inv_idx];
+    if(item_box.type == -1) 
+        return false;
 
-	if(item_box.type == -1)
-		return false;
+    int celestial_idx = _kid.GetCelestial(pos)->idx;
 
-	int kid_celestial_idx = _kid.GetCelestial(celestial_idx)->idx;
+    DATA_TYPE dt;
+    const KID_DEBRIS_ESSENCE *ess = (KID_DEBRIS_ESSENCE*)world_manager::GetDataMan().get_data_ptr(item_box.type, ID_SPACE_ESSENCE, dt);
+    if(!ess || dt != DT_KID_DEBRIS_ESSENCE) return false;
 
-	DATA_TYPE dt;
-	const KID_DEBRIS_ESSENCE *ess = (KID_DEBRIS_ESSENCE*)world_manager::GetDataMan().get_data_ptr(item_box.type, ID_SPACE_ESSENCE, dt);
-	if(!ess || dt != DT_KID_DEBRIS_ESSENCE) return false;
+    DATA_TYPE dt2;
+    const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(celestial_idx, ID_SPACE_CONFIG, dt2);
+    if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false; 
 
-	DATA_TYPE dt2;
-	const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(kid_celestial_idx, ID_SPACE_CONFIG, dt2);
-	if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false;
+    bool new_star = false;
+    int total_count = item_box.count;
+    int base_stone_exp = ess->swallow_exp;
 
-	int total_count = item_box.count;
-	int base_stone_exp = ess->swallow_exp;
-	int current_exp = _kid.GetCelestial(celestial_idx)->exp;
-	int current_star = _kid.GetCelestial(celestial_idx)->rank;
-	int new_idx = kid_celestial_idx;
-	int stones_used = 0;
-	int item_type = item_box.type;
-	int item_proc_type = item_box.proc_type;
+    int current_exp = _kid.GetCelestial(pos)->exp;
+    int current_star = _kid.GetCelestial(pos)->rank;
+    int new_idx = celestial_idx;
+    int stones_used = 0;
 
-	if (config2->id_kid_upgrade == 0)
-	{
-		DATA_TYPE dt3;
-		const KID_UPGRADE_STAR_CONFIG *config3 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->kid_upgrade_star_config, ID_SPACE_CONFIG, dt3);
-		if (!config3 || dt3 != DT_KID_UPGRADE_STAR_CONFIG) return false;
+    if (config2->id_kid_upgrade == 0) 
+    {
+        DATA_TYPE dt3;
+        const KID_UPGRADE_STAR_CONFIG *config3 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->kid_upgrade_star_config, ID_SPACE_CONFIG, dt3);
+        if (!config3 || dt3 != DT_KID_UPGRADE_STAR_CONFIG) return false;
 
-		while (total_count > 0)
-		{
-			int required_exp = config3->upgrade_star_info[current_star].start_exp;
-			if (current_exp + base_stone_exp >= required_exp)
-			{
-				current_exp = (current_exp + base_stone_exp) - required_exp;
-				current_star++;
-				stones_used++;
-				total_count--;
+        while (total_count > 0) 
+        {
+            int required_exp = config3->upgrade_star_info[current_star].start_exp;
+            if (current_exp + base_stone_exp >= required_exp) 
+            {
+                current_exp = (current_exp + base_stone_exp) - required_exp;
+                current_star++;
+                stones_used++;
+                total_count--;
 
-				if (current_star >= 6)
-				{
-					current_star = 6;
-					current_exp = 0;
-					break;
-				}
-			}
-			else
-			{
-				current_exp += base_stone_exp;
-				stones_used++;
-				total_count--;
-			}
-		}
+                if (current_star >= 6) 
+                {
+                    current_star = 6;
+                    current_exp = 0;
+                    break;
+                }
+            } 
+            else 
+            {
+                current_exp += base_stone_exp;
+                stones_used++;
+                total_count--;
+            }
+        }
 
-		UpdateMallConsumptionDestroying(item_type, item_proc_type, stones_used);
-		GetTrashInventory(IL_TRASH_BOX8).DecAmount(inv_idx, stones_used);
-		_runner->player_drop_item(IL_TRASH_BOX8, inv_idx, item_type, stones_used, S2C::DROP_TYPE_PRODUCE);
-		_kid.SetCelestial(celestial_idx, _kid.GetCelestial(celestial_idx)->level, current_star, current_exp, kid_celestial_idx);
-		KidCelestialInfoProtocol(0);
-		return true;
-	}
-	else
-	{
-		while (total_count > 0 && config2->id_kid_upgrade != 0)
-		{
-			int required_exp = config2->upgrade_exp;
+        if(SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
+        {
+            _kid.SetCelestial(pos, _kid.GetCelestial(pos)->level, current_star, current_exp, celestial_idx);
+            KidCelestialInfoProtocol(0);   
+        }  
+        return true;
+    } 
+    else 
+    {        
+        while (total_count > 0 && config2->id_kid_upgrade != 0) 
+        {
+            int required_exp = config2->upgrade_exp;
 
-			if (current_exp + base_stone_exp >= required_exp)
-			{
-				current_exp = (current_exp + base_stone_exp) - required_exp;
-				total_count--;
-				stones_used++;
+            if (current_exp + base_stone_exp >= required_exp) 
+            {
+                current_exp = (current_exp + base_stone_exp) - required_exp;
+                total_count--;
+                stones_used++;
 
-				new_idx = config2->id_kid_upgrade;
-				config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(new_idx, ID_SPACE_CONFIG, dt2);
-				if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false;
-			}
-			else
-			{
-				current_exp += base_stone_exp;
-				total_count--;
-				stones_used++;
-			}
-		}
+                new_idx = config2->id_kid_upgrade;
+                config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(new_idx, ID_SPACE_CONFIG, dt2);
+                if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false;
+            } 
+            else 
+            {
+                current_exp += base_stone_exp;
+                total_count--;
+                stones_used++;
+            }
+        }
 
-		UpdateMallConsumptionDestroying(item_type, item_proc_type, stones_used);
-		GetTrashInventory(IL_TRASH_BOX8).DecAmount(inv_idx, stones_used);
-		_runner->player_drop_item(IL_TRASH_BOX8, inv_idx, item_type, stones_used, S2C::DROP_TYPE_PRODUCE);
-		_kid.SetCelestial(celestial_idx, _kid.GetCelestial(celestial_idx)->level, current_star, current_exp, new_idx);
-		KidCelestialInfoProtocol(1);
-		return true;
-	}
+        if(SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
+        {
+            _kid.SetCelestial(pos, _kid.GetCelestial(pos)->level, current_star, current_exp, new_idx);   
+            KidCelestialInfoProtocol(1);            
+        }  
+        return true;
+    }    
 }
 
-void
+
+void 
 gplayer_imp::KidCelestialTransformation(int mode)
 {
 	struct
@@ -33377,9 +33441,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	int skills_count = 0;
 	int slot = _kid.GetActivity()->active_slot;
-	if (slot < 0 || slot >= (int)gplayer_kid::MAX_CELESTIAL) return;
 	int idx = _kid.GetCelestial(slot)->idx;
 	int level = _kid.GetCelestial(slot)->level;
+	int rank = _kid.GetCelestial(slot)->rank;
 	int now = g_timer.get_systime();
 
 	memset(_skills_shape, 0, sizeof(_skills_shape));
@@ -33387,7 +33451,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	DATA_TYPE data2;
 	const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(idx, ID_SPACE_CONFIG, data2);
-	if (!config2 || data2 != DT_KID_PROPERTY_CONFIG) return;
+	if (!config2 || data2 != DT_KID_PROPERTY_CONFIG) return;	
 
 	DATA_TYPE data3;
 	const KID_SKILL_CONFIG *configskill = (const KID_SKILL_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->id_kid_skill, ID_SPACE_CONFIG, data3);
@@ -33397,23 +33461,28 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	{
 		if (configskill->skill[i].id > 0)
 		{
-			int best_level = -1;
 			for (unsigned int j = 0; j < 10; j++)
 			{
-				if (level >= configskill->skill[i].level[j])
-					best_level = (int)j + 1; // 1-based skill level
-			}
-			if (best_level > 0)
-			{
-				_skills_shape[skills_count].id = configskill->skill[i].id;
-				_skills_shape[skills_count].level = best_level;
-				skills_count++;
+				if(level >= configskill->skill[i].level[j])
+				{
+					_skills_shape[i].id = configskill->skill[i].id;
+					_skills_shape[i].level = j;
+				}
 			}
 		}
 	}
 
-	if (mode)
+	for (unsigned int i = 0; i < 16; i++)
 	{
+		if (_skills_shape[i].id > 0)
+		{
+			skills_count++;
+		}
+	}
+
+	if (mode)
+	{		
+		// Checa todas as transformações
 		if (obj_if.IsFilterExist(FILTER_BEASTIEFORM) ||
 			obj_if.IsFilterExist(FILTER_TIGERFORM) ||
 			obj_if.IsFilterExist(FILTER_FOXFORM) ||
@@ -33433,26 +33502,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			_runner->error_message(628);
 			return;
 		}
-		SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
+		SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);	
 
-		_skill.AddFilterKidIncTransformation(obj_if, 30);
-
-		// Add transformation skills to player's skill map so they can be executed
-		for (int i = 0; i < skills_count; i++)
-		{
-			if (_skills_shape[i].id > 0)
-				_skill.ActivateDynSkill((unsigned int)_skills_shape[i].id, 1);
-		}
+		_skill.AddFilterKidIncTransformation(obj_if, 2);			
 	}
 	else
 	{
-		// Remove transformation skills from skill map before ending
-		for (int i = 0; i < skills_count; i++)
-		{
-			if (_skills_shape[i].id > 0)
-				_skill.DeactivateDynSkill((unsigned int)_skills_shape[i].id, 1);
-		}
-
 		if(_kid_transformation_time > 0)
 		{
 			_skill.AddFilterKidDecTransformation(obj_if, 1800);
@@ -33463,20 +33518,21 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		ChangeShape(0);
 		_runner->kid_celestial_transformation(0, _parent->ID.id, 0, 0);
 		_runner->player_world_speak_info((char)0, (char)1, (char)1, skills_count, (int*)_skills_shape);
-		obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
+		obj_if.RemoveTeamVisibleState(HSTATE_530);
 		return;
 	}
-
+		
 	_kid_transformation = true;
-	_kid_transformation_time = 30;
+	_kid_transformation_time = 30;	
 	ChangeShape(config2->unk1);
 	_runner->kid_celestial_transformation(config2->unk1, _parent->ID.id, 30, now+30);
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 }
-void gplayer_imp::FixChildSystem()
+void
+gplayer_imp::FixChildSystem()
 {
 	for (unsigned int i = 0; i < 6; i++)
-	{
+	{	
 		if (_kid.GetCelestial(i)->idx > 0)
 		{
 			DATA_TYPE data2;
@@ -33492,8 +33548,8 @@ void gplayer_imp::FixChildSystem()
 				newlevel += config3->level_max[config2->rahk];
 				int old_level = config3->level_max[_kid.GetCelestial(i)->rank];
 
-				if (_kid.GetCelestial(i)->level > old_level)
-				{
+				if(_kid.GetCelestial(i)->level > old_level)
+				{	
 					_kid.SetCelestial(i, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, _kid.GetCelestial(i)->exp, _kid.GetCelestial(i)->idx);
 				}
 			}
