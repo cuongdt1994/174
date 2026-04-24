@@ -32938,9 +32938,9 @@ int gplayer_imp::KidGetSuitePoints()
 	return points_recv;
 }
 
-bool gplayer_imp::KidAwakeningNewDay2() 
+bool gplayer_imp::KidAwakeningNewDay2()
 {
-    if (_kid.GetCheckDay()) 
+    if (_kid.GetCheckDay() && !_kid.IsBlockDay())
 	{
         int points_now = _kid.GetPointsAwakening();
         int points_recv = 0;
