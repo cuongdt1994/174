@@ -33518,7 +33518,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		
 	_kid_transformation = true;
 	_kid_transformation_time = 30;	
-	ChangeShape(config2->unk1);
+	ChangeShape(config2->unk1 | (3 << 6));
 	_runner->kid_celestial_transformation(config2->unk1, _parent->ID.id, 30, now+30);
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 }
