@@ -33498,7 +33498,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		}
 		SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);	
 
-		_skill.AddFilterKidIncTransformation(obj_if, 2);			
+		_skill.AddFilterKidIncTransformation(obj_if, 30);			
 	}
 	else
 	{
