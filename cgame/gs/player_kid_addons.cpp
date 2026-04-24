@@ -170,7 +170,7 @@ void gplayer_kid_addons::UpdateKidsAddonsProtocol(int roleid)
 	pImp->_runner->kid_award_addon(h1.size(), h1.data());
 }
 
-void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int addon_pos, int pos)
+void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int pos, int addon_pos)
 {
 	int windex1;
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
