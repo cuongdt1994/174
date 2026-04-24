@@ -672,14 +672,16 @@ gplayer_imp::PlayerEnterWorld()
 
 		if (EmulateSettings::GetInstance()->GetEnabledChild())
 		{
-			memset(&_kid, 0x00, sizeof(_kid));
-
+			for (unsigned int i = 0; i < gplayer_kid::MAX_CELESTIAL; i++)
+			{
+				_kid.SetCelestial(i, 0, 0, 0, 0);
+			}
 		} else
 		{
 			_celestial.ClearAllCelestialMemorial();
 			ProtocolCelestialMemorial();
 			ProtocolCelestialMemorialLottery();
-		}	
+		}
 	}
 
 	// Reseta a Paleta (07/05)
