@@ -32886,7 +32886,7 @@ gplayer_imp::KidAwakeningNewDay()
 		_kid.SetBlockDay(false);
 		_kid.SetAwakening(true);
 		_kid.SetAwakeningDayCount(_kid.GetAwakeningDayCount() + 1);
-		_kid.SetAwakeningCash(2000);
+		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
 		_kid.SetCourseRandomCost(false);
 		_kid.SetCheckDay(true);
 
@@ -32977,6 +32977,8 @@ int gplayer_imp::KidGetSuitePoints()
 	if (points_recv > 0)
 		points_recv *= (3.5f + (0.2f * _kid.GetAwakeningDayCount()));
 
+	points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
+
 	return points_recv;
 }
 
@@ -33053,11 +33055,13 @@ bool gplayer_imp::KidAwakeningNewDay2()
             }
         }
 	
-		points_recv += (points_recv * mutiple_add);		
-		
+		points_recv += (points_recv * mutiple_add);
+
 		// Bônus pela redução para 7 dias
 		if (points_recv > 0)
 			points_recv *= (3.5f + (0.2f * _kid.GetAwakeningDayCount()));
+
+		points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
 
         _kid.SetPointsAwakening(points_now + points_recv);
         _kid.SetAwakeningCash(0);

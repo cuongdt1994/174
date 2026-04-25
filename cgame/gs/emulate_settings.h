@@ -90,13 +90,14 @@ public:
 	inline int GetMsgLanguage() { return msg_language; }
 		
 	inline bool GetEnabledChild() { return (char)enabled_child; }
-	inline int GetChildAwakeningDays() { return child_awakening_days; }
+	// Days required to complete the awakening cycle. Default 7 if not set.
+	inline int GetChildAwakeningDays() { return child_awakening_days > 0 ? child_awakening_days : 7; }
 	inline bool GetEnabledMemorialReset() { return (char)enabled_memorial_reset; }
 	const char* GetGoogleTranslateApiKey() { return google_translate_api_key; }
 
-	// Kid getters — default-safe (returns 1/20/0 when not set in gs.conf)
+	// Kid getters — default-safe values preserve original hardcoded behavior when key absent in gs.conf
 	inline int GetKidPointsRate() { return kid_points_rate > 0 ? kid_points_rate : 1; }
-	inline int GetKidAwakeningCash() { return kid_awakening_cash > 0 ? kid_awakening_cash : 20; }
+	inline int GetKidAwakeningCash() { return kid_awakening_cash > 0 ? kid_awakening_cash : 2000; }
 	inline bool GetKidFreeCelestialLevel() { return kid_free_celestial_level == 1; }
 EmulateSettings()
 {

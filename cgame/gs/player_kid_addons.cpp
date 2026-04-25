@@ -13,6 +13,7 @@
 #include "public_quest.h"
 #include "luamanager.h"
 #include "player_kid_addons.h"
+#include "emulate_settings.h"
 #include <glog.h>
 
 void gplayer_kid_addons::GenerateKidsAddons(int roleid)
@@ -266,14 +267,17 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 		totalmoneycost += pCfg->exp[i];
 	}
 
-	if (pImp->GetAllMoney() < totalmoneycost)
+	if (!EmulateSettings::GetInstance()->GetKidFreeCelestialLevel())
 	{
-		pImp->_runner->error_message(S2C::ERR_OUT_OF_FUND);
-		return;
-	}
+		if (pImp->GetAllMoney() < totalmoneycost)
+		{
+			pImp->_runner->error_message(S2C::ERR_OUT_OF_FUND);
+			return;
+		}
 
-	pImp->SpendAllMoney(totalmoneycost, true);
-	pImp->SelfPlayerMoney();
+		pImp->SpendAllMoney(totalmoneycost, true);
+		pImp->SelfPlayerMoney();
+	}
 
 	int set_new_level = pImp->GetKid()->GetCelestial(pos)->level + level;	
 	if(set_new_level > gplayer_kid::MAX_KID_LEVEL)
