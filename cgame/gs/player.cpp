@@ -9138,6 +9138,46 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		_kid_addon.ActivateKidsAddons(_parent->ID.id);
 	}
 
+	if (_kid_transformation && _kid_transformation_time > 0)
+	{
+		int slot = _kid.GetActivity()->active_slot;
+		int idx = _kid.GetCelestial(slot)->idx;
+		int level = _kid.GetCelestial(slot)->level;
+
+		DATA_TYPE data2;
+		const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(idx, ID_SPACE_CONFIG, data2);
+
+		DATA_TYPE data3;
+		const KID_SKILL_CONFIG *configskill = (config2 && data2 == DT_KID_PROPERTY_CONFIG)
+			? (const KID_SKILL_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->id_kid_skill, ID_SPACE_CONFIG, data3)
+			: NULL;
+
+		if (config2 && data2 == DT_KID_PROPERTY_CONFIG && configskill && data3 == DT_KID_SKILL_CONFIG)
+		{
+			ChangeShape(config2->unk1 | (3 << 6));
+
+			for (unsigned int i = 0; i < 16; i++)
+			{
+				if (configskill->skill[i].id > 0)
+				{
+					int sk_level = -1;
+					for (unsigned int j = 0; j < 10; j++)
+					{
+						if (level >= configskill->skill[i].level[j])
+							sk_level = j;
+					}
+					if (sk_level >= 0)
+						_skill.SetLevel(configskill->skill[i].id, sk_level + 1);
+				}
+			}
+		}
+		else
+		{
+			_kid_transformation = false;
+			_kid_transformation_time = 0;
+		}
+	}
+
 	FixExpHeartBeat();
 }
 
@@ -33475,7 +33515,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	}
 
 	if (mode)
-	{		
+	{
 		// Checa todas as transformações
 		if (obj_if.IsFilterExist(FILTER_BEASTIEFORM) ||
 			obj_if.IsFilterExist(FILTER_TIGERFORM) ||
@@ -33496,12 +33536,23 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			_runner->error_message(628);
 			return;
 		}
-		SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);	
+		SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 
-		_skill.AddFilterKidIncTransformation(obj_if, 30);			
+		_skill.AddFilterKidIncTransformation(obj_if, 30);
 	}
 	else
 	{
+		if (_kid_transformation)
+		{
+			for (unsigned int i = 0; i < 16; i++)
+			{
+				if (_skills_shape[i].id > 0)
+				{
+					_skill.Remove(_skills_shape[i].id);
+				}
+			}
+		}
+
 		if(_kid_transformation_time > 0)
 		{
 			_skill.AddFilterKidDecTransformation(obj_if, 1800);
@@ -33515,10 +33566,19 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
 		return;
 	}
-		
+
 	_kid_transformation = true;
-	_kid_transformation_time = 30;	
+	_kid_transformation_time = 30;
 	ChangeShape(config2->unk1 | (3 << 6));
+
+	for (unsigned int i = 0; i < 16; i++)
+	{
+		if (_skills_shape[i].id > 0)
+		{
+			_skill.SetLevel(_skills_shape[i].id, _skills_shape[i].level + 1);
+		}
+	}
+
 	_runner->kid_celestial_transformation(config2->unk1, _parent->ID.id, 30, now+30);
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 }
