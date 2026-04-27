@@ -1595,9 +1595,47 @@ void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int bu
 	{
 		PlayerWrapper		w_player(player, 0, 0, 0, 0);
 		w_player.InsertTeamVisibleState(GNET::HSTATE_530, true);
-		
+
 		w_player.SetProbability (1.0 * 100);
 		w_player.SetCleardebuff(1);
+	}
+}
+
+void SkillWrapper::AddFilterKidTransformStats(object_interface player, int buff_period_sec,
+                                                float hp_ratio, float dmg_ratio, float def_ratio,
+                                                float mdef_ratio, float resist_ratio)
+{
+	if (buff_period_sec <= 0)
+		return;
+
+	PlayerWrapper w_player(player, 0, 0, 0, 0);
+	w_player.SetTime(1000.0f * buff_period_sec);
+	w_player.SetProbability(100.0);
+
+	if (hp_ratio > 0.0f)
+	{
+		w_player.SetRatio(hp_ratio);
+		w_player.SetGiant(1);
+	}
+	if (dmg_ratio > 0.0f)
+	{
+		w_player.SetRatio(dmg_ratio);
+		w_player.SetIncattack(1);
+	}
+	if (def_ratio > 0.0f)
+	{
+		w_player.SetRatio(def_ratio);
+		w_player.SetStoneskin(1);
+	}
+	if (mdef_ratio > 0.0f)
+	{
+		w_player.SetRatio(mdef_ratio);
+		w_player.SetBlessmagic(1);
+	}
+	if (resist_ratio > 0.0f)
+	{
+		w_player.SetRatio(resist_ratio);
+		w_player.SetIncresist(1);
 	}
 }
 

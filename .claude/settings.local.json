@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(fc /B \"C:\\\\Users\\\\Cuong\\\\Desktop\\\\174\\\\cgame\\\\gs\\\\skillwrapper.h\" \"C:\\\\Users\\\\Cuong\\\\Desktop\\\\174\\\\cskill\\\\skill\\\\skillwrapper.h\")"
+    ]
+  }
+}

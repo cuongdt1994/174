@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"if exist \\\"C:\\\\Users\\\\Cuong\\\\Desktop\\\\174\\\\cgame\\\\gs\\\\skillwrapper.cpp\\\" (echo \\\"EXISTS\\\") else (echo \\\"MISSING\\\")\",\"description\":\"Check if cgame skillwrapper.cpp exists\"}",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 1: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 1: `if exist \"C:\\Users\\Cuong\\Desktop\\174\\cgame\\gs\\skillwrapper.cpp\" (echo \"EXISTS\") else (echo \"MISSING\")'",
+  "timestamp": "2026-04-27T11:31:41.834Z",
+  "retry_count": 1
+}

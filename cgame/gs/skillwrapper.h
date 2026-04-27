@@ -633,8 +633,11 @@ public:
 	void MnFactionAddFilter(object_interface player, float ratio);
     void ResurrectByCashAddFilter(object_interface player, int buff_period, const float* buff_ratio, int buff_size);
 	
-	void AddFilterKidIncTransformation(object_interface player, int buff_period); // Imune, debuffs, etc	
-    void AddFilterKidDecTransformation(object_interface player, int buff_period); // debuff, hp/mp,defense, etc	
+	void AddFilterKidIncTransformation(object_interface player, int buff_period); // Imune, debuffs, etc
+    void AddFilterKidDecTransformation(object_interface player, int buff_period); // debuff, hp/mp,defense, etc
+    void AddFilterKidTransformStats(object_interface player, int buff_period_sec,
+                                     float hp_ratio, float dmg_ratio, float def_ratio,
+                                     float mdef_ratio, float resist_ratio); // kid celestial transform stat buff
 	
 	
 	//glyph

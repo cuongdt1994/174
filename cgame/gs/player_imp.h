@@ -1970,6 +1970,15 @@ protected:
 	bool _check_codex_get_storage;	// no save
 	int _kid_transformation;
 	int _kid_transformation_time;
+	struct
+	{
+		int saved_skill_id[16];
+		int saved_skill_level[16];      // level cũ của player (để restore qua SetLevel/Remove)
+		int saved_kid_skill_level[16];  // level từ Celestial (j) - dùng cho packet client
+		int saved_count;
+		int saved_idx;
+		int saved_slot;
+	} _kid_transform_skill_state;
 	//int _question_day;
 	//int _question_started;
 	//int _question_mode;
