@@ -638,6 +638,10 @@ public:
     void AddFilterKidTransformStats(object_interface player, int buff_period_sec,
                                      float hp_ratio, float dmg_ratio, float def_ratio,
                                      float mdef_ratio, float resist_ratio); // kid celestial transform stat buff
+    void AddFilterKidTransformAdvancedStats(object_interface player, int buff_period_sec,
+                                             int attack_degree_delta, int defend_degree_delta,
+                                             float attack_range_delta, float run_speed_ratio,
+                                             float attack_speed_ratio, float pray_speed_ratio); // kid celestial advanced stats
 	
 	
 	//glyph

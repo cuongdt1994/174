@@ -1639,6 +1639,63 @@ void SkillWrapper::AddFilterKidTransformStats(object_interface player, int buff_
 	}
 }
 
+void SkillWrapper::AddFilterKidTransformAdvancedStats(object_interface player, int buff_period_sec,
+                                                       int attack_degree_delta, int defend_degree_delta,
+                                                       float attack_range_delta, float run_speed_ratio,
+                                                       float attack_speed_ratio, float pray_speed_ratio)
+{
+	if (buff_period_sec <= 0)
+		return;
+
+	PlayerWrapper w_player(player, 0, 0, 0, 0);
+	w_player.SetTime(1000.0f * buff_period_sec);
+	w_player.SetProbability(100.0);
+	w_player.SetEnable(true);
+	w_player.SetShowicon(0);
+
+	// Attack degree (proficiency tấn công)
+	if (attack_degree_delta > 0)
+	{
+		w_player.SetValue((float)attack_degree_delta);
+		w_player.SetAddattackdegree(1);
+	}
+
+	// Defend degree (proficiency phòng ngự)
+	if (defend_degree_delta > 0)
+	{
+		w_player.SetValue((float)defend_degree_delta);
+		w_player.SetAdddefencedegree(1);
+	}
+
+	// Attack range (tầm đánh) — filter_Incattackrange dùng value (float)
+	if (attack_range_delta > 0.0f)
+	{
+		w_player.SetValue(attack_range_delta);
+		w_player.SetIncattackrange(1);
+	}
+
+	// Run speed (tốc độ di chuyển) — filter_Speedup dùng ratio*100
+	if (run_speed_ratio > 0.0f)
+	{
+		w_player.SetRatio(run_speed_ratio);
+		w_player.SetSpeedup(1);
+	}
+
+	// Attack speed — filter_Crazy dùng ratio*100
+	if (attack_speed_ratio > 0.0f)
+	{
+		w_player.SetRatio(attack_speed_ratio);
+		w_player.SetFastattack(1);
+	}
+
+	// Pray speed (giảm thời gian niệm) — filter_Fastpray dùng ratio*100
+	if (pray_speed_ratio > 0.0f)
+	{
+		w_player.SetRatio(pray_speed_ratio);
+		w_player.SetFastpray(1);
+	}
+}
+
 void SkillWrapper::MnFactionAddFilter(object_interface player, float ratio)
 {
 	PlayerWrapper		w_player(player, 0, 0, 0, 0);

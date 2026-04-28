@@ -1978,6 +1978,8 @@ protected:
 		int saved_count;
 		int saved_idx;
 		int saved_slot;
+		// Phase 2: tất cả buff dùng filter TTL — không cần manual restore
+		// (filter persist qua _filters.Save/Load và auto-cleanup khi hết TTL)
 	} _kid_transform_skill_state;
 	//int _question_day;
 	//int _question_started;

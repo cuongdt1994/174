@@ -33628,8 +33628,71 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	// Áp filter: HSTATE_530 + Cleardebuff (visual + bảo vệ debuff)
 	_skill.AddFilterKidIncTransformation(obj_if, 1800);
-	// Áp filter: stat buff (HP/dmg/def/resist)
+	// Áp filter Phase 1: stat buff cơ bản (HP/dmg/def/resist) — TTL 1800s tự gỡ
 	_skill.AddFilterKidTransformStats(obj_if, 1800, hp_ratio, dmg_ratio, def_ratio, 0.0f, resist_ratio);
+
+	// === Phase 2: stat nâng cao (degree/range/speed/pray) — TẤT CẢ qua filter TTL để tự gỡ ===
+	int attack_degree_delta = 0;
+	int defend_degree_delta = 0;
+	float attack_range_delta = 0.0f;
+	float run_speed_ratio = 0.0f;
+	float attack_speed_ratio = 0.0f;
+	float pray_speed_ratio = 0.0f;
+
+	// attack_degree / defend_degree: công thức 173 (atk_deg+def_deg)*param - cur
+	int sum_atk_def_deg = _attack_degree + _defend_degree;
+	if (sum_atk_def_deg > 0)
+	{
+		if (config2->attack_lvl_rank_param > 0.001f && config2->attack_lvl_rank_param < 50.0f)
+		{
+			long long d = (long long)((float)sum_atk_def_deg * config2->attack_lvl_rank_param) - _attack_degree;
+			if (d > 0 && d <= 1000000) attack_degree_delta = (int)d;
+		}
+		if (config2->defence_lvl_rank_param > 0.001f && config2->defence_lvl_rank_param < 50.0f)
+		{
+			long long d = (long long)((float)sum_atk_def_deg * config2->defence_lvl_rank_param) - _defend_degree;
+			if (d > 0 && d <= 1000000) defend_degree_delta = (int)d;
+		}
+	}
+
+	// attack_range: cfg->attack_dist - _cur_prop.attack_range (chỉ nếu kid có range lớn hơn)
+	if (config2->attack_dist > 0.0f && config2->attack_dist < 1000.0f
+		&& config2->attack_dist > _cur_prop.attack_range)
+	{
+		attack_range_delta = config2->attack_dist - _cur_prop.attack_range;
+		if (attack_range_delta > 100.0f) attack_range_delta = 100.0f;
+	}
+
+	// run_speed: ratio = (cfg.walk_speed - cur.run_speed) / cur.run_speed
+	if (config2->walk_speed > 0.0f && config2->walk_speed < 100.0f
+		&& _cur_prop.run_speed > 0.0f
+		&& config2->walk_speed > _cur_prop.run_speed)
+	{
+		run_speed_ratio = (config2->walk_speed - _cur_prop.run_speed) / _cur_prop.run_speed;
+		if (run_speed_ratio > 5.0f) run_speed_ratio = 5.0f;
+	}
+
+	// attack_speed: nếu cfg.attack_interval < 1.0 → kid đánh nhanh hơn → áp ratio buff
+	if (config2->attack_interval > 0.0f && config2->attack_interval < 5.0f
+		&& config2->attack_interval < 1.0f)
+	{
+		attack_speed_ratio = 1.0f - config2->attack_interval;
+		if (attack_speed_ratio > 1.0f) attack_speed_ratio = 1.0f;
+	}
+
+	// pray_speed: cfg.enchant_time_reduce đã là tỉ lệ giảm pray (0..1+)
+	if (config2->enchant_time_reduce > 0.001f && config2->enchant_time_reduce < 5.0f)
+	{
+		pray_speed_ratio = config2->enchant_time_reduce;
+		if (pray_speed_ratio > 2.0f) pray_speed_ratio = 2.0f;
+	}
+
+	// Lưu ý: anti_resistance_degree và crit BỎ QUA Phase 2 vì 174 không có filter TTL
+	// tương ứng — áp trực tiếp sẽ leak vĩnh viễn qua DB persistence (actobject.cpp:921-959)
+	_skill.AddFilterKidTransformAdvancedStats(obj_if, 1800,
+		attack_degree_delta, defend_degree_delta,
+		attack_range_delta, run_speed_ratio,
+		attack_speed_ratio, pray_speed_ratio);
 
 	// Đổi shape
 	ChangeShape(config2->unk1 | (3 << 6));
