@@ -5780,7 +5780,9 @@ gplayer_controller::CommandHandler(int cmd_type,const void * buf, unsigned int s
 
 					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_GET_ADDON:
 					{
-						pImp->GetKidAddons()->SetRecvKidsAddons(pImp->_parent->ID.id, cmd.val1, cmd.val2);
+						// 173full: ActivateReward(this, buf+6 /*addon_pos*/, buf+10 /*kid_pos*/)
+						// → val1 = addon_pos, val2 = kid_pos
+						pImp->GetKidAddons()->SetRecvKidsAddons(pImp->_parent->ID.id, cmd.val2, cmd.val1);
 					} break;
 
 					default:

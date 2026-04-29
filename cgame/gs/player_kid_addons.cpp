@@ -22,14 +22,14 @@ void gplayer_kid_addons::GenerateKidsAddons(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: failed to get player imp");
 		return;
 	}
 
@@ -46,21 +46,30 @@ void gplayer_kid_addons::GenerateKidsAddons(int roleid)
 	DATA_TYPE dt;
 	for (int i = 0; i < 6; i++)
 	{
-		KID_LEVEL_REWARD_CONFIG *pCfg = (KID_LEVEL_REWARD_CONFIG *)world_manager::GetDataMan().get_data_ptr(IDXS[i], ID_SPACE_CONFIG, dt);
-		if (dt != DT_KID_LEVEL_REWARD_CONFIG || !pCfg)
-			return;
-
-		if(addons[i].pos == -1)
+		// addons[i].pos is the kid index (0..5); slot index i is just storage order.
+		// Old code used IDXS[i], which loaded the wrong reward config when the slot
+		// index didn't match the kid index — fix per 173 ref ActivateReward semantics.
+		if (addons[i].pos < 0 || addons[i].pos >= (int)gplayer_kid::MAX_CELESTIAL)
 			continue;
 
-		for (int j = 0; j < addons[i].addons_count; j++)
+		KID_LEVEL_REWARD_CONFIG *pCfg = (KID_LEVEL_REWARD_CONFIG *)world_manager::GetDataMan().get_data_ptr(IDXS[addons[i].pos], ID_SPACE_CONFIG, dt);
+		if (dt != DT_KID_LEVEL_REWARD_CONFIG || !pCfg)
+			continue;
+
+		int cnt = (int)addons[i].addons_count;
+		if (cnt < 0) cnt = 0;
+		if (cnt > 8) cnt = 8;
+		for (int j = 0; j < cnt; j++)
 		{
-			int addon_pos = addons[i].addons_pos[j];
+			int addon_pos = (int)addons[i].addons_pos[j];
+			if (addon_pos < 0 || addon_pos >= 64)
+				continue;
+
 			addon_data new_data;
 			if (!world_manager::GetDataMan().generate_addon(pCfg->reward[addon_pos].addon_id, new_data))
 			{
 				GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: failed to generate addon data");
-				return;
+				continue;
 			}
 			pImp->_kids_addons[i]._total_addon[j].push_back(new_data);
 		}
@@ -177,16 +186,28 @@ void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int pos, int addon_pos)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetRecvKidsAddons: failed to get player imp");
 		return;
 	}
+
+	// Bounds: pos is the kid slot index (0..MAX_CELESTIAL-1),
+	//         addon_pos indexes KID_LEVEL_REWARD_CONFIG.reward[64].
+	// 173 ref (player_kid::ActivateReward) checks: num > 5 -> reject, num2 > 0x3F -> reject.
+	if (pos < 0 || pos >= (int)gplayer_kid::MAX_CELESTIAL)
+		return;
+	if (addon_pos < 0 || addon_pos >= 64)
+		return;
+
+	// Kid must be unlocked. 173 ref rejects when _kid_ess[num]._tid == 0; here idx mirrors _tid.
+	if (pImp->GetKid()->GetCelestial(pos)->idx <= 0)
+		return;
 
 	const int IDXS[] = {6878, 6977, 6979, 6978, 6980, 6981};
 	DATA_TYPE dt;
@@ -196,27 +217,59 @@ void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int pos, int addon_pos)
 
 	unsigned int require_level = pCfg->reward[addon_pos].require_level;
 
-	if (pImp->GetKid()->GetCelestial(pos)->level < require_level)
+	if ((unsigned int)pImp->GetKid()->GetCelestial(pos)->level < require_level)
 		return;
 
-	DeactivateKidsAddons(roleid);
-
+	// Locate slot for this kid (or pick a fresh one). Match 173 _addon_mask idempotent
+	// semantics by rejecting an addon that has already been claimed for the same kid.
+	int slot = -1;
 	for (int i = 0; i < 6; i++)
 	{
 		if (addons[i].pos == pos)
 		{
-			addons[i].addons_pos[addons[i].addons_count] = addon_pos;
-			addons[i].addons_count++;
+			int cnt = (int)addons[i].addons_count;
+			if (cnt > 8) cnt = 8;
+			for (int j = 0; j < cnt; j++)
+			{
+				if ((int)addons[i].addons_pos[j] == addon_pos)
+					return; // already claimed -> idempotent no-op
+			}
+			slot = i;
 			break;
 		}
-		else if (addons[i].pos == -1)
+	}
+
+	if (slot < 0)
+	{
+		for (int i = 0; i < 6; i++)
 		{
-			addons[i].pos = pos;
-			addons[i].addons_pos[addons[i].addons_count] = addon_pos;
-			addons[i].addons_count++;
-			addons_count++;
-			break;
+			if (addons[i].pos == -1)
+			{
+				slot = i;
+				break;
+			}
 		}
+		if (slot < 0)
+			return; // no free slot
+	}
+	else if (addons[slot].addons_count >= 8)
+	{
+		return; // capacity reached for this kid (addons_pos[8])
+	}
+
+	DeactivateKidsAddons(roleid);
+
+	if (addons[slot].pos == -1)
+	{
+		addons[slot].pos = pos;
+		addons[slot].addons_pos[0] = (unsigned int)addon_pos;
+		addons[slot].addons_count = 1;
+		addons_count++;
+	}
+	else
+	{
+		addons[slot].addons_pos[addons[slot].addons_count] = (unsigned int)addon_pos;
+		addons[slot].addons_count++;
 	}
 
 	UpdateKidsAddonsProtocol(roleid);
