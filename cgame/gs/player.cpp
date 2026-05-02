@@ -26128,16 +26128,18 @@ gplayer_imp::CheckRealmDay()
 		memset(&_day_world_points, 0x00, sizeof(_day_world_points) );
 	}
 	// Bebê Celestial
-	if (tm_now->tm_mday != (int)GetLua()->GetChildResetDay())
+	bool force_new_day = EmulateSettings::GetInstance()->GetKidForceNewDay();
+	if (force_new_day || tm_now->tm_mday != (int)GetLua()->GetChildResetDay())
 	{
 		if(EmulateSettings::GetInstance()->GetEnabledChild())
 		{
 			KidUnlockNewDay();
-			GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+			KidAwakeningNewDay();
+			GetLua()->SetChildResetDay(force_new_day ? 0 : (char)tm_now->tm_mday);
 
-			GLog::log(GLOG_ERR,"formatlog: reset child:roleid=%d:resetday=%d",GetParent()->ID.id,tm_now->tm_mday);
-		}	
-	}	
+			GLog::log(GLOG_ERR,"formatlog: reset child:roleid=%d:resetday=%d:force=%d",GetParent()->ID.id,tm_now->tm_mday,force_new_day);
+		}
+	}
 }
 
 

@@ -30,6 +30,7 @@ public:
 		MAX_KID_POINTS_RATE = 9999,
 		MAX_KID_AWAKENING_CASH = 9999,
 		MAX_KID_FREE_CELESTIAL_LEVEL = 1,
+		MAX_KID_FORCE_NEW_DAY = 1,
 	};
 
 	static EmulateSettings * instance;
@@ -79,6 +80,7 @@ private:
 	int kid_points_rate;
 	int kid_awakening_cash;
 	int kid_free_celestial_level;
+	int kid_force_new_day;
 public:
 	void Init();
 	void SetRatesConfig();
@@ -99,6 +101,7 @@ public:
 	inline int GetKidPointsRate() { return kid_points_rate > 0 ? kid_points_rate : 1; }
 	inline int GetKidAwakeningCash() { return kid_awakening_cash > 0 ? kid_awakening_cash : 2000; }
 	inline bool GetKidFreeCelestialLevel() { return kid_free_celestial_level == 1; }
+	inline bool GetKidForceNewDay() { return kid_force_new_day == 1; }
 EmulateSettings()
 {
 

@@ -54,4 +54,5 @@ void EmulateSettings::Init()
 	kid_points_rate          = atoi(emulate_settings->find("Custom_Setting", "kid_points_rate").c_str())          > MAX_KID_POINTS_RATE          ? MAX_KID_POINTS_RATE          : atoi(emulate_settings->find("Custom_Setting", "kid_points_rate").c_str());
 	kid_awakening_cash       = atoi(emulate_settings->find("Custom_Setting", "kid_awakening_cash").c_str())       > MAX_KID_AWAKENING_CASH       ? MAX_KID_AWAKENING_CASH       : atoi(emulate_settings->find("Custom_Setting", "kid_awakening_cash").c_str());
 	kid_free_celestial_level = atoi(emulate_settings->find("Custom_Setting", "kid_free_celestial_level").c_str()) > MAX_KID_FREE_CELESTIAL_LEVEL ? MAX_KID_FREE_CELESTIAL_LEVEL : atoi(emulate_settings->find("Custom_Setting", "kid_free_celestial_level").c_str());
+	kid_force_new_day        = atoi(emulate_settings->find("Custom_Setting", "kid_force_new_day").c_str())        > MAX_KID_FORCE_NEW_DAY        ? MAX_KID_FORCE_NEW_DAY        : atoi(emulate_settings->find("Custom_Setting", "kid_force_new_day").c_str());
 }
