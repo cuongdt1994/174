@@ -26129,6 +26129,12 @@ gplayer_imp::CheckRealmDay()
 	}
 	// Bebê Celestial
 	bool force_new_day = EmulateSettings::GetInstance()->GetKidForceNewDay();
+	int  target_days   = EmulateSettings::GetInstance()->GetChildAwakeningDays();
+
+	// Khi force=1, chỉ tick khi day_count chưa đạt mốc — tránh chạy quá target.
+	if (force_new_day && _kid.GetAwakeningDayCount() >= target_days)
+		force_new_day = false;
+
 	if (force_new_day || tm_now->tm_mday != (int)GetLua()->GetChildResetDay())
 	{
 		if(EmulateSettings::GetInstance()->GetEnabledChild())
@@ -26137,7 +26143,9 @@ gplayer_imp::CheckRealmDay()
 			KidAwakeningNewDay();
 			GetLua()->SetChildResetDay(force_new_day ? 0 : (char)tm_now->tm_mday);
 
-			GLog::log(GLOG_ERR,"formatlog: reset child:roleid=%d:resetday=%d:force=%d",GetParent()->ID.id,tm_now->tm_mday,force_new_day);
+			GLog::log(GLOG_ERR,"formatlog: reset child:roleid=%d:resetday=%d:force=%d:count=%d/%d",
+			         GetParent()->ID.id, tm_now->tm_mday, force_new_day,
+			         _kid.GetAwakeningDayCount(), target_days);
 		}
 	}
 }
