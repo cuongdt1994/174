@@ -26131,13 +26131,30 @@ gplayer_imp::CheckRealmDay()
 	bool force_new_day = EmulateSettings::GetInstance()->GetKidForceNewDay();
 	int  target_days   = EmulateSettings::GetInstance()->GetChildAwakeningDays();
 
+	// Recovery: nếu state mồ côi (name_length==0 nhưng day_count>0) — ví dụ save cũ
+	// đã bị heartbeat tăng day_count khi chưa tạo kid — reset về 0 để KidAwakeningCreate
+	// không bị chặn bởi điều kiện day_count>0 trong error_message(627).
+	if (_kid.GetNameLength() == 0 && _kid.GetAwakeningDayCount() > 0)
+	{
+		_kid.SetAwakeningDayCount(0);
+		_kid.SetCheckDay(false);
+		_kid.SetAwakening(false);
+		_kid.SetBlockDay(false);
+		_kid.SetAwakeningCash(0);
+		_kid.SetPointsAwakening(0);
+		_kid.SetAwakeningPotential(0);
+	}
+
 	// Khi force=1, chỉ tick khi day_count chưa đạt mốc — tránh chạy quá target.
 	if (force_new_day && _kid.GetAwakeningDayCount() >= target_days)
 		force_new_day = false;
 
 	if (force_new_day || tm_now->tm_mday != (int)GetLua()->GetChildResetDay())
 	{
-		if(EmulateSettings::GetInstance()->GetEnabledChild())
+		// Chỉ tick chu kỳ awakening khi kid thực sự đã được tạo (name_length>0).
+		// Nếu không gate, mỗi heartbeat sẽ tăng day_count cho player chưa có kid,
+		// khiến KidAwakeningCreate bị chặn vĩnh viễn bởi check day_count>0.
+		if(EmulateSettings::GetInstance()->GetEnabledChild() && _kid.GetNameLength() > 0)
 		{
 			KidUnlockNewDay();
 			KidAwakeningNewDay();
