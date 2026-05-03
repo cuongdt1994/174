@@ -32842,13 +32842,15 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		return false;
 	}
 
-	if(_kid.GetNameLength() > 0 || _kid.GetAwakeningDayCount() > 0) 
+	if(_kid.GetNameLength() > 0 || _kid.GetAwakeningDayCount() > 0)
 	{
 		_runner->error_message(627);
-		return false;		
+		return false;
 	}
 
-	if(type > 2) type = 0;	
+	// Theo 173: gender chuẩn hoá về 0/1 (gender_list[2] chỉ có male=0, female=1).
+	// Bất kỳ giá trị != 0 đều coi là female. Tránh OOB tại NewDay3.
+	type = (type != 0) ? 1 : 0;
 
 	// Init
 	_kid.SetNameLength(name_len);
@@ -33057,11 +33059,12 @@ bool gplayer_imp::KidAwakeningNewDay2()
             }
         }
 	
+		// Theo 173 (line 1133: _exp += j) — chỉ cộng tổng điểm course + suite bonus,
+		// KHÔNG có multiplier theo ngày, KHÔNG nhân kid_points_rate. Nhờ vậy điểm
+		// tích luỹ nằm trong dải require_score_min/max của KID_QUALITY_CONFIG nên
+		// KidAwakeningNewDay3 luôn match được tier.
+		// kid_points_rate vẫn được áp dụng như tuning knob của server (mặc định = 1).
 		points_recv += (points_recv * mutiple_add);
-
-		// Bônus pela redução para 7 dias
-		if (points_recv > 0)
-			points_recv *= (3.5f + (0.2f * _kid.GetAwakeningDayCount()));
 
 		points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
 
@@ -33280,7 +33283,7 @@ gplayer_imp::KidAwakeningCardMoveEquipInventory(char old_slot, char new_slot)
 }
 
 
-bool 
+bool
 gplayer_imp::KidAwakeningNewDay3()
 {
 	if (_kid.GetAwakeningDayCount() >= EmulateSettings::GetInstance()->GetChildAwakeningDays())
@@ -33289,6 +33292,10 @@ gplayer_imp::KidAwakeningNewDay3()
 		int gender = _kid.GetType();
 		int get_pos = -1;
 
+		// gender_list[2] — chỉ chấp nhận 0 (male) hoặc 1 (female).
+		if (gender != 0 && gender != 1)
+			return false;
+
 		DATA_TYPE data;
 		const KID_QUALITY_CONFIG *config = (const KID_QUALITY_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_QUALITY_CONFIG, ID_SPACE_CONFIG, data);
 		if (!config || data != DT_KID_QUALITY_CONFIG)
@@ -33296,14 +33303,40 @@ gplayer_imp::KidAwakeningNewDay3()
 
 		for (unsigned int i = 0; i < 4; i++)
 		{
-			if (get_points >= config->list[i].require_score_min && get_points <= config->list[i].require_score_max)
+			if ((unsigned int)get_points >= config->list[i].require_score_min && (unsigned int)get_points <= config->list[i].require_score_max)
 			{
 				get_pos = i;
 				break;
 			}
 		}
 
+		// Fallback: điểm vượt mọi require_score_max (vd kid_points_rate cao + nhiều ngày)
+		// → chọn tier có require_score_min cao nhất mà vẫn <= get_points (top tier hợp lệ).
+		if (get_pos < 0)
+		{
+			unsigned int best_min = 0;
+			bool found = false;
+			for (unsigned int i = 0; i < 4; i++)
+			{
+				if (config->list[i].require_score_min <= (unsigned int)get_points
+					&& (!found || config->list[i].require_score_min >= best_min))
+				{
+					best_min = config->list[i].require_score_min;
+					get_pos = (int)i;
+					found = true;
+				}
+			}
+		}
+
+		// list[4] — phòng thủ cuối: nếu vẫn không tìm được tier (điểm dưới mọi min).
+		if (get_pos < 0 || get_pos >= 4)
+			return false;
+
 		int finish_idx = abase::RandSelect(&(config->list[get_pos].gender_list[gender].kid[0].probability), sizeof(config->list[get_pos].gender_list[gender].kid[0]), 8);
+		// kid[8] — RandSelect trả về [0..7] khi config hợp lệ; phòng thủ thêm.
+		if (finish_idx < 0 || finish_idx >= 8)
+			return false;
+
 		int idx_item = config->list[get_pos].gender_list[gender].kid[finish_idx].id;
 		bool item_get = false;
 
@@ -33312,38 +33345,46 @@ gplayer_imp::KidAwakeningNewDay3()
 		if (!config2 || data2 != DT_KID_PROPERTY_CONFIG)
 			return false;
 
-		if (_kid.GetCelestial(config2->kid_debri_type)->idx > 0)
+		// celestial[MAX_CELESTIAL=6] — slot index từ config phải hợp lệ, không sẽ ghi OOB.
+		int slot = config2->kid_debri_type;
+		if (slot < 0 || slot >= (int)gplayer_kid::MAX_CELESTIAL)
+			return false;
+
+		if (_kid.GetCelestial(slot)->idx > 0)
 		{
-			if (_kid.GetCelestial(config2->kid_debri_type)->idx < idx_item)
-			{				
-				_kid.SetCelestial(config2->kid_debri_type, _kid.GetCelestial(config2->kid_debri_type)->level, _kid.GetCelestial(config2->kid_debri_type)->rank, _kid.GetCelestial(config2->kid_debri_type)->exp+config2->kid_debri_exp, idx_item);
+			if (_kid.GetCelestial(slot)->idx < idx_item)
+			{
+				_kid.SetCelestial(slot, _kid.GetCelestial(slot)->level, _kid.GetCelestial(slot)->rank, _kid.GetCelestial(slot)->exp+config2->kid_debri_exp, idx_item);
 				item_get = true;
-			}						
+			}
 			InvPlayerGiveItem(config2->kid_debri_id, 1);
 		}
 		else
-		{		
+		{
 			if(config2->broadcast > 0)
 			{
-				SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), config2->kid_debri_type);
-			}			
+				SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), slot);
+			}
 
 			DATA_TYPE data3;
 			const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)world_manager::GetDataMan().get_data_ptr(6877, ID_SPACE_CONFIG, data3);
 			if (!config3 || data3 != DT_KID_LEVEL_MAX_CONFIG)
 				return false;
 
-			int newlevel = 0;
-			newlevel += config3->level_max[config2->rahk];
-			int newexp = 0;	
+			// level_max[10] — rahk dùng làm chỉ số, kẹp về dải hợp lệ.
+			unsigned int rahk = config2->rahk;
+			if (rahk >= 10) return false;
 
-			_kid.SetCelestial(config2->kid_debri_type, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, newexp, idx_item);	
+			int newlevel = config3->level_max[rahk];
+			int newexp = 0;
+
+			_kid.SetCelestial(slot, newlevel < 1 ? 1 : newlevel, rahk >= 3 ? 1 : 0, newexp, idx_item);
 		}
-		
+
 		_kid.ClearAwakening();
-		
+
 		KidCelestialInfoProtocol(0);
-		_runner->kid_celestial_awakening(item_get ? _kid.GetCelestial(config2->kid_debri_type)->rank : 0, idx_item);
+		_runner->kid_celestial_awakening(item_get ? _kid.GetCelestial(slot)->rank : 0, idx_item);
 
 	}
 	return true;
