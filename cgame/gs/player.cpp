@@ -32880,40 +32880,39 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 
 	_kid.SetType(type);
 
-	_runner->kid_created_info_dialog();
-
-	KidAwakeningNameProtocol ();
-	KidAwakeningInfoProtocol ();
-
-	// kid_force_new_day=1 → bỏ qua chu kỳ 15 ngày. Đặt kid vào state "đã hết chu kỳ,
-	// chờ bấm nút thức tỉnh" — tương đương state sau khi KidUnlockNewDay chạy ngày
-	// thứ target+1 (block_day=true, is_awakening=false) — đây là state client mở
-	// nút "hoàn tất thức tỉnh".
+	// kid_force_new_day=1 → state "sẵn sàng thức tỉnh" ngay sau tạo kid.
 	//
-	// Cách bảo toàn state:
-	//   - day_count = target → KidAwakeningNewDay3 (case 5) qua gate `>=`.
-	//   - block_day = true, is_awakening = false → client hiện nút thức tỉnh.
-	//   - check_day = false → trùng state post-Unlock.
-	//   - SetChildResetDay(today.mday) + early-disable trong CheckRealmDay
-	//     (`force_new_day && day_count>=target → force=false`) → CheckRealmDay
-	//     bỏ qua block (force=false, mday==reset_day) → state không bị KidAwakeningNewDay
-	//     tick lại (sẽ tăng day_count và bật is_awakening). Sang ngày mới mday đổi,
-	//     chu kỳ bình thường resume — vô hại vì gate `>=` vẫn pass.
-	if (EmulateSettings::GetInstance()->GetKidForceNewDay())
+	// Quan sát thực nghiệm: client hiển thị "X/target" trong đó:
+	//   - State #3 (is_awakening=true): X = day_count.
+	//   - State #2 (is_awakening=false, block_day=true): X = day_count - 1.
+	// Ví dụ CUBU bug: state #2 day_count=15 → client hiện "14/15" (off-by-one) +
+	// nút "Bắt đầu ngày mới" thay vì nút thức tỉnh. Để hiện "target/target" trong
+	// state #2, cần day_count = target + 1.
+	//
+	// Đặt state TRƯỚC khi gửi protocol để tránh race với InfoProtocol đầu tiên
+	// (gửi day_count=0 trước khi state setup, có thể bị client cache lại trong
+	// dialog open initialize).
+	bool instant_awaken = EmulateSettings::GetInstance()->GetKidForceNewDay();
+	if (instant_awaken)
 	{
 		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
-		_kid.SetAwakeningDayCount(target);
+		_kid.SetAwakeningDayCount(target + 1);
 		_kid.SetAwakening(false);
 		_kid.SetBlockDay(true);
 		_kid.SetCheckDay(false);
 		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
-		_kid.SetCourseRandomCost(false);
 
 		time_t nnow; time(&nnow);
 		struct tm *tm_now = localtime(&nnow);
 		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+	}
 
-		KidAwakeningInfoProtocol();
+	_runner->kid_created_info_dialog();
+	KidAwakeningNameProtocol ();
+	KidAwakeningInfoProtocol ();   // gửi 1 lần với state đã finalized
+
+	if (instant_awaken)
+	{
 		KidAwakeningPercProtocol();
 		KidAwakeningCashProtocol();
 	}
@@ -32939,11 +32938,13 @@ gplayer_imp::KidAwakeningNewDay()
 {
 	if (!_kid.GetCheckDay())
 	{
-		// Đã đủ chu kỳ → không tick thêm. Giữ state post-Unlock (block_day=true,
-		// is_awakening=false, check_day=false) để client hiển thị nút thức tỉnh.
-		// Không có check này, mỗi lần mday đổi sẽ tick day_count→target+1 và bật
-		// lại is_awakening=true, đẩy state về #3 (active session) — nút biến mất.
-		if (_kid.GetAwakeningDayCount() >= EmulateSettings::GetInstance()->GetChildAwakeningDays())
+		// Cap day_count tại target+1 — state "sẵn sàng thức tỉnh".
+		// Cho phép tick từ target → target+1 (đây là cách user advance từ state
+		// stuck `15/15 không nút` sang `15/15 + nút thức tỉnh` qua nút "Bắt đầu
+		// ngày mới"). Không tick thêm khi đã đạt target+1 — tránh display tăng
+		// vô hạn (16/15, 17/15...) khi player bấm liên tục.
+		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
+		if (_kid.GetAwakeningDayCount() >= target + 1)
 			return true;
 
 		_kid.SetBlockDay(false);
