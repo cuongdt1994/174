@@ -32866,6 +32866,31 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 
 	KidAwakeningNameProtocol ();
 	KidAwakeningInfoProtocol ();
+
+	// kid_force_new_day=1 → bỏ qua chu kỳ đếm ngày (15 ngày). Đẩy thẳng kid vào trạng
+	// thái "sẵn sàng thức tỉnh" ngay khi vừa tạo: day_count=target, is_awakening=true,
+	// cash đã cấp. enabled_day client-side bật → nút thức tỉnh hiển thị tức thì,
+	// KidAwakeningNewDay3 (case 5) qua được gate day_count>=target.
+	// SetCheckDay(true) chặn CheckRealmDay tick thêm trong cùng heartbeat.
+	if (EmulateSettings::GetInstance()->GetKidForceNewDay())
+	{
+		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
+		_kid.SetAwakeningDayCount(target);
+		_kid.SetAwakening(true);
+		_kid.SetBlockDay(false);
+		_kid.SetCheckDay(true);
+		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
+		_kid.SetCourseRandomCost(false);
+
+		time_t nnow; time(&nnow);
+		struct tm *tm_now = localtime(&nnow);
+		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+
+		KidAwakeningInfoProtocol();
+		KidAwakeningPercProtocol();
+		KidAwakeningCashProtocol();
+	}
+
 	return true;
 }
 
