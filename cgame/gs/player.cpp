@@ -26145,6 +26145,24 @@ gplayer_imp::CheckRealmDay()
 		_kid.SetAwakeningPotential(0);
 	}
 
+	// Finalize: nếu kid đã đủ chu kỳ nhưng đang stuck ở state #3 (active session,
+	// is_awakening=true) — ví dụ kid được tạo trước khi build có fix, hoặc tick cuối
+	// cùng của KidAwakeningNewDay đẩy day_count đúng = target — thì flip về state #2
+	// (block_day=true, is_awakening=false, check_day=false) để client mở nút hoàn tất
+	// thức tỉnh ngay heartbeat tiếp theo, không cần tạo lại kid.
+	if (EmulateSettings::GetInstance()->GetEnabledChild()
+		&& _kid.GetNameLength() > 0
+		&& _kid.GetAwakeningDayCount() >= target_days
+		&& _kid.IsAwakening())
+	{
+		_kid.SetAwakening(false);
+		_kid.SetBlockDay(true);
+		_kid.SetCheckDay(false);
+		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+		KidAwakeningInfoProtocol();
+		return;
+	}
+
 	// Khi force=1, chỉ tick khi day_count chưa đạt mốc — tránh chạy quá target.
 	if (force_new_day && _kid.GetAwakeningDayCount() >= target_days)
 		force_new_day = false;
@@ -32867,18 +32885,27 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 	KidAwakeningNameProtocol ();
 	KidAwakeningInfoProtocol ();
 
-	// kid_force_new_day=1 → bỏ qua chu kỳ đếm ngày (15 ngày). Đẩy thẳng kid vào trạng
-	// thái "sẵn sàng thức tỉnh" ngay khi vừa tạo: day_count=target, is_awakening=true,
-	// cash đã cấp. enabled_day client-side bật → nút thức tỉnh hiển thị tức thì,
-	// KidAwakeningNewDay3 (case 5) qua được gate day_count>=target.
-	// SetCheckDay(true) chặn CheckRealmDay tick thêm trong cùng heartbeat.
+	// kid_force_new_day=1 → bỏ qua chu kỳ 15 ngày. Đặt kid vào state "đã hết chu kỳ,
+	// chờ bấm nút thức tỉnh" — tương đương state sau khi KidUnlockNewDay chạy ngày
+	// thứ target+1 (block_day=true, is_awakening=false) — đây là state client mở
+	// nút "hoàn tất thức tỉnh".
+	//
+	// Cách bảo toàn state:
+	//   - day_count = target → KidAwakeningNewDay3 (case 5) qua gate `>=`.
+	//   - block_day = true, is_awakening = false → client hiện nút thức tỉnh.
+	//   - check_day = false → trùng state post-Unlock.
+	//   - SetChildResetDay(today.mday) + early-disable trong CheckRealmDay
+	//     (`force_new_day && day_count>=target → force=false`) → CheckRealmDay
+	//     bỏ qua block (force=false, mday==reset_day) → state không bị KidAwakeningNewDay
+	//     tick lại (sẽ tăng day_count và bật is_awakening). Sang ngày mới mday đổi,
+	//     chu kỳ bình thường resume — vô hại vì gate `>=` vẫn pass.
 	if (EmulateSettings::GetInstance()->GetKidForceNewDay())
 	{
 		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
 		_kid.SetAwakeningDayCount(target);
-		_kid.SetAwakening(true);
-		_kid.SetBlockDay(false);
-		_kid.SetCheckDay(true);
+		_kid.SetAwakening(false);
+		_kid.SetBlockDay(true);
+		_kid.SetCheckDay(false);
 		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
 		_kid.SetCourseRandomCost(false);
 
@@ -32907,11 +32934,18 @@ gplayer_imp::KidUnlockNewDay()
 	}
 }
 
-bool 
+bool
 gplayer_imp::KidAwakeningNewDay()
 {
 	if (!_kid.GetCheckDay())
 	{
+		// Đã đủ chu kỳ → không tick thêm. Giữ state post-Unlock (block_day=true,
+		// is_awakening=false, check_day=false) để client hiển thị nút thức tỉnh.
+		// Không có check này, mỗi lần mday đổi sẽ tick day_count→target+1 và bật
+		// lại is_awakening=true, đẩy state về #3 (active session) — nút biến mất.
+		if (_kid.GetAwakeningDayCount() >= EmulateSettings::GetInstance()->GetChildAwakeningDays())
+			return true;
+
 		_kid.SetBlockDay(false);
 		_kid.SetAwakening(true);
 		_kid.SetAwakeningDayCount(_kid.GetAwakeningDayCount() + 1);
