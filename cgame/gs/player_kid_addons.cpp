@@ -65,12 +65,30 @@ void gplayer_kid_addons::GenerateKidsAddons(int roleid)
 			if (addon_pos < 0 || addon_pos >= 64)
 				continue;
 
+			// 173 ref (player_kid::Activate): bỏ qua reward chỉ-có-item (addon_id == 0).
+			// Tránh gọi generate_addon(0, ...) vô nghĩa và đảm bảo idempotent với reward
+			// item-only ở các mốc level (vd lv70).
+			unsigned int addon_id = pCfg->reward[addon_pos].addon_id;
+			if (addon_id == 0)
+				continue;
+
 			addon_data new_data;
-			if (!world_manager::GetDataMan().generate_addon(pCfg->reward[addon_pos].addon_id, new_data))
+			if (!world_manager::GetDataMan().generate_addon(addon_id, new_data))
 			{
-				GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: failed to generate addon data");
+				// 173 ref log "kid addon_id err1   %d" rồi return không crash.
+				GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: addon_id err1 %u", addon_id);
 				continue;
 			}
+
+			// 173 ref check TestUpdate(&data) == ADDON_MASK_ACTIVATE (==2). Nếu addon
+			// thuộc loại STATIC/USE/ESSENCE thì không phải addon kiểu kích hoạt và
+			// không nên đẩy vào danh sách Activate/Deactivate của kid.
+			if (addon_manager::TestUpdate(new_data) != addon_manager::ADDON_MASK_ACTIVATE)
+			{
+				GLog::log(GLOG_ERR, "gplayer_kid_addons::GenerateKidsAddons: addon_id err2 %u", addon_id);
+				continue;
+			}
+
 			pImp->_kids_addons[i]._total_addon[j].push_back(new_data);
 		}
 	}
