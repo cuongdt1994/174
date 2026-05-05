@@ -25329,6 +25329,7 @@ bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time 
 				item & inv_it = GetTrashInventory(where)[pos];
 				_runner->produce_once(it->type, inv_it.count, inv_it.count, where, pos);
 				FirstAcquireItem(it);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 			FreeItem(it);
@@ -25340,7 +25341,7 @@ bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time 
 bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 {
 	bool res = false;
-	
+
 	if ( id > 0 && count > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
 	{
 		int pos = GetTrashInventory(where).Find(16,id);
@@ -25352,6 +25353,7 @@ bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 				UpdateMallConsumptionDestroying(it.type, it.proc_type, count);
 				GetTrashInventory(where).DecAmount(pos, count);
 				_runner->player_drop_item(where,pos,it.type,count,S2C::DROP_TYPE_USE);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 			else
@@ -25359,18 +25361,19 @@ bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 				UpdateMallConsumptionDestroying(it.type, it.proc_type, it.count);
 				GetTrashInventory(where).DecAmount(pos, it.count);
 				_runner->player_drop_item(gplayer_imp::IL_INVENTORY,pos,it.type,it.count,S2C::DROP_TYPE_USE);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 		}
 	}
-	
+
 	return res;
 }
 
 bool gplayer_imp::SpendTrashBoxItem2(int where, int inv, int count)
 {
 	bool res = false;
-	
+
 	if ( inv >= 0 && count > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
 	{
 		if (inv >= 0)
@@ -25381,6 +25384,7 @@ bool gplayer_imp::SpendTrashBoxItem2(int where, int inv, int count)
 				UpdateMallConsumptionDestroying(it.type, it.proc_type, count);
 				GetTrashInventory(where).DecAmount(inv, count);
 				_runner->player_drop_item(where,inv,it.type,count,S2C::DROP_TYPE_PRODUCE);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 			else
@@ -25388,11 +25392,12 @@ bool gplayer_imp::SpendTrashBoxItem2(int where, int inv, int count)
 				UpdateMallConsumptionDestroying(it.type, it.proc_type, it.count);
 				GetTrashInventory(where).DecAmount(inv, it.count);
 				_runner->player_drop_item(gplayer_imp::IL_INVENTORY,inv,it.type,it.count,S2C::DROP_TYPE_PRODUCE);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 		}
 	}
-	
+
 	return res;
 }
 
@@ -33468,19 +33473,20 @@ gplayer_imp::KidCelestialActivity(int val1, int val2, int val3)
 	return true;
 }
 
-bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx) 
+bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 {
     item_list & _trashbox = GetTrashInventory(IL_TRASH_BOX8);
 
-    if(inv_idx >= _trashbox.Size()) 
+    if(inv_idx < 0 || (unsigned int)inv_idx >= _trashbox.Size())
         return false;
 
     item & item_box = _trashbox[inv_idx];
 
-    if(item_box.type == -1) 
+    if(item_box.type <= 0 || item_box.count <= 0)
         return false;
 
     int celestial_idx = _kid.GetCelestial(pos)->idx;
+    if (celestial_idx <= 0) return false;
 
     DATA_TYPE dt;
     const KID_DEBRIS_ESSENCE *ess = (KID_DEBRIS_ESSENCE*)world_manager::GetDataMan().get_data_ptr(item_box.type, ID_SPACE_ESSENCE, dt);
@@ -33488,86 +33494,93 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 
     DATA_TYPE dt2;
     const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(celestial_idx, ID_SPACE_CONFIG, dt2);
-    if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false; 
+    if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false;
 
-    bool new_star = false;
     int total_count = item_box.count;
     int base_stone_exp = ess->swallow_exp;
+    if (base_stone_exp <= 0) return false;
 
     int current_exp = _kid.GetCelestial(pos)->exp;
     int current_star = _kid.GetCelestial(pos)->rank;
     int new_idx = celestial_idx;
     int stones_used = 0;
+    int protocol_mode = 0;
 
-    if (config2->id_kid_upgrade == 0) 
+    // Type-upgrade pass: consume stones to evolve celestial until id_kid_upgrade == 0 or stones exhausted
+    while (total_count > 0 && config2->id_kid_upgrade != 0)
+    {
+        int required_exp = config2->upgrade_exp;
+        if (required_exp <= 0) break;
+
+        if (current_exp + base_stone_exp >= required_exp)
+        {
+            current_exp = (current_exp + base_stone_exp) - required_exp;
+            total_count--;
+            stones_used++;
+
+            new_idx = config2->id_kid_upgrade;
+            DATA_TYPE dt2_next;
+            const KID_PROPERTY_CONFIG *config2_next = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(new_idx, ID_SPACE_CONFIG, dt2_next);
+            if (!config2_next || dt2_next != DT_KID_PROPERTY_CONFIG) break;
+            config2 = config2_next;
+            protocol_mode = 1;
+        }
+        else
+        {
+            current_exp += base_stone_exp;
+            total_count--;
+            stones_used++;
+            protocol_mode = 1;
+        }
+    }
+
+    // Star-upgrade pass: if celestial is fully evolved (id_kid_upgrade == 0) and star config exists,
+    // continue consuming the remaining stones to push star rank — matches AddDebri recursion in 173 ref.
+    if (total_count > 0 && config2->id_kid_upgrade == 0 && config2->kid_upgrade_star_config != 0)
     {
         DATA_TYPE dt3;
         const KID_UPGRADE_STAR_CONFIG *config3 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->kid_upgrade_star_config, ID_SPACE_CONFIG, dt3);
-        if (!config3 || dt3 != DT_KID_UPGRADE_STAR_CONFIG) return false;
-
-        while (total_count > 0) 
+        if (config3 && dt3 == DT_KID_UPGRADE_STAR_CONFIG)
         {
-            int required_exp = config3->upgrade_star_info[current_star].start_exp;
-            if (current_exp + base_stone_exp >= required_exp) 
+            while (total_count > 0)
             {
-                current_exp = (current_exp + base_stone_exp) - required_exp;
-                current_star++;
-                stones_used++;
-                total_count--;
-
-                if (current_star >= 6) 
+                if (current_star >= 6)
                 {
                     current_star = 6;
                     current_exp = 0;
                     break;
                 }
-            } 
-            else 
-            {
-                current_exp += base_stone_exp;
-                stones_used++;
-                total_count--;
+
+                int required_exp = config3->upgrade_star_info[current_star].start_exp;
+                if (required_exp <= 0) break;
+
+                if (current_exp + base_stone_exp >= required_exp)
+                {
+                    current_exp = (current_exp + base_stone_exp) - required_exp;
+                    current_star++;
+                    stones_used++;
+                    total_count--;
+                }
+                else
+                {
+                    current_exp += base_stone_exp;
+                    stones_used++;
+                    total_count--;
+                }
             }
         }
+    }
 
-        if(SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
-        {
-            _kid.SetCelestial(pos, _kid.GetCelestial(pos)->level, current_star, current_exp, celestial_idx);
-            KidCelestialInfoProtocol(0);   
-        }  
+    if (stones_used <= 0) return false;
+
+    if (SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
+    {
+        _kid.SetCelestial(pos, _kid.GetCelestial(pos)->level, current_star, current_exp, new_idx);
+        KidCelestialInfoProtocol(protocol_mode);
         return true;
-    } 
-    else 
-    {        
-        while (total_count > 0 && config2->id_kid_upgrade != 0) 
-        {
-            int required_exp = config2->upgrade_exp;
+    }
 
-            if (current_exp + base_stone_exp >= required_exp) 
-            {
-                current_exp = (current_exp + base_stone_exp) - required_exp;
-                total_count--;
-                stones_used++;
-
-                new_idx = config2->id_kid_upgrade;
-                config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(new_idx, ID_SPACE_CONFIG, dt2);
-                if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false;
-            } 
-            else 
-            {
-                current_exp += base_stone_exp;
-                total_count--;
-                stones_used++;
-            }
-        }
-
-        if(SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
-        {
-            _kid.SetCelestial(pos, _kid.GetCelestial(pos)->level, current_star, current_exp, new_idx);   
-            KidCelestialInfoProtocol(1);            
-        }  
-        return true;
-    }    
+    return false;
 }
 
 
