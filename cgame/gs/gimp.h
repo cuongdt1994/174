@@ -612,7 +612,7 @@ public:
 	/*170+ Bebe Celestial*/
 	virtual void kid_course_change(char old_slot, char new_slot) {}
 	virtual void kid_course_remove(char old_slot) {}
-	virtual void kid_name_awakening(short name_len, const char * name) {}
+	virtual void kid_name_awakening(char gender, short name_len, const char * name) {}
 	virtual void kid_course_info(unsigned int * course_info, int count) {}
 	virtual void kid_course_perc(char level, int reserved) {}
 	virtual void kid_course_insert(char old_slot, char new_slot) {}

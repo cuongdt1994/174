@@ -4837,12 +4837,12 @@ gplayer_dispatcher::kid_course_remove (char old_slot)
 }
 
 void
-gplayer_dispatcher::kid_name_awakening (short name_len, const char * name)
+gplayer_dispatcher::kid_name_awakening (char gender, short name_len, const char * name)
 {
 	_tbuf.clear();
 
-	CMD::Make<CMD::kid_name_awakening>::From(_tbuf, name_len, name);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	CMD::Make<CMD::kid_name_awakening>::From(_tbuf, gender, name_len, name);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
 	send_ls_msg(pPlayer, _tbuf);
 }
 

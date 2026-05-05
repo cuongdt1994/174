@@ -32671,10 +32671,13 @@ gplayer_imp::GetEquipSlotCount()
 
 
 /*170+ Bebe Celestial*/
-void 
+void
 gplayer_imp::KidAwakeningNameProtocol()
 {
-	_runner->kid_name_awakening(_kid.GetNameLength(), _kid.GetName());
+	// 173 gửi opcode 570 với [gender][name_len][name] — đây là gói trigger hoạt
+	// ảnh sinh kid + auto-mở bảng. Gender lấy từ _kid.GetType() (0=male, 1=female,
+	// đã normalize trong KidAwakeningCreate).
+	_runner->kid_name_awakening(_kid.GetType(), _kid.GetNameLength(), _kid.GetName());
 }
 
 void 
@@ -32944,7 +32947,11 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
 	}
 
-	_runner->kid_created_info_dialog();
+	// Thứ tự gói (theo 173): gói name_awakening (opcode 570) là gói KÍCH HOẠT
+	// hoạt ảnh sinh kid + auto-mở bảng kid. Phải gửi data trước, sau đó mới gửi
+	// kid_created_info_dialog (opcode 13520) để client đã có dữ liệu khi mở
+	// dialog. Đảo thứ tự cũ (dialog trước data) làm client mở dialog rỗng → không
+	// có hoạt ảnh và phải tắt/mở bảng thủ công.
 	KidAwakeningNameProtocol ();
 	KidAwakeningInfoProtocol ();   // gửi 1 lần với state đã finalized
 
@@ -32953,6 +32960,8 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		KidAwakeningPercProtocol();
 		KidAwakeningCashProtocol();
 	}
+
+	_runner->kid_created_info_dialog();
 
 	return true;
 }

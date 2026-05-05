@@ -4882,7 +4882,9 @@ namespace S2C
 		struct kid_name_awakening
 		{
 			single_data_header header;
-			char name[10];
+			char gender;        // 0 = male, 1 = female
+			char name_len;      // độ dài name (<= 16)
+			char name[16];
 		};
 
 		struct kid_course_info

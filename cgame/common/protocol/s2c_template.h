@@ -6875,15 +6875,20 @@ namespace  S2C
 		template <>
 		struct Make<CMD::kid_name_awakening>
 		{
+			// Format 173 (kid_val9 / opcode 570): [gender(1B)][name_len(1B)][name bytes].
+			// Client dùng gói này để trigger hoạt ảnh sinh kid + auto-mở bảng kid sau
+			// khi tạo. Thiếu 2 byte header (gender + name_len) thì client diễn giải
+			// sai → không có hoạt ảnh và phải tắt/mở bảng thủ công.
 			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, short name_len, const char * name)
+			inline static WRAPPER& From(WRAPPER& wrapper, char gender, short name_len, const char * name)
 			{
 				Make<single_data_header>::From(wrapper, KID_NAME_AWAKENING);
 				if(name_len > 16) name_len = 16;
+				wrapper << gender << (char)name_len;
 				wrapper.push_back(name, name_len);
 
 				return wrapper;
-			}		
+			}
 		};
 		
 		template <>
