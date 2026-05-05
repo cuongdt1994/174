@@ -33543,6 +33543,7 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 
     int current_exp = _kid.GetCelestial(pos)->exp;
     int current_star = _kid.GetCelestial(pos)->rank;
+    int initial_star = current_star;
     int new_idx = celestial_idx;
     int stones_used = 0;
     int protocol_mode = 0;
@@ -33613,6 +33614,31 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
     }
 
     if (stones_used <= 0) return false;
+
+    // fee_cost — chuẩn theo UpKidLvl (173full): cộng dồn KID_EXP_CONFIG.exp[i] qua khoảng rank được nâng,
+    // kiểm tra GetAllMoney rồi SpendAllMoney trước khi cam kết tiêu đá và set state.
+    int fee_cost = 0;
+    if (current_star > initial_star)
+    {
+        DATA_TYPE dt_exp;
+        const KID_EXP_CONFIG *pCfgExp = (const KID_EXP_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid_addons::IDX_MAX_LEVEL_MONEY_COST, ID_SPACE_CONFIG, dt_exp);
+        if (pCfgExp && dt_exp == DT_KID_EXP_CONFIG)
+        {
+            for (int i = initial_star; i < current_star && i < 150; ++i)
+                fee_cost += pCfgExp->exp[i];
+        }
+    }
+
+    if (fee_cost > 0 && !EmulateSettings::GetInstance()->GetKidFreeCelestialLevel())
+    {
+        if (GetAllMoney() < (unsigned int)fee_cost)
+        {
+            _runner->error_message(S2C::ERR_OUT_OF_FUND);
+            return false;
+        }
+        SpendAllMoney(fee_cost, true);
+        SelfPlayerMoney();
+    }
 
     if (SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
     {
