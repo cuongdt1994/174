@@ -22,40 +22,38 @@ kid_dribis_generator_item::OnUse(item::LOCATION l,gactive_imp * obj,unsigned int
 		return -1;
 	}
 
-	gplayer_imp* pImp = (gplayer_imp*)obj;
-	LuaManager *lua = LuaManager::GetInstance();
-
-	if (pImp)
+	gplayer_imp * pImp = (gplayer_imp *)obj;
+	if (!pImp)
 	{
-		if (pImp->GetTrashInventory(gplayer_imp::IL_TRASH_BOX8).GetEmptySlotCount() < 1
-			&& pImp->GetTrashInventory(gplayer_imp::IL_TRASH_BOX8).Find(0, 0) < 0)
-		{
-			pImp->_runner->error_message(S2C::ERR_INVENTORY_IS_FULL);
-			return -1;
-		}
-
-		unsigned int item_id, item_count;
-		item_id = item_count = 0;
-		int item_idx = abase::RandSelect(&(ess->list[0].probability),sizeof(ess->list[0]), 256);
-		item_id = ess->list[item_idx].id;
-		item_count = 1;
-
-		if (item_id)
-		{
-			if (!pImp->GiveTrashBoxItem(gplayer_imp::IL_TRASH_BOX8, item_id, item_count))
-				return -1;
-
-			char MsgStr[256];
-			if (EmulateSettings::GetInstance()->GetMsgLanguage() == 1) // PT-BR
-				snprintf(MsgStr, sizeof(MsgStr), "^80ff80Abertura feita com sucesso, você pode verificar o item diretamente no inventário dos Celestiais. \n");
-			else // US-UK
-				snprintf(MsgStr, sizeof(MsgStr), "^80ff80Opening successful, you can check the item directly in the Celestials inventory. \n");
-
-			lua->game__ChatMsg(0, pImp->_parent->ID.id, 0, MsgStr, -1);
-			return 1;
-		}
+		obj->_runner->error_message(S2C::ERR_CANNOT_USE_ITEM);
+		return -1;
 	}
 
-	obj->_runner->error_message(S2C::ERR_CANNOT_USE_ITEM);
-	return -1;
+	// Roll a debris from the table.
+	int item_idx = abase::RandSelect(&(ess->list[0].probability), sizeof(ess->list[0]), 256);
+	unsigned int item_id = ess->list[item_idx].id;
+
+	// Validate the rolled id is actually a debris essence (mirrors 173 reference).
+	if (item_id <= 0
+		|| world_manager::GetDataMan().get_data_type(item_id, ID_SPACE_ESSENCE) != DT_KID_DEBRIS_ESSENCE)
+	{
+		obj->_runner->error_message(S2C::ERR_CANNOT_USE_ITEM);
+		return -1;
+	}
+
+	// GiveTrashBoxItem now handles the empty-slot / pile-merge check itself
+	// and emits an obtain_item update so the client refreshes the slot in real
+	// time (no relogin required).
+	if (!pImp->GiveTrashBoxItem(gplayer_imp::IL_TRASH_BOX8, item_id, 1))
+		return -1;
+
+	LuaManager * lua = LuaManager::GetInstance();
+	char MsgStr[256];
+	if (EmulateSettings::GetInstance()->GetMsgLanguage() == 1) // PT-BR
+		snprintf(MsgStr, sizeof(MsgStr), "^80ff80Abertura feita com sucesso, você pode verificar o item diretamente no inventário dos Celestiais. \n");
+	else // US-UK
+		snprintf(MsgStr, sizeof(MsgStr), "^80ff80Opening successful, you can check the item directly in the Celestials inventory. \n");
+
+	lua->game__ChatMsg(0, pImp->_parent->ID.id, 0, MsgStr, -1);
+	return 1;
 }

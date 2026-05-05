@@ -25290,21 +25290,44 @@ bool gplayer_imp::GetTrashBoxItemByTable(int where, int * table, int & id, int &
 bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time /*0*/, int proctype /*-1*/)
 {
 	bool res = false;
-	
+
 	if ( id > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
 	{
-		if(GetTrashInventory(where).GetEmptySlotCount() < 1) 
+		item_list & trash_inv = GetTrashInventory(where);
+		unsigned int pile_limit = world_manager::GetDataMan().get_item_pile_limit(id);
+
+		// Allow operation if there is at least one empty slot OR an existing pile of the
+		// same id that still has capacity. The previous implementation only checked the
+		// empty-slot count, which prevented merging into an existing stack and made the
+		// "open" silently fail when the panel was technically full but had a mergeable pile.
+		if (trash_inv.GetEmptySlotCount() < 1)
 		{
-			_runner->error_message(S2C::ERR_INVENTORY_IS_FULL);
-			return res;
+			bool can_merge = false;
+			if (pile_limit > 1)
+			{
+				for (unsigned int i = 0; i < trash_inv.Size(); ++i)
+				{
+					if ((unsigned int)trash_inv[i].type == (unsigned int)id
+						&& (unsigned int)trash_inv[i].count < pile_limit)
+					{
+						can_merge = true;
+						break;
+					}
+				}
+			}
+			if (!can_merge)
+			{
+				_runner->error_message(S2C::ERR_INVENTORY_IS_FULL);
+				return res;
+			}
 		}
-		
+
 		element_data::item_tag_t tag = {element_data::IMT_CREATE,0};
 		item_data * it = world_manager::GetDataMan().generate_item_from_player(id,&tag,sizeof(tag));
-		
+
 		if (it)
 		{
-			if (count > 0 && count <= world_manager::GetDataMan().get_item_pile_limit(id))
+			if (count > 0 && (unsigned int)count <= pile_limit)
 			{
 				it->count = count;
 			}
@@ -25312,22 +25335,31 @@ bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time 
 			{
 				count = it->count;
 			}
-			
-			if (time) 
+
+			if (time)
 			{
 				it->expire_date = time += g_timer.get_systime();
 			}
-			
+
 			if (proctype != -1)
 			{
 				it->proc_type = proctype;
 			}
-		
-			int pos = GetTrashInventory(where).Push(*it);
+
+			// Save original count so we can compute the actual delta added.
+			// item_list::Push merges into existing piles when possible; whatever
+			// is left in it->count after the call is what was NOT placed.
+			int original_count = it->count;
+			int pos = trash_inv.Push(*it);
 			if (pos >= 0)
 			{
-				item & inv_it = GetTrashInventory(where)[pos];
-				_runner->produce_once(it->type, inv_it.count, inv_it.count, where, pos);
+				item & inv_it = trash_inv[pos];
+				// obtain_item(type, expire_date, amount_added, slot_total, where, slot)
+				// Sending (delta, total) lets the client UI update the slot in-place
+				// instead of overwriting it with a wrong value (which forced a relogin).
+				_runner->obtain_item(it->type, it->expire_date,
+									 original_count - it->count, inv_it.count,
+									 where, pos);
 				FirstAcquireItem(it);
 				IncTrashBoxChangeCounter();
 				res = true;
