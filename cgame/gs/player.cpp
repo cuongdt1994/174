@@ -33929,9 +33929,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// === MIRROR filter_Kidform::OnAttach (173full.txt:2437-2496) ===
 
 	// 173 line 2451-2454: EventChange(skill, player, oldForm, 3)
-	//   174 không có FORM=3, dùng GNET::FORM_CLASS=1 (career change). EventChange chỉ phản ứng
-	//   với from/to == FORM_CLASS, nên dùng 1 để fire passive class skills.
-	_skill.EventChange(obj_if, GetForm(), GNET::FORM_CLASS);
+	//   GNET::FORM_CLASS = 1 (định nghĩa trong cskill/skill/skill.h:108).
+	//   skill.h KHÔNG được include qua skillwrapper.h ở chuỗi include của player.cpp,
+	//   nên dùng literal 1 thay vì GNET::FORM_CLASS để tránh lỗi name resolution.
+	//   EventChange (cskill/skill/skillwrapper.cpp:665) chỉ phản ứng khi
+	//   from/to == 1 (FORM_CLASS) — fire passive class-change skills.
+	_skill.EventChange(obj_if, GetForm(), 1);
 
 	// 173 line 2455-2457: LockEquipment(1), SetNoMount(1), SetNoBind(1)
 	//   QUAN TRỌNG: LockEquipment(true) khiến cast pipeline bỏ qua weapon class check
