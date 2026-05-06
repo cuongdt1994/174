@@ -33688,9 +33688,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			else
 				_skill.Remove(sk_id);
 
-			// Build packet payload với level kid (như activate) — flag enabled=0 ở packet sẽ báo client gỡ skill
+			// Chuẩn 173: packet luôn (1,1,1,...), level âm = client gỡ skill
 			_skills_shape[skills_count].id = sk_id;
-			_skills_shape[skills_count].level = _kid_transform_skill_state.saved_kid_skill_level[i];
+			_skills_shape[skills_count].level = -_kid_transform_skill_state.saved_kid_skill_level[i];
 			skills_count++;
 		}
 
@@ -33704,8 +33704,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 		ChangeShape(0);
 		_runner->kid_celestial_transformation(0, _parent->ID.id, 0, 0);
-		_runner->player_world_speak_info((char)0, (char)1, (char)1, skills_count, (int*)_skills_shape);
+		_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 		obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
+		PlayerGetProperty();
 		return;
 	}
 
@@ -33763,7 +33764,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	}
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 
-	// Build skill list (j chạy ngược 9..0, BREAK ngay khi tìm thấy level đủ)
+	// Build skill list — chuẩn 173: i=0..15, j=9..0, break ngay khi gặp level đủ; packet level = j+1
 	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 	for (int i = 0; i < 16; i++)
 	{
@@ -33773,7 +33774,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			if (configskill->skill[i].level[j] > 0 && level >= configskill->skill[i].level[j])
 			{
 				int sk_id = configskill->skill[i].id;
-				int sk_lv = j;
+				int sk_lv = j + 1; // 1-based: khớp 173 (cfg2->skill[i].level lưu ngưỡng theo cấp 1..10)
 				int sk_old = _skill.GetLevel(sk_id, GetPlayerClass(), false);
 
 				_skills_shape[skills_count].id = sk_id;
@@ -33905,11 +33906,11 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// Đổi shape
 	ChangeShape(config2->unk1 | (3 << 6));
 
-	// Apply skill levels (sau khi đã lưu level cũ)
+	// Apply skill levels (sau khi đã lưu level cũ) — level đã là 1-based theo chuẩn 173
 	for (int i = 0; i < skills_count; i++)
 	{
 		if (_skills_shape[i].id > 0)
-			_skill.SetLevel(_skills_shape[i].id, _skills_shape[i].level + 1);
+			_skill.SetLevel(_skills_shape[i].id, _skills_shape[i].level);
 	}
 
 	// Full heal sau khi áp buff (max_hp đã được tăng bởi SetGiant)
@@ -33917,6 +33918,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	_runner->kid_celestial_transformation(config2->unk1, _parent->ID.id, 1800, now + 1800);
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
+	PlayerGetProperty();
 }
 void
 gplayer_imp::FixChildSystem()
