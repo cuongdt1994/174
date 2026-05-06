@@ -33654,19 +33654,20 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 // Chuẩn 173 (player_kid::ActivateTransform / DeactivateTransform):
 //  - Spec hóa thân:
 //    * Xóa sạch toàn bộ buff/debuff hiện có, hồi đầy sinh mệnh
-//    * Mang thuộc tính của Tiên Đồng đang xuất chiến (không cộng dồn lên player)
+//    * KHÔNG áp BẤT KỲ buff nào trong lúc biến hình
+//      ("Không bị giảm tấn công, phòng thủ, mức sinh mệnh; cũng không tăng")
 //    * Có thể dùng kỹ năng Tiên Đồng + skill từ tinh linh/trang bị + Tiên Đan
 //    * Tử vong như thông thường
 //  - Spec hủy hóa thân (cả tự kết thúc và chủ động hủy):
 //    * Trở lại thuộc tính ban đầu
 //    * % HP còn lại = % HP của Tiên Đồng lúc hủy
-//    * Áp hiệu ứng Tấn Công Chi Linh + Phòng Thủ Chi Linh
-//  - Thời gian: hóa thân 30 giây, hồi phục 30 phút
+//    * Áp hiệu ứng Tấn Công Chi Linh + Phòng Thủ Chi Linh thời hạn 1 tiếng
+//  - Thời gian: hóa thân 30 giây, cooldown 30 phút, post-buff 1 tiếng
 void
 gplayer_imp::KidCelestialTransformation(int mode)
 {
 	const int KID_TRANSFORM_DURATION_SEC = 30;       // Spec: 30 giây
-	const int KID_POSTBUFF_DURATION_SEC  = 1800;     // Tấn Công / Phòng Thủ Chi Linh — 30 phút (= cooldown)
+	const int KID_POSTBUFF_DURATION_SEC  = 3600;     // Tấn Công / Phòng Thủ Chi Linh — 1 tiếng
 
 	struct
 	{
@@ -33753,7 +33754,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	}
 	int idx = _kid.GetCelestial(slot)->idx;
 	int level = _kid.GetCelestial(slot)->level;
-	int rank = _kid.GetCelestial(slot)->rank;
 	if (idx <= 0 || level <= 0)
 	{
 		_runner->error_message(627);
@@ -33849,123 +33849,34 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// Bước 8: Set cooldown (sau khi đã pass tất cả validation và có config hợp lệ)
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 
-	// Bước 9: Tính thuộc tính Tiên Đồng (chuẩn 173: dùng KID_PROPERTY_CONFIG nhân level + rank)
-	float rank_param = 1.0f;
-	DATA_TYPE dt_star;
-	const KID_UPGRADE_STAR_CONFIG *cfg_star = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->kid_upgrade_star_config, ID_SPACE_CONFIG, dt_star);
-	if (cfg_star && dt_star == DT_KID_UPGRADE_STAR_CONFIG)
-	{
-		if (rank > 0 && rank <= 6)
-			rank_param = cfg_star->upgrade_star_info[rank - 1].star_param;
-		else
-			rank_param = cfg_star->zero_star_param;
-	}
-	if (rank_param <= 0.0f) rank_param = 1.0f;
-
-	float kid_hp   = (float)config2->hp            * (float)level * rank_param;
-	float kid_dmg  = (float)config2->damage        * (float)level * rank_param;
-	float kid_def  = (float)config2->defence       * (float)level * rank_param;
-	float kid_mdef = (float)config2->magic_defence * (float)level * rank_param;
-
-	float hp_ratio = 0.0f, dmg_ratio = 0.0f, def_ratio = 0.0f, resist_ratio = 0.0f;
-	if (_cur_prop.max_hp > 0)
-		hp_ratio = kid_hp / (float)_cur_prop.max_hp;
-
-	int base_dmg = (_cur_prop.damage_low + _cur_prop.damage_high) / 2;
-	if (base_dmg > 0)
-		dmg_ratio = kid_dmg / (float)base_dmg;
-
-	if (_cur_prop.defense > 0)
-		def_ratio = kid_def / (float)_cur_prop.defense;
-
-	int resist_sum = _cur_prop.resistance[0] + _cur_prop.resistance[1] + _cur_prop.resistance[2] + _cur_prop.resistance[3] + _cur_prop.resistance[4];
-	if (resist_sum > 0)
-		resist_ratio = kid_mdef * 5.0f / (float)resist_sum;
-
-	if (hp_ratio     > 5.0f) hp_ratio     = 5.0f;
-	if (dmg_ratio    > 5.0f) dmg_ratio    = 5.0f;
-	if (def_ratio    > 5.0f) def_ratio    = 5.0f;
-	if (resist_ratio > 5.0f) resist_ratio = 5.0f;
-
-	// Bước 10: Set state biến hình — duration = 30 giây (spec)
+	// Bước 9: Set state biến hình — duration = 30 giây (spec)
+	// Chuẩn 173 + spec người dùng: KHÔNG áp bất kỳ buff nào trong lúc biến hình.
+	// Chỉ giữ nguyên thuộc tính player (đã clear buff/debuff ở Bước 6) +
+	// shape mới + skill list mới + hồi đầy HP.
 	_kid_transformation = 1;
 	_kid_transformation_time = KID_TRANSFORM_DURATION_SEC;
 
-	// Bước 11: Áp filter biến hình — TTL khớp duration để tự gỡ buff khi hết hạn
+	// Bước 10: Áp marker visible state HSTATE_530 (chỉ trạng thái hiển thị, không phải buff stat)
+	// AddFilterKidIncTransformation chỉ set HSTATE_530 + Cleardebuff, không add stat buff.
 	_skill.AddFilterKidIncTransformation(obj_if, KID_TRANSFORM_DURATION_SEC);
-	_skill.AddFilterKidTransformStats(obj_if, KID_TRANSFORM_DURATION_SEC,
-		hp_ratio, dmg_ratio, def_ratio, 0.0f, resist_ratio);
 
-	// Bước 12: Stat nâng cao (degree/range/speed/pray) — qua filter TTL
-	int attack_degree_delta = 0;
-	int defend_degree_delta = 0;
-	float attack_range_delta = 0.0f;
-	float run_speed_ratio = 0.0f;
-	float attack_speed_ratio = 0.0f;
-	float pray_speed_ratio = 0.0f;
+	// Bước 11: Đổi shape (chuẩn 173: tmp_data.shape = cfg->shape_type)
+	// KHÔNG dùng (3 << 6) form mask để tránh _cur_form != 0 chặn các action khác
+	ChangeShape(config2->unk1);
 
-	int sum_atk_def_deg = _attack_degree + _defend_degree;
-	if (sum_atk_def_deg > 0)
-	{
-		if (config2->attack_lvl_rank_param > 0.001f && config2->attack_lvl_rank_param < 50.0f)
-		{
-			long long d = (long long)((float)sum_atk_def_deg * config2->attack_lvl_rank_param) - _attack_degree;
-			if (d > 0 && d <= 1000000) attack_degree_delta = (int)d;
-		}
-		if (config2->defence_lvl_rank_param > 0.001f && config2->defence_lvl_rank_param < 50.0f)
-		{
-			long long d = (long long)((float)sum_atk_def_deg * config2->defence_lvl_rank_param) - _defend_degree;
-			if (d > 0 && d <= 1000000) defend_degree_delta = (int)d;
-		}
-	}
-
-	if (config2->attack_dist > 0.0f && config2->attack_dist < 1000.0f
-		&& config2->attack_dist > _cur_prop.attack_range)
-	{
-		attack_range_delta = config2->attack_dist - _cur_prop.attack_range;
-		if (attack_range_delta > 100.0f) attack_range_delta = 100.0f;
-	}
-
-	if (config2->walk_speed > 0.0f && config2->walk_speed < 100.0f
-		&& _cur_prop.run_speed > 0.0f
-		&& config2->walk_speed > _cur_prop.run_speed)
-	{
-		run_speed_ratio = (config2->walk_speed - _cur_prop.run_speed) / _cur_prop.run_speed;
-		if (run_speed_ratio > 5.0f) run_speed_ratio = 5.0f;
-	}
-
-	if (config2->attack_interval > 0.0f && config2->attack_interval < 5.0f
-		&& config2->attack_interval < 1.0f)
-	{
-		attack_speed_ratio = 1.0f - config2->attack_interval;
-		if (attack_speed_ratio > 1.0f) attack_speed_ratio = 1.0f;
-	}
-
-	if (config2->enchant_time_reduce > 0.001f && config2->enchant_time_reduce < 5.0f)
-	{
-		pray_speed_ratio = config2->enchant_time_reduce;
-		if (pray_speed_ratio > 2.0f) pray_speed_ratio = 2.0f;
-	}
-
-	_skill.AddFilterKidTransformAdvancedStats(obj_if, KID_TRANSFORM_DURATION_SEC,
-		attack_degree_delta, defend_degree_delta,
-		attack_range_delta, run_speed_ratio,
-		attack_speed_ratio, pray_speed_ratio);
-
-	// Bước 13: Đổi shape (chuẩn 173: SetKidFilter sets tmp_data.shape = cfg->shape_type)
-	ChangeShape(config2->unk1 | (3 << 6));
-
-	// Bước 14: Apply skill levels (sau khi đã save level cũ)
+	// Bước 12: Apply skill levels (sau khi đã save level cũ) — register vào skill book
+	// Để player có thể cast 6 skill của Tiên Đồng. SkillWrapper::SetLevel(id, lv) ghi
+	// trực tiếp vào map[id].level → GetLevel(id, cls) sẽ trả lv bất kể class player.
 	for (int i = 0; i < skills_count; i++)
 	{
 		if (_skills_shape[i].id > 0)
 			_skill.SetLevel(_skills_shape[i].id, _skills_shape[i].level);
 	}
 
-	// Bước 15: Hồi đầy sinh mệnh (chuẩn 173: this->_basic.hp = max_hp sau khi áp filter)
+	// Bước 13: Hồi đầy sinh mệnh (chuẩn 173: this->_basic.hp = max_hp)
 	_basic.hp = _cur_prop.max_hp;
 
-	// Bước 16: Gửi packet client + refresh property
+	// Bước 14: Gửi packet client + refresh property
 	_runner->kid_celestial_transformation(config2->unk1, _parent->ID.id, KID_TRANSFORM_DURATION_SEC, now + KID_TRANSFORM_DURATION_SEC);
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 	PlayerGetProperty();
