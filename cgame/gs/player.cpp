@@ -33651,88 +33651,97 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 }
 
 
-// Chuẩn 173 (player_kid::ActivateTransform / DeactivateTransform):
-//  - Spec hóa thân:
-//    * Xóa sạch toàn bộ buff/debuff hiện có, hồi đầy sinh mệnh
-//    * KHÔNG áp BẤT KỲ buff nào trong lúc biến hình
-//      ("Không bị giảm tấn công, phòng thủ, mức sinh mệnh; cũng không tăng")
-//    * Có thể dùng kỹ năng Tiên Đồng + skill từ tinh linh/trang bị + Tiên Đan
-//    * Tử vong như thông thường
-//  - Spec hủy hóa thân (cả tự kết thúc và chủ động hủy):
-//    * Trở lại thuộc tính ban đầu
-//    * % HP còn lại = % HP của Tiên Đồng lúc hủy
-//    * Áp hiệu ứng Tấn Công Chi Linh + Phòng Thủ Chi Linh thời hạn 1 tiếng
-//  - Thời gian: hóa thân 30 giây, cooldown 30 phút, post-buff 1 tiếng
+// Mirror chính xác chuẩn 173full.txt:
+//   - player_kid::ActivateTransform   (173full.txt:1910-2071)
+//   - player_kid::DeactivateTransform (173full.txt:2073-2090)
+//
+// Map 173 → 174 (do 174 không có filter_Kidform 4276229 và filter 139):
+//   * 173 filter 139 (1800000ms) ⇒ 174 SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN)
+//   * 173 filter_Kidform (TTL 30s) ⇒ 174 _kid_transformation flag + _kid_transformation_time
+//   * 173 SetKidFilter (lưu shape+stats+skills DELTAS) ⇒ 174 ChangeShape + _skill.SetLevel
+//     (không lưu stat deltas vì 174 không có filter_Kidform infrastructure)
+//   * 173 vptr+427 (skill packet) ⇒ 174 _runner->player_world_speak_info
+//
+// Spec người dùng bổ sung (không có trong 173 thuần):
+//   - Post-buff Tấn Công/Phòng Thủ Chi Linh thời hạn 1 tiếng khi deactivate
+//   - HP% giữ nguyên qua deactivate
+//   - Reset shape + HSTATE_530 trong deactivate (vì không có filter_Kidform tự gỡ)
 void
 gplayer_imp::KidCelestialTransformation(int mode)
 {
-	const int KID_TRANSFORM_DURATION_SEC = 30;       // Spec: 30 giây
-	const int KID_POSTBUFF_DURATION_SEC  = 3600;     // Tấn Công / Phòng Thủ Chi Linh — 1 tiếng
+	const int KID_TRANSFORM_DURATION_SEC = 30;       // 173 filter_Kidform timeout
+	const int KID_POSTBUFF_DURATION_SEC  = 3600;     // Spec: post-buff 1 tiếng
 
-	struct
-	{
-		int id;
-		int level;
-	} _skills_shape[16];
-
+	struct { int id; int level; } _skills_shape[16];
 	int skills_count = 0;
 	int now = g_timer.get_systime();
 
 	memset(_skills_shape, 0, sizeof(_skills_shape));
 	object_interface obj_if(this);
 
-	// === DEACTIVATE (mode == 0) — chuẩn 173 player_kid::DeactivateTransform + spec mở rộng ===
+	// =========================================================================
+	// DeactivateTransform — mirror 173full.txt:2073-2090
+	// 173 logic:
+	//   if (this->tmp_data.skill_count) {
+	//     for i in 0..count: tmp_data.skill[2*i+1] = -tmp_data.skill[2*i+1];
+	//     vptr+427(runner, 1, 1, 1, count, skill[]);  // skill packet với level âm
+	//     PlayerGetProperty(owner);
+	//   }
+	// =========================================================================
 	if (!mode)
 	{
 		if (!_kid_transformation)
 			return;
 
-		// Bước 1: Lưu % HP hiện tại của Tiên Đồng (để phục hồi sau khi đổi stat)
+		// Lưu HP% (spec: HP% còn lại của Tiên Đồng → áp lên player sau deactivate)
 		float kid_hp_pct = 0.0f;
 		if (_cur_prop.max_hp > 0)
 			kid_hp_pct = (float)_basic.hp / (float)_cur_prop.max_hp;
 		if (kid_hp_pct < 0.0f) kid_hp_pct = 0.0f;
 		if (kid_hp_pct > 1.0f) kid_hp_pct = 1.0f;
 
-		// Bước 2: Restore skill levels — chuẩn 173: packet (1,1,1,...) với level âm = client gỡ skill
+		// 173: for i in skill_count: tmp_data.skill[2*i+1] = -tmp_data.skill[2*i+1]
 		int saved_count = _kid_transform_skill_state.saved_count;
 		if (saved_count < 0) saved_count = 0;
 		if (saved_count > 16) saved_count = 16;
-
 		for (int i = 0; i < saved_count; i++)
 		{
-			int sk_id = _kid_transform_skill_state.saved_skill_id[i];
+			int sk_id  = _kid_transform_skill_state.saved_skill_id[i];
 			int sk_old = _kid_transform_skill_state.saved_skill_level[i];
+			int sk_lv  = _kid_transform_skill_state.saved_kid_skill_level[i];
 			if (sk_id <= 0) continue;
+
+			// 174 thêm: restore skill level cũ trong skill book (173 dùng filter_Kidform tự gỡ)
 			if (sk_old > 0)
 				_skill.SetLevel(sk_id, sk_old);
 			else
 				_skill.Remove(sk_id);
 
 			_skills_shape[skills_count].id = sk_id;
-			_skills_shape[skills_count].level = -_kid_transform_skill_state.saved_kid_skill_level[i];
+			_skills_shape[skills_count].level = -sk_lv;   // 173: negate level
 			skills_count++;
 		}
 
-		// Bước 3: Reset trạng thái biến hình
+		// 174 thêm: reset state flags (173 không có do filter_Kidform tự gỡ)
 		_kid_transformation = 0;
 		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
-		// Bước 4: Áp post-deactivate buff Tấn Công Chi Linh / Phòng Thủ Chi Linh
-		// Spec: cả khi tự kết thúc và chủ động hủy đều phải áp
-		_skill.AddFilterKidDecTransformation(obj_if, KID_POSTBUFF_DURATION_SEC);
-
-		// Bước 5: Đổi shape về 0 + gỡ HSTATE_530 + gửi packet
+		// 174 thêm: gỡ shape + HSTATE_530 (173 do filter_Kidform OnRemove xử lý)
 		ChangeShape(0);
 		obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
+
+		// Spec: post-buff Tấn Công Chi Linh / Phòng Thủ Chi Linh thời hạn 1 tiếng
+		_skill.AddFilterKidDecTransformation(obj_if, KID_POSTBUFF_DURATION_SEC);
+
+		// 173: vptr+427(runner, 1, 1, 1, count, skill[]) — skill packet với level âm
 		_runner->kid_celestial_transformation(0, _parent->ID.id, 0, 0);
 		_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 
-		// Bước 6: Refresh property (max_hp đổi sau khi gỡ filter biến hình)
+		// 173: gplayer_imp::PlayerGetProperty(owner)
 		PlayerGetProperty();
 
-		// Bước 7: Áp lại % HP — spec "tỉ lệ % máu bằng với tỉ lệ % máu còn lại của Tiên Đồng"
+		// Spec: áp HP% sau khi PlayerGetProperty refresh max_hp
 		if (_cur_prop.max_hp > 0)
 		{
 			int new_hp = (int)((float)_cur_prop.max_hp * kid_hp_pct);
@@ -33743,9 +33752,30 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		return;
 	}
 
-	// === ACTIVATE (mode == 1) — chuẩn 173 player_kid::ActivateTransform ===
+	// =========================================================================
+	// ActivateTransform — mirror 173full.txt:1910-2071
+	// 173 logic:
+	//   if (_select <= 5 && _kid_ess[_select]._tid) {
+	//     if (GetForm(owner)) { RemoveFilter(_filters, 4550); }
+	//     else if (vptr+92(owner, 139)) {                     // filter 139 chưa tồn tại
+	//       ClearSpecFilter(_filters, 12288, 100000);
+	//       RemoveFilter on 4267,4268,4269,4270,4320,4262,4325,4333;
+	//       cfg = get_data_ptr(_kid_ess[_select]._tid, ID_SPACE_CONFIG);
+	//       if (cfg && DT_KID_PROPERTY_CONFIG) {
+	//         tmp_data = compute deltas...;
+	//         build skill list (i=0..15, j=9..0, level=j+1);
+	//         vptr+93(owner, 139, 1800000, 0);              // filter 139 TTL 30 phút
+	//         SetKidFilter(skill, player, &tmp_data.shape); // filter_Kidform TTL 30s
+	//         _basic.hp = _cur_prop.max_hp;
+	//         vptr+427(runner, 1, 1, 1, count, skill[]);
+	//         PlayerGetProperty(owner);
+	//       }
+	//     }
+	//     else { vptr+29(runner, 53); }                     // filter 139 đã tồn tại
+	//   }
+	// =========================================================================
 
-	// Bước 1: Validate slot/idx/level (chuẩn 173: _select <= 5 && _kid_ess[_select]._tid)
+	// 173: if (_select <= 5 && _kid_ess[_select]._tid)
 	int slot = _kid.GetActivity()->active_slot;
 	if (slot < 0 || slot >= 6)
 	{
@@ -33760,77 +33790,64 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		return;
 	}
 
-	// Bước 2: Kiểm tra đã đang biến hình (chuẩn 173: filter 139 đã tồn tại → error_message(53))
-	if (_kid_transformation)
+	// 173: if (GetForm(owner)) RemoveFilter(4550); — silent cleanup, không activate
+	if (GetForm())
+	{
+		_filters.RemoveFilter(FILTER_CANNONFORM);   // 4550
+		return;
+	}
+
+	// 173: else if (vptr+92(owner, 139)) {...} else error_message(53)
+	// (filter 139 đã tồn tại = đang trong cooldown 30 phút = không activate được)
+	if (_kid_transformation || !CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
+	{
+		_runner->error_message(53);
+		return;
+	}
+
+	// 173: cfg = get_data_ptr(_kid_ess[_select]._tid, ID_SPACE_CONFIG)
+	DATA_TYPE dt_cfg;
+	const KID_PROPERTY_CONFIG *cfg = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(idx, ID_SPACE_CONFIG, dt_cfg);
+	if (!cfg || dt_cfg != DT_KID_PROPERTY_CONFIG)
 	{
 		_runner->error_message(627);
 		return;
 	}
 
-	// Bước 3: Kiểm tra đang ở form khác (mount, biến hình thú v.v.)
-	if (obj_if.IsFilterExist(FILTER_BEASTIEFORM) ||
-		obj_if.IsFilterExist(FILTER_TIGERFORM) ||
-		obj_if.IsFilterExist(FILTER_FOXFORM) ||
-		obj_if.IsFilterExist(FILTER_SWIFTFORM) ||
-		obj_if.IsFilterExist(FILTER_FISHFORM) ||
-		obj_if.IsFilterExist(FILTER_THUNDERFORM) ||
-		obj_if.IsFilterExist(FILTER_SHADOWFORM) ||
-		obj_if.IsFilterExist(FILTER_FAIRYFORM) ||
-		obj_if.IsFilterExist(FILTER_GIANTFORM))
+	// 173: cfg2 = get_data_ptr(cfg->id_kid_skill, ID_SPACE_CONFIG)
+	DATA_TYPE dt_skill;
+	const KID_SKILL_CONFIG *cfg2 = (const KID_SKILL_CONFIG *)world_manager::GetDataMan().get_data_ptr(cfg->id_kid_skill, ID_SPACE_CONFIG, dt_skill);
+	if (!cfg2 || dt_skill != DT_KID_SKILL_CONFIG)
 	{
 		_runner->error_message(627);
 		return;
 	}
 
-	// Bước 4: Cooldown — KHÔNG SetCoolDown ở đây để tránh đốt cooldown khi validation sau fail
-	if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
-	{
-		_runner->error_message(628);
-		return;
-	}
-
-	// Bước 5: Lấy config (chuẩn 173: KID_PROPERTY_CONFIG và KID_SKILL_CONFIG)
-	DATA_TYPE data2;
-	const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(idx, ID_SPACE_CONFIG, data2);
-	if (!config2 || data2 != DT_KID_PROPERTY_CONFIG)
-	{
-		_runner->error_message(627);
-		return;
-	}
-
-	DATA_TYPE data3;
-	const KID_SKILL_CONFIG *configskill = (const KID_SKILL_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->id_kid_skill, ID_SPACE_CONFIG, data3);
-	if (!configskill || data3 != DT_KID_SKILL_CONFIG)
-	{
-		_runner->error_message(627);
-		return;
-	}
-
-	// Bước 6: Xóa sạch buff/debuff hiện có (chuẩn 173: ClearSpecFilter + RemoveFilter các ID)
-	// Spec: "xóa sạch toàn bộ lợi ích (buff) và ảnh hưởng phụ hiện có (debuff)"
+	// 173: ClearSpecFilter(_filters, 12288, 100000) + RemoveFilter on 8 IDs
 	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
-	_filters.RemoveFilter(FILTER_REBIRTH);        // 4262
-	_filters.RemoveFilter(FILTER_SOULRETORT);     // 4267
-	_filters.RemoveFilter(FILTER_SOULSEALED);     // 4268
-	_filters.RemoveFilter(FILTER_SOULBEATBACK);   // 4269
-	_filters.RemoveFilter(FILTER_SOULSTUN);       // 4270
-	_filters.RemoveFilter(FILTER_SOULRETORT2);    // 4320
-	_filters.RemoveFilter(FILTER_REBIRTH2);       // 4325
-	_filters.RemoveFilter(FILTER_INCATKDEFHP);    // 4333
+	_filters.RemoveFilter(FILTER_REBIRTH);          // 4262
+	_filters.RemoveFilter(FILTER_SOULRETORT);       // 4267
+	_filters.RemoveFilter(FILTER_SOULSEALED);       // 4268
+	_filters.RemoveFilter(FILTER_SOULBEATBACK);     // 4269
+	_filters.RemoveFilter(FILTER_SOULSTUN);         // 4270
+	_filters.RemoveFilter(FILTER_SOULRETORT2);      // 4320
+	_filters.RemoveFilter(FILTER_REBIRTH2);         // 4325
+	_filters.RemoveFilter(FILTER_INCATKDEFHP);      // 4333
 
-	// Bước 7: Build skill list — chuẩn 173: i=0..15, j=9..0, level packet = j+1 (1-based)
+	// 173: build skill list (i=0..15, j=9..0, level=j+1 1-based)
 	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i <= 15; i++)
 	{
-		if (configskill->skill[i].id <= 0) continue;
+		if (cfg2->skill[i].id <= 0) continue;
 		for (int j = 9; j >= 0; j--)
 		{
-			if (configskill->skill[i].level[j] > 0 && level >= configskill->skill[i].level[j])
+			if (cfg2->skill[i].level[j] && level >= cfg2->skill[i].level[j])
 			{
-				int sk_id = configskill->skill[i].id;
+				int sk_id = cfg2->skill[i].id;
 				int sk_lv = j + 1;
 				int sk_old = _skill.GetLevel(sk_id, GetPlayerClass(), false);
 
+				// 173: tmp_data.skill[2*count] = id; tmp_data.skill[2*count+1] = j+1;
 				_skills_shape[skills_count].id = sk_id;
 				_skills_shape[skills_count].level = sk_lv;
 
@@ -33846,39 +33863,40 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	_kid_transform_skill_state.saved_idx = idx;
 	_kid_transform_skill_state.saved_slot = slot;
 
-	// Bước 8: Set cooldown (sau khi đã pass tất cả validation và có config hợp lệ)
+	// 173: vptr+93(owner, 139, 1800000, 0) — filter 139 TTL 30 phút (cooldown marker)
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 
-	// Bước 9: Set state biến hình — duration = 30 giây (spec)
-	// Chuẩn 173 + spec người dùng: KHÔNG áp bất kỳ buff nào trong lúc biến hình.
-	// Chỉ giữ nguyên thuộc tính player (đã clear buff/debuff ở Bước 6) +
-	// shape mới + skill list mới + hồi đầy HP.
+	// 173: SetKidFilter(skill, player, &tmp_data.shape) — filter_Kidform TTL 30s
+	//   174 không có filter_Kidform. Thay thế:
+	//     - flag _kid_transformation + _kid_transformation_time để track lifetime
+	//     - HSTATE_530 marker (qua AddFilterKidIncTransformation, không phải stat buff)
+	//     - ChangeShape để đổi visual
+	//     - SetLevel để register kid skills vào skill book
+	//   Không lưu stat deltas vì spec yêu cầu KHÔNG thay đổi atk/def/hp.
 	_kid_transformation = 1;
 	_kid_transformation_time = KID_TRANSFORM_DURATION_SEC;
 
-	// Bước 10: Áp marker visible state HSTATE_530 (chỉ trạng thái hiển thị, không phải buff stat)
-	// AddFilterKidIncTransformation chỉ set HSTATE_530 + Cleardebuff, không add stat buff.
 	_skill.AddFilterKidIncTransformation(obj_if, KID_TRANSFORM_DURATION_SEC);
 
-	// Bước 11: Đổi shape (chuẩn 173: tmp_data.shape = cfg->shape_type)
-	// KHÔNG dùng (3 << 6) form mask để tránh _cur_form != 0 chặn các action khác
-	ChangeShape(config2->unk1);
+	// 173: tmp_data.shape = cfg->shape_type
+	ChangeShape(cfg->unk1);
 
-	// Bước 12: Apply skill levels (sau khi đã save level cũ) — register vào skill book
-	// Để player có thể cast 6 skill của Tiên Đồng. SkillWrapper::SetLevel(id, lv) ghi
-	// trực tiếp vào map[id].level → GetLevel(id, cls) sẽ trả lv bất kể class player.
+	// 173: kid skills lưu trong tmp_data.skill[] của filter_Kidform
+	//   174: register vào skill map qua SetLevel để cast pipeline tìm thấy
 	for (int i = 0; i < skills_count; i++)
 	{
 		if (_skills_shape[i].id > 0)
 			_skill.SetLevel(_skills_shape[i].id, _skills_shape[i].level);
 	}
 
-	// Bước 13: Hồi đầy sinh mệnh (chuẩn 173: this->_basic.hp = max_hp)
+	// 173: this->_owner->_basic.hp = this->_owner->_cur_prop.max_hp; — hồi đầy HP
 	_basic.hp = _cur_prop.max_hp;
 
-	// Bước 14: Gửi packet client + refresh property
-	_runner->kid_celestial_transformation(config2->unk1, _parent->ID.id, KID_TRANSFORM_DURATION_SEC, now + KID_TRANSFORM_DURATION_SEC);
+	// 173: vptr+427(runner, 1, 1, 1, count, skill[]) — skill packet
+	_runner->kid_celestial_transformation(cfg->unk1, _parent->ID.id, KID_TRANSFORM_DURATION_SEC, now + KID_TRANSFORM_DURATION_SEC);
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
+
+	// 173: gplayer_imp::PlayerGetProperty(owner)
 	PlayerGetProperty();
 }
 void
