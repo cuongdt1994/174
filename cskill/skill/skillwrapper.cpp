@@ -1541,6 +1541,49 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter)
 	it->second.ability += counter;
 }
 
+// Mirror chuẩn 173full.txt:2649-2735 — GNET::SkillWrapper::ActivateDynSkill (5 args)
+// Khác overload 2-arg ở chỗ:
+//   - Dùng level truyền vào (KHÔNG hardcode 1)
+//   - Với passive skill có EventFlag == EVENT_CHANGE: gọi TakeEffect, KHÔNG insert dyn_map
+//   - Với active skill: insert vào dyn_map ở level chính xác
+// Cần thiết cho kid skills (filter_Kidform::OnAttach gọi variant này với level đúng).
+void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player, int level)
+{
+	SkillKeeper skill = Skill::Create(id);
+	if(!skill)
+		return;
+
+	skill->SetLevel(level);
+
+	const SkillStub *stub = SkillStub::GetStub(id);
+	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
+	{
+		// Passive skill có EVENT_CHANGE flag → TakeEffect ngay (không cần dyn_map)
+		PlayerWrapper w_player(player, this, skill, 0, 0);
+		w_player.SetSkill(skill);
+		skill->SetLevel(level);
+		skill->SetPlayer(&w_player);
+		skill->TakeEffect(&w_player, -1);
+	}
+	else
+	{
+		// Active skill → đăng ký dyn_map ở level đúng
+		StorageMap::iterator it = dyn_map.find(id);
+		if(it == dyn_map.end())
+		{
+			PersistentData data;
+			data.ability = counter;
+			data.level = level;        // ← chuẩn 173: dùng level truyền vào
+			data.overridden = 0;
+			dyn_map[id] = data;
+		}
+		else
+		{
+			it->second.ability += counter;
+		}
+	}
+}
+
 void SkillWrapper::ResurrectByCashAddFilter(object_interface player, int buff_period, const float* buff_ratio, int buff_size)
 {
 	if ( buff_period > 0 && buff_ratio && buff_size == 6 )
@@ -1712,13 +1755,46 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter)
 		ASSERT(false);
 		return;
 	}
-	
+
 	it->second.ability -= counter;
 	ASSERT(it->second.ability >= 0);
 	if(it->second.ability == 0)
 	{
 		//no notice
 		//Notifies clients of reduced skills
+		dyn_map.erase(it);
+	}
+}
+
+// Mirror chuẩn 173full.txt:2738-2790 — GNET::SkillWrapper::DeactivateDynSkill (5 args)
+// Khác overload 2-arg ở chỗ:
+//   - Với passive skill có EventFlag == EVENT_CHANGE: NO-OP (UndoEffect do EventChange xử lý)
+//   - Với active skill: dec ability trong dyn_map, xóa nếu về 0
+void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface player, int level)
+{
+	SkillKeeper skill = Skill::Create(id);
+	if(!skill)
+		return;
+
+	const SkillStub *stub = SkillStub::GetStub(id);
+	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
+	{
+		// Passive EVENT_CHANGE: UndoEffect do EventChange(player, FORM_CLASS, 0) đảm nhận
+		// → no-op ở đây
+		return;
+	}
+
+	StorageMap::iterator it = dyn_map.find(id);
+	if(it == dyn_map.end())
+	{
+		ASSERT(false);
+		return;
+	}
+
+	it->second.ability -= counter;
+	ASSERT(it->second.ability >= 0);
+	if(it->second.ability == 0)
+	{
 		dyn_map.erase(it);
 	}
 }

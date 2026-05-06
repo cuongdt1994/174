@@ -327,6 +327,10 @@ public:
 	void GodEvilConvert(std::unordered_map<int,int>& convert_table, object_interface player, int weapon_class, int form, int worldtag);	//��ħת��
 	void ActivateDynSkill(ID id, int counter);
 	void DeactivateDynSkill(ID id, int counter);
+	// 4-arg overload mirror chuẩn 173full.txt:2649-2735 / :2738-2790
+	// Hỗ trợ kid form skills (đăng ký vào dyn_map ở level đúng + TakeEffect cho passive EVENT_CHANGE)
+	void ActivateDynSkill(ID id, int counter, object_interface player, int level);
+	void DeactivateDynSkill(ID id, int counter, object_interface player, int level);
 	int GetDynSkillCounter(ID id);
 
 	int Condition( ID id, object_interface player, const XID * target, int size ); // ���� error_code

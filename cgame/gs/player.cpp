@@ -9147,27 +9147,22 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 	{
 		object_interface obj_if_kid(this);
 
-		// Đảo ngược OnAttach: EventChange + unlock + DecImmuneMask + DeactivateDynSkill
+		// Đảo ngược OnAttach: EventChange + unlock + DecImmuneMask + DeactivateDynSkill (4-arg)
 		_skill.EventChange(obj_if_kid, GetForm(), 0);
 		obj_if_kid.LockEquipment(false);
 		obj_if_kid.SetNoMount(false);
 		obj_if_kid.SetNoBind(false);
 		obj_if_kid.DecImmuneMask(50339840);
 
-		// Restore skill levels từ saved state + DeactivateDynSkill
 		int saved_count = _kid_transform_skill_state.saved_count;
 		if (saved_count < 0) saved_count = 0;
 		if (saved_count > 16) saved_count = 16;
 		for (int i = 0; i < saved_count; i++)
 		{
-			int sk_id  = _kid_transform_skill_state.saved_skill_id[i];
-			int sk_old = _kid_transform_skill_state.saved_skill_level[i];
+			int sk_id = _kid_transform_skill_state.saved_skill_id[i];
+			int sk_lv = _kid_transform_skill_state.saved_kid_skill_level[i];
 			if (sk_id <= 0) continue;
-			_skill.DeactivateDynSkill(sk_id, 1);
-			if (sk_old > 0)
-				_skill.SetLevel(sk_id, sk_old);
-			else
-				_skill.Remove(sk_id);
+			_skill.DeactivateDynSkill(sk_id, 1, obj_if_kid, sk_lv);
 		}
 
 		_kid_transformation = 0;
@@ -33758,28 +33753,22 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// 173 line 2551: DecImmuneMask(50339840) — đảo ngược activate
 		obj_if.DecImmuneMask(50339840);
 
-		// 173 line 2552-2559: DeactivateDynSkill cho từng kid skill +
-		//   restore skill level cũ trong map (174-specific vì SetLevel được dùng ở activate)
+		// 173 line 2552-2559: for i: DeactivateDynSkill(skill[2*i], 1, player, skill[2*i+1])
+		//   Vì activate dùng overload 4-arg → deactivate cũng dùng 4-arg để đảo ngược chuẩn xác.
+		//   - Active kid skills → dec ability + xóa khỏi dyn_map khi về 0
+		//   - Passive EVENT_CHANGE → no-op (UndoEffect đã do EventChange xử lý ở trên)
 		int saved_count = _kid_transform_skill_state.saved_count;
 		if (saved_count < 0) saved_count = 0;
 		if (saved_count > 16) saved_count = 16;
 		for (int i = 0; i < saved_count; i++)
 		{
-			int sk_id  = _kid_transform_skill_state.saved_skill_id[i];
-			int sk_old = _kid_transform_skill_state.saved_skill_level[i];
-			int sk_lv  = _kid_transform_skill_state.saved_kid_skill_level[i];
+			int sk_id = _kid_transform_skill_state.saved_skill_id[i];
+			int sk_lv = _kid_transform_skill_state.saved_kid_skill_level[i];
 			if (sk_id <= 0) continue;
 
-			// Đảo ngược ActivateDynSkill ở activate
-			_skill.DeactivateDynSkill(sk_id, 1);
+			_skill.DeactivateDynSkill(sk_id, 1, obj_if, sk_lv);
 
-			// Restore skill level cũ trong map (174-specific cleanup)
-			if (sk_old > 0)
-				_skill.SetLevel(sk_id, sk_old);
-			else
-				_skill.Remove(sk_id);
-
-			// 173 packet (1,1,1,...): negate level → client gỡ skill
+			// 173 packet (1,1,1,...): negate level → client gỡ skill khỏi UI
 			_skills_shape[skills_count].id = sk_id;
 			_skills_shape[skills_count].level = -sk_lv;
 			skills_count++;
@@ -33940,9 +33929,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// === MIRROR filter_Kidform::OnAttach (173full.txt:2437-2496) ===
 
 	// 173 line 2451-2454: EventChange(skill, player, oldForm, 3)
-	//   174 không có FORM=3, dùng FORM_CLASS=1 (career change). EventChange chỉ phản ứng
+	//   174 không có FORM=3, dùng GNET::FORM_CLASS=1 (career change). EventChange chỉ phản ứng
 	//   với from/to == FORM_CLASS, nên dùng 1 để fire passive class skills.
-	_skill.EventChange(obj_if, GetForm(), 3);
+	_skill.EventChange(obj_if, GetForm(), GNET::FORM_CLASS);
 
 	// 173 line 2455-2457: LockEquipment(1), SetNoMount(1), SetNoBind(1)
 	//   QUAN TRỌNG: LockEquipment(true) khiến cast pipeline bỏ qua weapon class check
@@ -33969,16 +33958,15 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	obj_if.IncImmuneMask(50339840);
 
 	// 173 line 2482-2489: for i: ActivateDynSkill(skill[2*i], 1, player, skill[2*i+1])
-	//   174 ActivateDynSkill chỉ có 2 args (id, counter) → store level=1 hardcoded
-	//   Bù: dùng SetLevel để ghi level đúng vào map (GetLevel check map TRƯỚC dyn_map)
-	//   → cast pipeline đọc level đúng, ActivateDynSkill chỉ để mark "active dynamic"
+	//   174 đã thêm overload 4-arg ActivateDynSkill(id, counter, player, level) ở
+	//   skillwrapper.cpp:1550 — mirror chuẩn 173.
+	//   - Active kid skills → ghi vào dyn_map ở level đúng (GetLevel check map → dyn_map)
+	//   - Passive EVENT_CHANGE skills → TakeEffect ngay (kết hợp với EventChange ở trên)
+	//   KHÔNG dùng SetLevel(map) vì sẽ persist sang skill book của player (lỗi sau relog).
 	for (int i = 0; i < skills_count; i++)
 	{
 		if (_skills_shape[i].id > 0)
-		{
-			_skill.SetLevel(_skills_shape[i].id, _skills_shape[i].level);
-			_skill.ActivateDynSkill(_skills_shape[i].id, 1);
-		}
+			_skill.ActivateDynSkill(_skills_shape[i].id, 1, obj_if, _skills_shape[i].level);
 	}
 
 	// 173 line 2490-2495: SendClientAttackData, UpdateDefense/Magic/Attack/Speed
