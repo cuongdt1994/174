@@ -33942,7 +33942,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// 173 line 2451-2454: EventChange(skill, player, oldForm, 3)
 	//   174 không có FORM=3, dùng FORM_CLASS=1 (career change). EventChange chỉ phản ứng
 	//   với from/to == FORM_CLASS, nên dùng 1 để fire passive class skills.
-	_skill.EventChange(obj_if, GetForm(), FORM_CLASS);
+	_skill.EventChange(obj_if, GetForm(), 3);
 
 	// 173 line 2455-2457: LockEquipment(1), SetNoMount(1), SetNoBind(1)
 	//   QUAN TRỌNG: LockEquipment(true) khiến cast pipeline bỏ qua weapon class check
