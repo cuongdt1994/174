@@ -33771,6 +33771,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		//   filter_Inchp (tăng HP), filter_Ironshield (khiên sắt).
 		// SkillWrapper::AddFilterKidDecTransformation đã wrap đủ với ratios
 		// 0.3/0.7/0.6/0.6/0.3/0.6 + cleardebuff (skillwrapper.cpp:1610).
+		obj_if.SendClientAttackData();
+		obj_if.UpdateDefenseData();
+		obj_if.UpdateMagicData();
+		obj_if.UpdateAttackData();
+		obj_if.UpdateSpeedData();
+		obj_if.SendClientCurSpeed();
 		_skill.AddFilterKidDecTransformation(obj_if, KID_POSTBUFF_DURATION_SEC);
 
 		// HSTATE_530 visible-state marker — gỡ
@@ -34022,6 +34028,13 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		if (_skills_shape[i].id > 0)
 			_skill.ActivateDynSkill(_skills_shape[i].id, 1, obj_if, _skills_shape[i].level);
 	}
+	
+	obj_if.SendClientAttackData();
+	obj_if.UpdateDefenseData();
+	obj_if.UpdateMagicData();
+	obj_if.UpdateAttackData();
+	obj_if.UpdateSpeedData();
+	obj_if.SendClientCurSpeed();
 
 	// State flags (174-specific để track transform lifetime, 173 dùng filter_Kidform TTL)
 	_kid_transformation = 1;
