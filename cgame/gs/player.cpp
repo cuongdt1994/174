@@ -9161,6 +9161,7 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 			_cur_item.weapon_class = _kid_transform_skill_state.saved_weapon_class;
 			_real_weapon_class      = _kid_transform_skill_state.saved_weapon_class;
 		}
+		_fake_weapon_class = 0;
 
 		int saved_count = _kid_transform_skill_state.saved_count;
 		if (saved_count < 0) saved_count = 0;
@@ -33741,6 +33742,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// (đảo ngược override 0xFFFFFFFF dùng để bypass cast pipeline weapon check).
 		_cur_item.weapon_class  = _kid_transform_skill_state.saved_weapon_class;
 		_real_weapon_class      = _kid_transform_skill_state.saved_weapon_class;
+		_fake_weapon_class      = 0; // default value (ban đầu init = 0)
 
 		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc
 		ChangeShape(0);
@@ -33962,9 +33964,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// 174 LockEquipment chỉ là cờ ngăn đổi trang bị, KHÔNG bypass cast.
 	// → Lưu weapon_class gốc, đặt = 0xFFFFFFFF (wildcard, all bits set) để mọi
 	// AND mask của skill đều thoả mãn → kid skill cast được dù player cầm vũ khí gì.
+	// Đặt cả 3 trường (cur_item, real, fake) vì cast pipeline có thể đọc bất kỳ
+	// trường nào — đảm bảo không có path nào còn check weapon class thật của player.
 	_kid_transform_skill_state.saved_weapon_class = _cur_item.weapon_class;
-	_cur_item.weapon_class = 0xFFFFFFFF;
+	_cur_item.weapon_class  = 0xFFFFFFFF;
 	_real_weapon_class      = 0xFFFFFFFF;
+	_fake_weapon_class      = 0xFFFFFFFF;
 
 	// 173 line 2458-2460: shape = cfg->shape_type | 0xC0; ChangeShape2(shape, 30)
 	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
