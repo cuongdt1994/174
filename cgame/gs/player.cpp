@@ -9140,9 +9140,16 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		_kid_addon.ActivateKidsAddons(_parent->ID.id);
 	}
 
-	// Kid transform skill state là runtime-only (không persist DB).
-	// Khi player relog/enter world đang biến hình → end transformation cleanly.
-	// Mirror filter_Kidform::OnRelease (173) đảo ngược OnAttach:
+	// Kid transform: state RUNTIME-ONLY (skill list + d_* không persist DB).
+	// Save/Load chỉ giữ _kid_transformation flag + time → khi relog luôn phải
+	// reset CLEAN. Nếu KHÔNG reset thì:
+	//   • _cur_form vẫn = 3 ngầm (qua Save/Load actobject._cur_form) → mọi
+	//     non-kid skill bị từ chối form check.
+	//   • dyn_map rỗng → kid skills cast được do allow_forms=8 nhưng skill
+	//     không tồn tại trong wrapper → silent fail.
+	// Pattern dùng: ChangeShape(0) (reset _cur_form), DecImmuneMask, unlock
+	// equipment, gỡ HSTATE_530, recompute _cur_prop. KHÔNG cần DeactivateDynSkill
+	// vì dyn_map đã rỗng sau load (runtime-only).
 	if (_kid_transformation)
 	{
 		object_interface obj_if_kid(this);
@@ -9153,27 +9160,15 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		obj_if_kid.SetNoBind(false);
 		obj_if_kid.DecImmuneMask(50339840);
 
-		// (Không cần restore weapon_class — Activate KHÔNG override nó.)
-
-		int saved_count = _kid_transform_skill_state.saved_count;
-		if (saved_count < 0) saved_count = 0;
-		if (saved_count > 16) saved_count = 16;
-		for (int i = 0; i < saved_count; i++)
-		{
-			int sk_id = _kid_transform_skill_state.saved_skill_id[i];
-			int sk_lv = _kid_transform_skill_state.saved_kid_skill_level[i];
-			if (sk_id <= 0) continue;
-			_skill.DeactivateDynSkill(sk_id, 1, obj_if_kid, sk_lv);
-		}
-
 		_kid_transformation = 0;
 		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-		ChangeShape(0);
+		ChangeShape(0);   // reset _cur_form về 0 (form thường) — bắt buộc cho
+		                  // mọi non-kid skill cast được sau relog.
 		obj_if_kid.RemoveTeamVisibleState(GNET::HSTATE_530);
 
-		// Khôi phục _cur_prop (carrier dismount pattern, player.cpp:26420).
-		// Cần sau khi clear _kid_transformation để RefreshEquipment chạy bình thường.
+		// Recompute _cur_prop từ base + equipment (carrier dismount pattern,
+		// player.cpp:26420). Bắt buộc CHẠY SAU khi clear _kid_transformation.
 		property_policy::UpdatePlayer(GetPlayerClass(), this);
 		RefreshEquipment();
 		if (_basic.hp > _cur_prop.max_hp) _basic.hp = _cur_prop.max_hp;
@@ -33860,8 +33855,10 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		return;
 	}
 
-	// 173: ClearSpecFilter(_filters, 12288, 100000) + RemoveFilter on 8 IDs
-	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
+	// 173: ClearSpecFilter(_filters, 12288, 100000) — mask 12288 = 0x3000.
+	// 174 tách thành FILTER_MASK_DEBUFF (0x1000) + FILTER_MASK_DEBUFF2 (0x04000000).
+	// Phải clear cả 2 mới đủ loại debuff/control làm gián đoạn cast skill kid.
+	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF | filter::FILTER_MASK_DEBUFF2);
 	_filters.RemoveFilter(FILTER_REBIRTH);          // 4262
 	_filters.RemoveFilter(FILTER_SOULRETORT);       // 4267
 	_filters.RemoveFilter(FILTER_SOULSEALED);       // 4268
@@ -33891,13 +33888,23 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	int kid_resist  = (int)((float)cfg->magic_defence * level * mutiple_val);
 	int kid_crit    = (int)(cfg->crit_hit_probability * 100.0f * level * mutiple_val);
 
-	// === Lưu state để Deactivate có thể restore (skill list, shape, time_reduce) ===
-	// Note: stat fields (d_hp, d_damage_*, ...) không còn dùng vì 174 chuyển sang
-	// direct override _cur_prop (xem dưới) thay vì dùng Enhance/Impair %.
+	// === Lưu state để Deactivate / restore on relog có thể tính đúng kid stats ===
 	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
 	_kid_transform_skill_state.d_shape       = (cfg->unk1 & 0x3F) | 0xC0;
 	_kid_transform_skill_state.d_attack_type = cfg->attack_type;
+	_kid_transform_skill_state.d_hp                = kid_hp;
+	_kid_transform_skill_state.d_damage_low        = kid_damage;
+	_kid_transform_skill_state.d_damage_high       = kid_damage;
+	_kid_transform_skill_state.d_damage_magic_low  = kid_magic;
+	_kid_transform_skill_state.d_damage_magic_high = kid_magic;
+	_kid_transform_skill_state.d_defence           = kid_defence;
+	for (int ri = 0; ri < 5; ri++)
+		_kid_transform_skill_state.d_resistance[ri] = kid_resist;
+	_kid_transform_skill_state.d_crit          = kid_crit;
+	_kid_transform_skill_state.d_attack_speed  = (int)(cfg->attack_interval * 20.0f);
+	_kid_transform_skill_state.d_attack_range  = cfg->attack_dist;
+	_kid_transform_skill_state.d_run_speed     = (float)cfg->walk_speed;
 
 	// 173 line 2017-2018: time_reduce = cfg->enchant_time_reduce*100 - GetPraySpeed
 	int dtr = (int)(cfg->enchant_time_reduce * 100.0f) - _skill.GetPraySpeed();
@@ -33905,6 +33912,8 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	_kid_transform_skill_state.d_time_reduce = dtr;
 
 	// 173: build skill list (i=0..15, j=9..0, level=j+1 1-based)
+	// Clamp sk_lv theo SkillStub.max_level (kid skill mặc định = 4) để tránh
+	// Skill::SetLevel(level > max) khi config kid_skill.data trỏ tới j∈{4..9}.
 	for (int i = 0; i <= 15; i++)
 	{
 		if (cfg2->skill[i].id <= 0) continue;
@@ -33914,6 +33923,14 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			{
 				int sk_id = cfg2->skill[i].id;
 				int sk_lv = j + 1;
+
+				// Clamp sk_lv ≤ KID_SKILL_MAX_LEVEL (= 4 cho mọi kid stub
+				// 6032-6068 trong error.txt). Tránh Skill::SetLevel(level=5..10)
+				// khi config kid_skill.data trỏ sai j∈{4..9}.
+				const int KID_SKILL_MAX_LEVEL = 4;
+				if (sk_lv > KID_SKILL_MAX_LEVEL) sk_lv = KID_SKILL_MAX_LEVEL;
+				if (sk_lv < 1) break;
+
 				int sk_old = _skill.GetLevel(sk_id, GetPlayerClass(), false);
 
 				_skills_shape[skills_count].id = sk_id;
