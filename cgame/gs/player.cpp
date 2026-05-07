@@ -3280,7 +3280,6 @@ gplayer_imp::FromSwitchToNormal()
 
 	if(_parent->b_disconnect)
 	{
-		//����Ѿ�����
 		_player_state = PLAYER_DISCONNECT;
 		_disconnect_timeout = LOGOUT_TIME_IN_NORMAL;
 	}
@@ -3289,9 +3288,7 @@ gplayer_imp::FromSwitchToNormal()
 bool 
 gplayer_imp::CanAttack(const XID & target)
 {
-	//�����κεط������Խ�����ͨ����
 	if(!_layer_ctrl.CheckAttack()) return false;
-	if(_kid_transformation) return true;
 	return _equipment[item::EQUIP_INDEX_WEAPON].CheckAttack(_equipment);
 }
 
@@ -33728,7 +33725,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		obj_if.SetNoMount(false);
 		obj_if.SetNoBind(false);
 
-		obj_if.SetWeaponClass(_kid_transform_skill_state.saved_weapon_class);
 
 		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc + gửi packet
 		// kid_celestial_transformation(0, roleid, 0, 0) cho client gỡ kid form.
@@ -33771,12 +33767,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		//   filter_Inchp (tăng HP), filter_Ironshield (khiên sắt).
 		// SkillWrapper::AddFilterKidDecTransformation đã wrap đủ với ratios
 		// 0.3/0.7/0.6/0.6/0.3/0.6 + cleardebuff (skillwrapper.cpp:1610).
-		obj_if.SendClientAttackData();
-		obj_if.UpdateDefenseData();
-		obj_if.UpdateMagicData();
-		obj_if.UpdateAttackData();
-		obj_if.UpdateSpeedData();
-		obj_if.SendClientCurSpeed();
 		_skill.AddFilterKidDecTransformation(obj_if, KID_POSTBUFF_DURATION_SEC);
 
 		// HSTATE_530 visible-state marker — gỡ
@@ -33973,12 +33963,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	obj_if.SetNoMount(true);
 	obj_if.SetNoBind(true);
 
-	// Lưu lại weapon_class hiện tại của người chơi (nếu dòng này chưa có)
-	_kid_transform_skill_state.saved_weapon_class = _cur_item.weapon_class;
-
-	// BẮT BUỘC: Ghi đè weapon_class của người chơi bằng attack_type của Kid Form
-	// Điều này giúp hàm Skill::CanAttack() pass được vòng check restrict_weapons
-	obj_if.SetWeaponClass(_kid_transform_skill_state.d_attack_type);
 	// 173 line 2458-2460: shape = cfg->shape_type | 0xC0; ChangeShape2(shape, 30)
 	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
 	// CRITICAL: dùng ChangeShape2 (kid-aware packet) THAY VÌ gactive_imp::ChangeShape
@@ -34025,13 +34009,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		if (_skills_shape[i].id > 0)
 			_skill.ActivateDynSkill(_skills_shape[i].id, 1, obj_if, _skills_shape[i].level);
 	}
-	
-	obj_if.SendClientAttackData();
-	obj_if.UpdateDefenseData();
-	obj_if.UpdateMagicData();
-	obj_if.UpdateAttackData();
-	obj_if.UpdateSpeedData();
-	obj_if.SendClientCurSpeed();
 
 	// State flags (174-specific để track transform lifetime, 173 dùng filter_Kidform TTL)
 	_kid_transformation = 1;
