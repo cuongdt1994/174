@@ -33729,7 +33729,8 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc + gửi packet
 		// kid_celestial_transformation(0, roleid, 0, 0) cho client gỡ kid form.
 		obj_if.ChangeShape2(0, 0);
-
+		_cur_form = 0;
+		_shape_form = 0;
 		// 173 line 2529-2530: lưu HP% trước khi tính lại max_hp
 		float hp_pct = 0.0f;
 		if (_cur_prop.max_hp > 0)
@@ -33925,8 +33926,10 @@ gplayer_imp::KidCelestialTransformation(int mode)
 				// Clamp sk_lv ≤ KID_SKILL_MAX_LEVEL (= 4 cho mọi kid stub
 				// 6032-6068 trong error.txt). Tránh Skill::SetLevel(level=5..10)
 				// khi config kid_skill.data trỏ sai j∈{4..9}.
+				/*
 				const int KID_SKILL_MAX_LEVEL = 4;
 				if (sk_lv > KID_SKILL_MAX_LEVEL) sk_lv = KID_SKILL_MAX_LEVEL;
+				*/
 				if (sk_lv < 1) break;
 
 				int sk_old = _skill.GetLevel(sk_id, GetPlayerClass(), false);
@@ -33971,7 +33974,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// danh sách kid skill. Nếu chậm, client từ chối show kid skill bar / cast
 	// → server thấy như "tuyệt chiêu gián đoạn".
 	obj_if.ChangeShape2(_kid_transform_skill_state.d_shape, KID_TRANSFORM_DURATION_SEC);
-
+	_cur_form = (_kid_transform_skill_state.d_shape & 0xC0) >> 6;
+	_shape_form = _kid_transform_skill_state.d_shape & 0xFF;
+	_attack_type = cfg->attack_type;
 	// === Override _cur_prop trực tiếp (carrier/mount pattern: player.cpp:26368) ===
 	// 174 Enhance/Impair tác dụng vào _en_percent (% boost) → EnhanceMaxHP(140)
 	// có nghĩa là +140% HP, không phải set max_hp = 140 như 173.
