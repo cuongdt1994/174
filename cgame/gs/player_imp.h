@@ -1999,6 +1999,13 @@ protected:
 		int d_anti_defense;
 		int d_anti_resistance;
 		int d_time_reduce;
+
+		// Lưu weapon class gốc của nhân vật. Trong kid form, override
+		// _cur_item.weapon_class = 0xFFFFFFFF (wildcard) để cast pipeline
+		// (skillwrapper.cpp StartSkill / Condition) không reject kid skill
+		// vì weapon không khớp. 173 dùng LockEquipment(true) để bypass nhưng
+		// 174 LockEquipment chỉ ngăn đổi trang bị, không ảnh hưởng cast.
+		int saved_weapon_class;
 	} _kid_transform_skill_state;
 	//int _question_day;
 	//int _question_started;

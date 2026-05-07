@@ -9153,6 +9153,15 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		obj_if_kid.SetNoBind(false);
 		obj_if_kid.DecImmuneMask(50339840);
 
+		// Khôi phục weapon class gốc trước khi clear state (giống flow Deactivate
+		// trong KidCelestialTransformation). RefreshEquipment ở dưới sẽ tự đặt lại
+		// theo trang bị thực tế nhưng restore tay cũng đảm bảo không có gap window.
+		if (_kid_transform_skill_state.saved_weapon_class != 0)
+		{
+			_cur_item.weapon_class = _kid_transform_skill_state.saved_weapon_class;
+			_real_weapon_class      = _kid_transform_skill_state.saved_weapon_class;
+		}
+
 		int saved_count = _kid_transform_skill_state.saved_count;
 		if (saved_count < 0) saved_count = 0;
 		if (saved_count > 16) saved_count = 16;
@@ -28459,17 +28468,24 @@ gplayer_imp::RewardWorldPoints()
 }
 
 /*160+*/
-void 
+void
 gplayer_imp::SpeedSkillManager()
 {
 	if(LuaManager::GetInstance()->GetConfig()->speed_skill_enable < 1)
 	return;
-	
+
+	// Khi đang nhập thể Kid, _cur_prop đã bị override sang chỉ số kid
+	// (xem KidCelestialTransformation). property_policy::UpdatePlayer ở dưới
+	// sẽ tính lại _cur_prop từ base + equipment, xóa sạch override → chỉ số
+	// nhân vật quay về stats gốc trước khi hết 30s. Skip để giữ kid stats.
+	if (_kid_transformation)
+		return;
+
 	int level = _basic.level;
 	int reincarnation = GetReincarnationTimes();
 	float speed = 10.4f;
 	object_interface obj_if(this);
-	
+
 	if(level <= ActivityEventConfig::GetInstance()->GetExpBonusMaxLevel()
 		&& reincarnation <= ActivityEventConfig::GetInstance()->GetExpBonusMaxReincarnation())
 	{
@@ -28478,9 +28494,9 @@ gplayer_imp::SpeedSkillManager()
 		_cur_prop.swim_speed = speed;
 		_cur_prop.flight_speed = speed;
 		obj_if.InsertTeamVisibleState(GNET::HSTATE_NEWBUFFSPEED, 99999);
-	
+
 		PlayerGetProperty();
-	} else 
+	} else
 	{
 		property_policy::UpdatePlayer(GetPlayerClass(),this);
 		PlayerGetProperty();
@@ -33721,6 +33737,11 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		obj_if.SetNoMount(false);
 		obj_if.SetNoBind(false);
 
+		// Khôi phục weapon class gốc đã lưu khi Activate
+		// (đảo ngược override 0xFFFFFFFF dùng để bypass cast pipeline weapon check).
+		_cur_item.weapon_class  = _kid_transform_skill_state.saved_weapon_class;
+		_real_weapon_class      = _kid_transform_skill_state.saved_weapon_class;
+
 		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc
 		ChangeShape(0);
 
@@ -33935,6 +33956,15 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	obj_if.LockEquipment(true);
 	obj_if.SetNoMount(true);
 	obj_if.SetNoBind(true);
+
+	// === Bypass weapon class check để kid skills không bị "tuyệt chiêu bị gián đoạn" ===
+	// 173 dùng LockEquipment(true) để cast pipeline bỏ qua weapon class check.
+	// 174 LockEquipment chỉ là cờ ngăn đổi trang bị, KHÔNG bypass cast.
+	// → Lưu weapon_class gốc, đặt = 0xFFFFFFFF (wildcard, all bits set) để mọi
+	// AND mask của skill đều thoả mãn → kid skill cast được dù player cầm vũ khí gì.
+	_kid_transform_skill_state.saved_weapon_class = _cur_item.weapon_class;
+	_cur_item.weapon_class = 0xFFFFFFFF;
+	_real_weapon_class      = 0xFFFFFFFF;
 
 	// 173 line 2458-2460: shape = cfg->shape_type | 0xC0; ChangeShape2(shape, 30)
 	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
