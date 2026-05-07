@@ -47,13 +47,13 @@ kid_dribis_generator_item::OnUse(item::LOCATION l,gactive_imp * obj,unsigned int
 	if (!pImp->GiveTrashBoxItem(gplayer_imp::IL_TRASH_BOX8, item_id, 1))
 		return -1;
 
-	LuaManager * lua = LuaManager::GetInstance();
-	char MsgStr[256];
-	if (EmulateSettings::GetInstance()->GetMsgLanguage() == 1) // PT-BR
-		snprintf(MsgStr, sizeof(MsgStr), "^80ff80Abertura feita com sucesso, você pode verificar o item diretamente no inventário dos Celestiais. \n");
-	else // US-UK
-		snprintf(MsgStr, sizeof(MsgStr), "^80ff80Opening successful, you can check the item directly in the Celestials inventory. \n");
+	//LuaManager * lua = LuaManager::GetInstance();
+	//char MsgStr[256];
+	//if (EmulateSettings::GetInstance()->GetMsgLanguage() == 1) // PT-BR
+	//	snprintf(MsgStr, sizeof(MsgStr), "^80ff80Abertura feita com sucesso, você pode verificar o item diretamente no inventário dos Celestiais. \n");
+	//else // US-UK
+	//	snprintf(MsgStr, sizeof(MsgStr), "^80ff80Opening successful, you can check the item directly in the Celestials inventory. \n");
 
-	lua->game__ChatMsg(0, pImp->_parent->ID.id, 0, MsgStr, -1);
+	//lua->game__ChatMsg(0, pImp->_parent->ID.id, 0, MsgStr, -1);
 	return 1;
 }
