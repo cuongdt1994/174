@@ -1999,6 +1999,7 @@ protected:
 		int d_anti_defense;
 		int d_anti_resistance;
 		int d_time_reduce;
+		int saved_weapon_class;
 	} _kid_transform_skill_state;
 	//int _question_day;
 	//int _question_started;
