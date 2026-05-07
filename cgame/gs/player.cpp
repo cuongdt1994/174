@@ -3291,6 +3291,7 @@ gplayer_imp::CanAttack(const XID & target)
 {
 	//�����κεط������Խ�����ͨ����
 	if(!_layer_ctrl.CheckAttack()) return false;
+	if(_kid_transformation) return true;
 	return _equipment[item::EQUIP_INDEX_WEAPON].CheckAttack(_equipment);
 }
 
@@ -33727,8 +33728,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		obj_if.SetNoMount(false);
 		obj_if.SetNoBind(false);
 
-		// (Không cần restore weapon_class — Activate KHÔNG override nó nữa.
-		// saved_weapon_class chỉ giữ giá trị tham chiếu, không sử dụng.)
+		obj_if.SetWeaponClass(_kid_transform_skill_state.saved_weapon_class);
 
 		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc + gửi packet
 		// kid_celestial_transformation(0, roleid, 0, 0) cho client gỡ kid form.
@@ -33973,15 +33973,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	obj_if.SetNoMount(true);
 	obj_if.SetNoBind(true);
 
-	// === KHÔNG override weapon_class ===
-	// Kid skills (error.txt) dùng `restrict_weapons` là LIST ID cụ thể
-	// {0, 1, 5, 9, 13, 182, 291, 292, ...} chứ không phải bitmask.
-	// Đặt 0xFFFFFFFF không khớp entry nào → cast bị reject.
-	// Để nguyên _cur_item.weapon_class của player; cast pipeline tự khớp với
-	// entry phù hợp (player class mặc định nằm trong list cho phép).
-	// Trường saved_weapon_class giữ giá trị gốc cho deactive path để no-op.
+	// Lưu lại weapon_class hiện tại của người chơi (nếu dòng này chưa có)
 	_kid_transform_skill_state.saved_weapon_class = _cur_item.weapon_class;
 
+	// BẮT BUỘC: Ghi đè weapon_class của người chơi bằng attack_type của Kid Form
+	// Điều này giúp hàm Skill::CanAttack() pass được vòng check restrict_weapons
+	obj_if.SetWeaponClass(_kid_transform_skill_state.d_attack_type);
 	// 173 line 2458-2460: shape = cfg->shape_type | 0xC0; ChangeShape2(shape, 30)
 	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
 	// CRITICAL: dùng ChangeShape2 (kid-aware packet) THAY VÌ gactive_imp::ChangeShape
