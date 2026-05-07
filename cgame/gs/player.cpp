@@ -9163,8 +9163,11 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		_kid_transformation = 0;
 		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-		ChangeShape(0);   // reset _cur_form về 0 (form thường) — bắt buộc cho
-		                  // mọi non-kid skill cast được sau relog.
+		// ChangeShape2(0, 0) thay vì ChangeShape(0) để VÀ reset _cur_form server
+		// VÀ gửi packet kid_celestial_transformation(0,...) cho client biết hết
+		// hóa thân — cần thiết khi relog đang trong form 3, client mới đăng nhập
+		// chưa biết server đã reset form.
+		obj_if_kid.ChangeShape2(0, 0);
 		obj_if_kid.RemoveTeamVisibleState(GNET::HSTATE_530);
 
 		// Recompute _cur_prop từ base + equipment (carrier dismount pattern,
@@ -33700,7 +33703,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	struct { int id; int level; } _skills_shape[16];
 	int skills_count = 0;
-	int now = g_timer.get_systime();
 
 	memset(_skills_shape, 0, sizeof(_skills_shape));
 	object_interface obj_if(this);
@@ -33728,8 +33730,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// (Không cần restore weapon_class — Activate KHÔNG override nó nữa.
 		// saved_weapon_class chỉ giữ giá trị tham chiếu, không sử dụng.)
 
-		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc
-		ChangeShape(0);
+		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc + gửi packet
+		// kid_celestial_transformation(0, roleid, 0, 0) cho client gỡ kid form.
+		obj_if.ChangeShape2(0, 0);
 
 		// 173 line 2529-2530: lưu HP% trước khi tính lại max_hp
 		float hp_pct = 0.0f;
@@ -33778,9 +33781,8 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
-		// 173 line 2595: KidTransformEnd → broadcast packet kết thúc nhập thể (clientsync)
-		_runner->kid_celestial_transformation(0, _parent->ID.id, 0, 0);
-		// Skill list packet với level âm để client gỡ kid skills khỏi UI
+		// 173 line 2595: KidTransformEnd → packet (đã gửi qua ChangeShape2 ở trên).
+		// Chỉ còn skill list packet với level âm để client gỡ kid skills khỏi UI.
 		_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 
 		// Recompute base/equipment-derived stats (carrier dismount pattern,
@@ -33976,7 +33978,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	// 173 line 2458-2460: shape = cfg->shape_type | 0xC0; ChangeShape2(shape, 30)
 	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
-	ChangeShape(_kid_transform_skill_state.d_shape);
+	// CRITICAL: dùng ChangeShape2 (kid-aware packet) THAY VÌ gactive_imp::ChangeShape
+	// (server-only). Phải gửi packet kid_celestial_transformation NGAY ở thời
+	// điểm này (trước ActivateDynSkill) để client biết form=3 trước khi nhận
+	// danh sách kid skill. Nếu chậm, client từ chối show kid skill bar / cast
+	// → server thấy như "tuyệt chiêu gián đoạn".
+	obj_if.ChangeShape2(_kid_transform_skill_state.d_shape, KID_TRANSFORM_DURATION_SEC);
 
 	// === Override _cur_prop trực tiếp (carrier/mount pattern: player.cpp:26368) ===
 	// 174 Enhance/Impair tác dụng vào _en_percent (% boost) → EnhanceMaxHP(140)
@@ -34026,8 +34033,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// 173: this->_owner->_basic.hp = this->_owner->_cur_prop.max_hp; — hồi đầy HP
 	_basic.hp = _cur_prop.max_hp;
 
-	// 173: vptr+427(runner, 1, 1, 1, count, skill[]) — packet đổi shape + skill list (clientsync)
-	_runner->kid_celestial_transformation(_kid_transform_skill_state.d_shape, _parent->ID.id, KID_TRANSFORM_DURATION_SEC, now + KID_TRANSFORM_DURATION_SEC);
+	// 173 line 2056: vptr+427(runner, 1, 1, 1, count, skill[]) — chỉ packet skill list.
+	// Packet shape (vptr+417 = kid_celestial_transformation) đã được ChangeShape2
+	// gửi ở trên — KHÔNG gửi lại để tránh client xử lý 2 lần.
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 
 	// 173: gplayer_imp::PlayerGetProperty(owner) — đẩy stats mới về client

@@ -264,8 +264,14 @@ public:
 	void ModifyTeamVisibleState(unsigned short state, int param, int param2, int t);
 	void RemoveTeamVisibleState(unsigned short state);
 
-	//���ñ�����־	
+	//���ñ�����־
 	void ChangeShape(int shape);
+	// Mirror 173 object_interface::ChangeShape2(shape, timeout) — đặt server
+	// state (_cur_form, shape_form, STATE_SHAPE) + gửi packet kid-specific
+	// (kid_celestial_transformation) cho client biết hóa thân với timer.
+	// Bắt buộc dùng cho kid form thay vì ChangeShape (vốn gửi packet
+	// change_shape standard 1-byte không mang timeout/role).
+	void ChangeShape2(int shape, int timeout);
 	int GetForm();
 	void SetFormCls(int form);
 

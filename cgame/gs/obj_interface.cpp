@@ -1928,6 +1928,20 @@ void object_interface::ChangeShape(int shape)
 	_imp->_runner->change_shape(shape);
 }
 
+// Mirror 173full.txt:2808-2815 — object_interface::ChangeShape2(shape, a):
+//   gactive_imp::ChangeShape(shape)               // server _cur_form, shape_form, STATE_SHAPE
+//   _runner->vptr+417(shape, a)                   // kid-specific shape packet với timeout
+// 174 vptr+417 = kid_celestial_transformation(shape, roleid, reserve, reserve2).
+// Reserve2 mang absolute end-time để client tự tính TTL chuẩn (race-free
+// nếu network lag). Khi shape=0 và timeout=0 → packet "kết thúc hóa thân".
+void object_interface::ChangeShape2(int shape, int timeout)
+{
+	_imp->ChangeShape(shape);
+	int roleid = _imp->_parent ? _imp->_parent->ID.id : 0;
+	int end_time = (timeout > 0) ? ((int)time(NULL) + timeout) : 0;
+	_imp->_runner->kid_celestial_transformation(shape, roleid, timeout, end_time);
+}
+
 int object_interface::GetForm()
 {
 	return _imp->GetForm();
