@@ -9142,12 +9142,11 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 
 	// Kid transform skill state là runtime-only (không persist DB).
 	// Khi player relog/enter world đang biến hình → end transformation cleanly.
-	// Phải mirror toàn bộ filter_Kidform::OnRelease (173) để đảo ngược OnAttach:
+	// Mirror filter_Kidform::OnRelease (173) đảo ngược OnAttach:
 	if (_kid_transformation)
 	{
 		object_interface obj_if_kid(this);
 
-		// Đảo ngược OnAttach: EventChange + unlock + DecImmuneMask + DeactivateDynSkill (4-arg)
 		_skill.EventChange(obj_if_kid, GetForm(), 0);
 		obj_if_kid.LockEquipment(false);
 		obj_if_kid.SetNoMount(false);
@@ -9170,6 +9169,12 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 		ChangeShape(0);
 		obj_if_kid.RemoveTeamVisibleState(GNET::HSTATE_530);
+
+		// Khôi phục _cur_prop (carrier dismount pattern, player.cpp:26420).
+		// Cần sau khi clear _kid_transformation để RefreshEquipment chạy bình thường.
+		property_policy::UpdatePlayer(GetPlayerClass(), this);
+		RefreshEquipment();
+		if (_basic.hp > _cur_prop.max_hp) _basic.hp = _cur_prop.max_hp;
 	}
 
 	FixExpHeartBeat();
@@ -33697,8 +33702,11 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	object_interface obj_if(this);
 
 	// =========================================================================
-	// DeactivateTransform — mirror filter_Kidform::OnRelease (173full.txt:2498-2596)
-	// + DeactivateTransform (173full.txt:2073-2090).
+	// DeactivateTransform — mirror filter_Kidform::OnRelease (173full.txt:2498-2596).
+	// 174: Vì Enhance/Impair của obj_interface tác dụng vào _en_percent (% boost),
+	// dùng nó với absolute kid stat làm méo chỉ số (vd EnhanceMaxHP(140) = +140%).
+	// → Áp dụng pattern carrier/mount (player.cpp:26420): trả _cur_prop về base
+	// bằng property_policy::UpdatePlayer + RefreshEquipment. Sạch và chính xác.
 	// =========================================================================
 	if (!mode)
 	{
@@ -33716,29 +33724,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc
 		ChangeShape(0);
 
-		// 173 line 2529-2530: lưu HP% trước khi Impair max_hp
+		// 173 line 2529-2530: lưu HP% trước khi tính lại max_hp
 		float hp_pct = 0.0f;
 		if (_cur_prop.max_hp > 0)
 			hp_pct = (float)_basic.hp / (float)_cur_prop.max_hp;
 		if (hp_pct < 0.0f) hp_pct = 0.0f;
 		if (hp_pct > 1.0f) hp_pct = 1.0f;
-
-		// 173 line 2531-2547: Impair* — đảo ngược toàn bộ Enhance* đã làm khi Activate
-		// (gỡ filter_Kidform = trừ tất cả delta đã cộng để đưa nhân vật về sức mạnh ban đầu).
-		obj_if.ImpairMaxHP(_kid_transform_skill_state.d_hp);
-		obj_if.ImpairDefense(_kid_transform_skill_state.d_defence);
-		for (int i = 0; i < 5; i++)
-			obj_if.ImpairResistance((unsigned int)i, _kid_transform_skill_state.d_resistance[i]);
-		obj_if.ImpairDamage(_kid_transform_skill_state.d_damage_low);
-		obj_if.ImpairMagicDamage(_kid_transform_skill_state.d_damage_magic_low);
-		obj_if.ImpairCrit(_kid_transform_skill_state.d_crit);
-		obj_if.ImpairAttackSpeed(_kid_transform_skill_state.d_attack_speed);
-		obj_if.ImpairAttackRange(_kid_transform_skill_state.d_attack_range);
-		obj_if.ImpairSpeed0(_kid_transform_skill_state.d_run_speed);
-		obj_if.ImpairAttackDegree(_kid_transform_skill_state.d_attack_degree);
-		obj_if.ImpairDefendDegree(_kid_transform_skill_state.d_defend_degree);
-		obj_if.DecAntiDefenseDegree(_kid_transform_skill_state.d_anti_defense);
-		obj_if.DecAntiResistanceDegree(_kid_transform_skill_state.d_anti_resistance);
 
 		// 173 line 2548-2550: IncPrayTime — đảo ngược DecPrayTime của Activate
 		_skill.IncPrayTime(_kid_transform_skill_state.d_time_reduce);
@@ -33785,8 +33776,10 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// Skill list packet với level âm để client gỡ kid skills khỏi UI
 		_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 
-		// PlayerGetProperty refresh _cur_prop.max_hp/stats trước khi áp HP%
-		PlayerGetProperty();
+		// Recompute base/equipment-derived stats (carrier dismount pattern,
+		// player.cpp:26420). Trả _cur_prop về đúng giá trị nhân vật gốc.
+		property_policy::UpdatePlayer(GetPlayerClass(), this);
+		RefreshEquipment();
 
 		// 173 line 2584-2594: tự động điều chỉnh HP hiện tại theo tỉ lệ máu tối đa mới
 		// để tránh lỗi hiển thị (Heal nếu < hoặc DecHP nếu >).
@@ -33797,6 +33790,8 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			if (new_hp > _cur_prop.max_hp) new_hp = _cur_prop.max_hp;
 			_basic.hp = new_hp;
 		}
+
+		PlayerGetProperty();
 		return;
 	}
 
@@ -33884,51 +33879,13 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	int kid_resist  = (int)((float)cfg->magic_defence * level * mutiple_val);
 	int kid_crit    = (int)(cfg->crit_hit_probability * 100.0f * level * mutiple_val);
 
-	// === Lưu deltas để Deactivate có thể Impair ngược lại chính xác (filter_Kidform fields) ===
+	// === Lưu state để Deactivate có thể restore (skill list, shape, time_reduce) ===
+	// Note: stat fields (d_hp, d_damage_*, ...) không còn dùng vì 174 chuyển sang
+	// direct override _cur_prop (xem dưới) thay vì dùng Enhance/Impair %.
 	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
-	_kid_transform_skill_state.d_shape             = (cfg->unk1 & 0x3F) | 0xC0;
-	_kid_transform_skill_state.d_attack_type       = cfg->attack_type;
-	_kid_transform_skill_state.d_hp                = kid_hp;
-	_kid_transform_skill_state.d_damage_low        = kid_damage;
-	_kid_transform_skill_state.d_damage_high       = kid_damage;
-	_kid_transform_skill_state.d_damage_magic_low  = kid_magic;
-	_kid_transform_skill_state.d_damage_magic_high = kid_magic;
-	_kid_transform_skill_state.d_defence           = kid_defence;
-	for (int i = 0; i < 5; i++)
-		_kid_transform_skill_state.d_resistance[i] = kid_resist;
-	_kid_transform_skill_state.d_crit              = kid_crit;
-
-	// 173 line 2004: attack_speed = player_cur - cfg->attack_speed*20
-	// (174 cfg dùng attack_interval thay attack_speed; lower attack_speed = nhanh hơn)
-	_kid_transform_skill_state.d_attack_speed = (int)(cfg->attack_interval * 20.0f);
-
-	// 173 line 2005: attack_range = cfg->attack_range - player_cur
-	float dr = cfg->attack_dist - _cur_prop.attack_range;
-	if (dr < 0.0f) dr = 0.0f;
-	_kid_transform_skill_state.d_attack_range = dr;
-
-	// 173 line 2006: speed = cfg->run_speed - player_cur (174 cfg dùng walk_speed)
-	float ds = cfg->walk_speed - _cur_prop.run_speed;
-	if (ds < 0.0f) ds = 0.0f;
-	_kid_transform_skill_state.d_run_speed = ds;
-
-	// 173 line 2007-2016: kế thừa attack/defend degree và anti-degree theo inherit_rate
-	// (174 cfg dùng *_lvl_rank_param và anti_*_param tương ứng).
-	int en_atk = _attack_degree + _defend_degree;
-	int en_pen = _anti_defense_degree + _anti_resistance_degree;
-	int da = (int)((float)en_atk * cfg->attack_lvl_rank_param)  - _attack_degree;
-	int dd = (int)((float)en_atk * cfg->defence_lvl_rank_param) - _defend_degree;
-	int dpa = (int)((float)en_pen * cfg->anti_defence_param) - _anti_defense_degree;
-	int dpd = (int)((float)en_pen * cfg->anti_magic_param)   - _anti_resistance_degree;
-	if (da  < 0) da  = 0;
-	if (dd  < 0) dd  = 0;
-	if (dpa < 0) dpa = 0;
-	if (dpd < 0) dpd = 0;
-	_kid_transform_skill_state.d_attack_degree   = da;
-	_kid_transform_skill_state.d_defend_degree   = dd;
-	_kid_transform_skill_state.d_anti_defense    = dpa;
-	_kid_transform_skill_state.d_anti_resistance = dpd;
+	_kid_transform_skill_state.d_shape       = (cfg->unk1 & 0x3F) | 0xC0;
+	_kid_transform_skill_state.d_attack_type = cfg->attack_type;
 
 	// 173 line 2017-2018: time_reduce = cfg->enchant_time_reduce*100 - GetPraySpeed
 	int dtr = (int)(cfg->enchant_time_reduce * 100.0f) - _skill.GetPraySpeed();
@@ -33971,12 +33928,10 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// =====================================================================
 
 	// 173 line 2451-2454: EventChange(skill, player, oldForm, 3=FORM_KID)
-	//   174 dùng literal 1 (FORM_CLASS) — fire passive class-change skills.
-	_skill.EventChange(obj_if, GetForm(), 1);
+	//   to=3 fire passive class-change skills lắng nghe FORM_KID (mirror 173).
+	_skill.EventChange(obj_if, GetForm(), 3);
 
 	// 173 line 2455-2457: khóa equipment + cấm cưỡi/bind
-	//   LockEquipment(true) khiến cast pipeline bỏ qua weapon class check
-	//   → kid skills không bị reject vì weapon không match.
 	obj_if.LockEquipment(true);
 	obj_if.SetNoMount(true);
 	obj_if.SetNoBind(true);
@@ -33985,22 +33940,29 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
 	ChangeShape(_kid_transform_skill_state.d_shape);
 
-	// 173 line 2461-2477: kết hợp chỉ số Kid + người chơi (HP, sát thương, phòng thủ,
-	// kháng tính, tốc độ, crit, attack/defend degree, anti-degree).
-	obj_if.EnhanceMaxHP(_kid_transform_skill_state.d_hp);
-	obj_if.EnhanceDamage(_kid_transform_skill_state.d_damage_low);
-	obj_if.EnhanceMagicDamage(_kid_transform_skill_state.d_damage_magic_low);
-	obj_if.EnhanceDefense(_kid_transform_skill_state.d_defence);
+	// === Override _cur_prop trực tiếp (carrier/mount pattern: player.cpp:26368) ===
+	// 174 Enhance/Impair tác dụng vào _en_percent (% boost) → EnhanceMaxHP(140)
+	// có nghĩa là +140% HP, không phải set max_hp = 140 như 173.
+	// Áp dụng trực tiếp giống cưỡi quái (player_carrier_up): replace stats.
+	// Khi DeactivateTransform, property_policy::UpdatePlayer + RefreshEquipment
+	// sẽ tính lại _cur_prop từ _base_prop + equipment để khôi phục.
+	_cur_prop.max_hp            = kid_hp;
+	_cur_prop.damage_low        = kid_damage;
+	_cur_prop.damage_high       = kid_damage;
+	_cur_prop.damage_magic_low  = kid_magic;
+	_cur_prop.damage_magic_high = kid_magic;
+	_cur_prop.defense           = kid_defence;
 	for (int i = 0; i < 5; i++)
-		obj_if.EnhanceResistance((unsigned int)i, _kid_transform_skill_state.d_resistance[i]);
-	obj_if.EnhanceCrit(_kid_transform_skill_state.d_crit);
-	obj_if.EnhanceAttackSpeed(_kid_transform_skill_state.d_attack_speed);
-	obj_if.EnhanceAttackRange(_kid_transform_skill_state.d_attack_range);
-	obj_if.EnhanceSpeed0(_kid_transform_skill_state.d_run_speed);
-	obj_if.EnhanceAttackDegree(_kid_transform_skill_state.d_attack_degree);
-	obj_if.EnhanceDefendDegree(_kid_transform_skill_state.d_defend_degree);
-	obj_if.IncAntiDefenseDegree(_kid_transform_skill_state.d_anti_defense);
-	obj_if.IncAntiResistanceDegree(_kid_transform_skill_state.d_anti_resistance);
+		_cur_prop.resistance[i] = kid_resist;
+	_cur_prop.attack_speed      = (int)(cfg->attack_interval * 20.0f);
+	_cur_prop.attack_range      = cfg->attack_dist;
+	_cur_prop.run_speed         = cfg->walk_speed;
+	_cur_prop.walk_speed        = cfg->walk_speed;
+
+	// Crit của kid replace _crit_rate gốc (kid_crit là raw % * level * star_param)
+	// Lưu ý: hiển thị "Bạo kích" trong UI = _crit_rate + _base_crit_rate, để
+	// _base_crit_rate giữ nguyên — kid form sẽ hiện crit cộng dồn.
+	_crit_rate = kid_crit;
 
 	// 173 line 2478-2480: DecPrayTime (giảm thời gian niệm chú)
 	_skill.DecPrayTime(_kid_transform_skill_state.d_time_reduce);
@@ -34024,7 +33986,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	_skill.AddFilterKidIncTransformation(obj_if, KID_TRANSFORM_DURATION_SEC);
 
 	// 173: this->_owner->_basic.hp = this->_owner->_cur_prop.max_hp; — hồi đầy HP
-	//   (Enhance trên đã refresh max_hp qua property_policy::UpdateLife)
 	_basic.hp = _cur_prop.max_hp;
 
 	// 173: vptr+427(runner, 1, 1, 1, count, skill[]) — packet đổi shape + skill list (clientsync)
