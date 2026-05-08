@@ -33730,7 +33730,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		// kid_celestial_transformation(0, roleid, 0, 0) cho client gỡ kid form.
 		obj_if.ChangeShape2(0, 0);
 		_cur_form = 0;
-		_shape_form = 0;
 		// 173 line 2529-2530: lưu HP% trước khi tính lại max_hp
 		float hp_pct = 0.0f;
 		if (_cur_prop.max_hp > 0)
@@ -33975,8 +33974,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// → server thấy như "tuyệt chiêu gián đoạn".
 	obj_if.ChangeShape2(_kid_transform_skill_state.d_shape, KID_TRANSFORM_DURATION_SEC);
 	_cur_form = (_kid_transform_skill_state.d_shape & 0xC0) >> 6;
-	_shape_form = _kid_transform_skill_state.d_shape & 0xFF;
-	_attack_type = cfg->attack_type;
 	// === Override _cur_prop trực tiếp (carrier/mount pattern: player.cpp:26368) ===
 	// 174 Enhance/Impair tác dụng vào _en_percent (% boost) → EnhanceMaxHP(140)
 	// có nghĩa là +140% HP, không phải set max_hp = 140 như 173.
