@@ -1978,28 +1978,6 @@ protected:
 		int saved_count;
 		int saved_idx;
 		int saved_slot;
-
-		// Mirror filter_Kidform fields (173full.txt:2837-2859) — stat deltas
-		// đã Enhance* khi ActivateTransform để Deactivate có thể Impair* ngược lại.
-		int d_shape;
-		int d_attack_type;
-		int d_hp;
-		int d_damage_low;
-		int d_damage_high;
-		int d_damage_magic_low;
-		int d_damage_magic_high;
-		int d_defence;
-		int d_resistance[5];
-		int d_crit;
-		int d_attack_speed;
-		float d_attack_range;
-		float d_run_speed;
-		int d_attack_degree;
-		int d_defend_degree;
-		int d_anti_defense;
-		int d_anti_resistance;
-		int d_time_reduce;
-		int saved_weapon_class;
 	} _kid_transform_skill_state;
 	//int _question_day;
 	//int _question_started;
