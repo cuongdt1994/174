@@ -15368,14 +15368,6 @@ public:
 	}
 };
 
-// Mirror chuẩn 173full.txt:1-348 — filter_Kidform
-// Layout buf (24+ ints):
-//   [0]=shape, [1]=attack_type, [2]=hp, [3..4]=damage_lo/hi,
-//   [5..6]=damage_magic_lo/hi, [7]=defence, [8..12]=resistance[0..4],
-//   [13]=crit_point, [14]=attack_speed_ratio, [15]=range(float),
-//   [16]=speed(float), [17]=attack_adj, [18]=defend_adj,
-//   [19]=attack_ant, [20]=defend_ant, [21]=time_reduce,
-//   [22]=skill_count(clamp 16), [23..]=skill[(id,level)*N]
 class filter_Kidform : public timeout_filter
 {
 protected:
@@ -15468,42 +15460,49 @@ public:
 		_filter_id = FILTER_KIDFORM;
 	}
 
-	// Mirror 173full.txt:147-206 — Plan B (174-specific):
-	// Stat application (Enhance*) gây SetRefreshState race với cast state →
-	// client interrupt cast bar. Để outer scope (gplayer_imp::ActivateKidTransform)
-	// trực tiếp ghi _cur_prop và _crit_rate (giống pattern cưỡi quái). Filter chỉ
-	// quản lý: form change event, lock equip, ChangeShape2, DecPrayTime,
-	// ActivateDynSkill loop, và OnRelease cleanup.
 	void OnAttach()
 	{
 		int form = _parent.GetForm();
-		// 173 EventChange(skill, player, oldForm, 3) — to=3 = kid form (NOT FORM_CLASS=1)
 		_parent.GetSkillWrapper().EventChange(_parent, form, 3);
 		_parent.LockEquipment(true);
 		_parent.SetNoMount(true);
 		_parent.SetNoBind(true);
-		// 173: shape = _shape; LOBYTE(shape) |= 0xC0; — kid form mark = 3<<6 = 0xC0
 		_parent.ChangeShape2(_shape | 0xC0, 30);
 
-		// 173 DecPrayTime — giảm thời gian niệm chú
-		_parent.GetSkillWrapper().DecPrayTime(_time_reduce);
+		_parent.EnhanceMaxHP(_hp);
+		_parent.EnhanceDamage2(_damage_low,_damage_high);
+		_parent.EnhanceMagicDamage2(_damage_magic_low,_damage_magic_high);
+		_parent.EnhanceDefense(_defence);
+		_parent.EnhanceResistance(0, _resistance[0]);
+		_parent.EnhanceResistance(1, _resistance[1]);
+		_parent.EnhanceResistance(2, _resistance[2]);
+		_parent.EnhanceResistance(3, _resistance[3]);
+		_parent.EnhanceResistance(4, _resistance[4]);
+		_parent.EnhanceCrit(_point);
+		_parent.EnhanceAttackSpeed(_ratio);
+		_parent.EnhanceAttackRange(_range);
+		_parent.EnhanceSpeed0(_speed);
+		_parent.EnhanceAttackDegree(_attack_adj);
+		_parent.EnhanceDefendDegree(_defend_adj);
+		_parent.IncAntiDefenseDegree(_attack_ant);
+		_parent.IncAntiResistanceDegree(_defend_ant);
 
-		// 173 ActivateDynSkill cho từng kid skill
+		_parent.GetSkillWrapper().DecPrayTime(_time_reduce);
+		_parent.IncImmuneMask(0x3002000);
+
 		for(int i = 0; i < _skill_count; ++i)
 		{
 			_parent.GetSkillWrapper().ActivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
 		}
-		// 174: Enhance* / IncImmuneMask / SendClientAttackData / Update*Data của 173
-		// đã được bỏ — gây SetRefreshState race và mismatch IMMUNE bit layout.
-		// Stats được outer scope ghi trực tiếp _cur_prop trước khi gọi SetKidFilter.
+
+		_parent.SendClientAttackData();
+		_parent.UpdateDefenseData();
+		_parent.UpdateMagicData();
+		_parent.UpdateAttackData();
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
 	}
 
-	// Mirror 173full.txt:208-306 — Plan B (174-specific):
-	// Stat rollback bằng property_policy::UpdatePlayer + RefreshEquipment thực hiện
-	// ở outer scope (mode=0 path) — pattern carrier dismount. Filter chỉ quản lý:
-	// EventChange→0, unlock, ChangeShape2(0,0), IncPrayTime, DeactivateDynSkill,
-	// 6 post-buffs. KHÔNG Impair* (sẽ làm lệch _en_point) và KHÔNG HP-rebalance
-	// (outer scope handle).
 	void OnRelease()
 	{
 		int form = _parent.GetForm();
@@ -15513,14 +15512,42 @@ public:
 		_parent.SetNoBind(false);
 		_parent.ChangeShape2(0, 0);
 
+		float cur_hp = (float)_parent.GetBasicProp().hp;
+		float ratio  = cur_hp / (float)_parent.GetExtendProp().max_hp;
+
+		_parent.ImpairMaxHP(_hp);
+		_parent.ImpairDefense(_defence);
+		_parent.ImpairResistance(0, _resistance[0]);
+		_parent.ImpairResistance(1, _resistance[1]);
+		_parent.ImpairResistance(2, _resistance[2]);
+		_parent.ImpairResistance(3, _resistance[3]);
+		_parent.ImpairResistance(4, _resistance[4]);
+		_parent.ImpairDamage2(_damage_low,_damage_high);
+		_parent.ImpairMagicDamage2(_damage_magic_low,_damage_magic_high);
+		_parent.ImpairCrit(_point);
+		_parent.ImpairAttackSpeed(_ratio);
+		_parent.ImpairAttackRange(_range);
+		_parent.ImpairSpeed0(_speed);
+		_parent.ImpairAttackDegree(_attack_adj);
+		_parent.ImpairDefendDegree(_defend_adj);
+		_parent.DecAntiDefenseDegree(_attack_ant);
+		_parent.DecAntiResistanceDegree(_defend_ant);
+
 		_parent.GetSkillWrapper().IncPrayTime(_time_reduce);
+		_parent.DecImmuneMask(0x3002000);
 
 		for(int i = 0; i < _skill_count; ++i)
 		{
 			_parent.GetSkillWrapper().DeactivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
 		}
 
-		// 173full.txt:276-293 — 6 post-buffs TTL 3600s
+		_parent.SendClientAttackData();
+		_parent.UpdateDefenseData();
+		_parent.UpdateMagicData();
+		_parent.UpdateAttackData();
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+
 		_parent.AddFilter(new filter_Giant     (_parent, 30, 3600));
 		_parent.AddFilter(new filter_Blessmagic(_parent, 70, 3600));
 		_parent.AddFilter(new filter_Stoneskin (_parent, 60, 3600));
@@ -15528,10 +15555,12 @@ public:
 		_parent.AddFilter(new filter_Inchp     (_parent, 30, 3600));
 		_parent.AddFilter(new filter_Ironshield(_parent, 60, 3600));
 
-		// 174: Impair* + HP-rebalance + KidTransformEnd KHÔNG gọi ở đây.
-		// Outer scope (gplayer_imp::DeactivateKidTransform) gọi
-		// property_policy::UpdatePlayer + RefreshEquipment + HP rebalance sau
-		// RemoveFilter — handles cả manual deactivate và auto-timeout không khác.
+		int new_hp = (int)((float)_parent.GetExtendProp().max_hp * ratio);
+		int delta  = _parent.GetBasicProp().hp - new_hp;
+		if (delta > 0)
+			_parent.DecHP(delta);
+		else if (delta < 0)
+			_parent.Heal((unsigned int)(-delta));
 	}
 
 	void Heartbeat(int tick)
