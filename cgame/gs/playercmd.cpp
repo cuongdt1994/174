@@ -5775,7 +5775,10 @@ gplayer_controller::CommandHandler(int cmd_type,const void * buf, unsigned int s
 
 					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_TRANSFORM:
 					{
-						pImp->KidCelestialTransformation(cmd.val1);
+						if (cmd.val1)
+							pImp->ActivateKidTransform();
+						else
+							pImp->DeactivateKidTransform();
 					} break;
 
 					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_GET_ADDON:

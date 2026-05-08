@@ -15470,7 +15470,7 @@ public:
 
 	// Mirror 173full.txt:147-206 — Plan B (174-specific):
 	// Stat application (Enhance*) gây SetRefreshState race với cast state →
-	// client interrupt cast bar. Để outer scope (gplayer_imp::KidCelestialTransformation)
+	// client interrupt cast bar. Để outer scope (gplayer_imp::ActivateKidTransform)
 	// trực tiếp ghi _cur_prop và _crit_rate (giống pattern cưỡi quái). Filter chỉ
 	// quản lý: form change event, lock equip, ChangeShape2, DecPrayTime,
 	// ActivateDynSkill loop, và OnRelease cleanup.
@@ -15529,7 +15529,7 @@ public:
 		_parent.AddFilter(new filter_Ironshield(_parent, 60, 3600));
 
 		// 174: Impair* + HP-rebalance + KidTransformEnd KHÔNG gọi ở đây.
-		// Outer scope (KidCelestialTransformation mode=0) gọi
+		// Outer scope (gplayer_imp::DeactivateKidTransform) gọi
 		// property_policy::UpdatePlayer + RefreshEquipment + HP rebalance sau
 		// RemoveFilter — handles cả manual deactivate và auto-timeout không khác.
 	}

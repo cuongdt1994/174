@@ -5348,7 +5348,8 @@ public:	//lgc
 	bool KidCelestialActivity(int val1, int val2, int val3);
 	bool KidCelestialUpgradeRank(int celestial_idx, int where, int inv_idx);
 	int KidCelestialDebrisLevelUp(int idx, int exp);
-	void KidCelestialTransformation(int mode);
+	void ActivateKidTransform();
+	void DeactivateKidTransform();
 
 	void KidUnlockNewDay ();
 

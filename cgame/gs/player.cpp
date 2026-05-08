@@ -5866,7 +5866,7 @@ gplayer_imp::OnHeartbeat(unsigned int tick)
 
 			if(_kid_transformation_time <= 0)
 			{
-				KidCelestialTransformation(0);
+				DeactivateKidTransform();
 			}
 		}
 	}
@@ -33683,27 +33683,65 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 // 174 ĐÃ có filter_Kidform (skillfilter.h, 173full.txt:1-348) — gọi SetKidFilter
 // thay vì port OnAttach/OnRelease inline.
 //
-// 173 references:
-//   - player_kid::ActivateTransform     (173full.txt:1910-2071)
-//   - player_kid::DeactivateTransform   (173full.txt:2073-2090)
-//   - filter_Kidform::OnAttach          (173full.txt:2437-2496)
-//   - filter_Kidform::OnRelease         (173full.txt:2498-2596)
-//   - GNET::SkillWrapper::SetKidFilter  (ski.txt / 173full.txt:2607-2647)
-//
-// Activate (mode=1): tính kid stats, build buf[23+32], SetKidFilter → OnAttach
-//                    chạy ngay (EventChange, ChangeShape2, EnhanceMaxHP, EnhanceDamage,
-//                    DecPrayTime, IncImmuneMask, ActivateDynSkill, …).
-// Deactivate (mode=0): RemoveFilter(FILTER_KIDFORM) → OnRelease chạy (Impair*,
-//                      6 post-buffs 1h, HP-rebalance) + send skill-list packet
-//                      với level âm cho client gỡ kid skill bar.
+// Activate: tính kid stats, build buf[23+32], SetKidFilter → OnAttach chạy ngay
+//           (EventChange, ChangeShape2, EnhanceMaxHP, EnhanceDamage,
+//            DecPrayTime, IncImmuneMask, ActivateDynSkill, …).
+// Deactivate: RemoveFilter(FILTER_KIDFORM) → OnRelease chạy (Impair*, 6 post-buffs
+//             1h, HP-rebalance) + send skill-list packet với level âm cho client
+//             gỡ kid skill bar.
+// =========================================================================
+// DeactivateKidTransform — mirror 173 player_kid::DeactivateTransform
+// (173full.txt:174-191).
+// RemoveFilter(FILTER_KIDFORM) → filter_Kidform::OnRelease (form.txt:257-355)
+// xử lý Impair*, ChangeShape2(0,0), DeactivateDynSkill, post-buffs, HP rescale.
+// =========================================================================
 void
-gplayer_imp::KidCelestialTransformation(int mode)
+gplayer_imp::DeactivateKidTransform()
 {
-	// Structured port của 173 player_kid::ActivateTransform / DeactivateTransform
-	// (173full.txt:11-191) + filter_Kidform::OnAttach/OnRelease (form.txt:196-355).
-	// filter_Kidform sống trong libskill.so → SetKidFilter tự lo Enhance* / Impair*,
-	// ChangeShape2, lock equip, (De)ActivateDynSkill, post-buffs, HP rescale.
-	// C++ side chỉ build buf, kích hoạt filter, và gửi packet skill list cho client.
+	if (!_kid_transformation)
+		return;
+
+	struct { int id; int level; } _skills_shape[16];
+	memset(_skills_shape, 0, sizeof(_skills_shape));
+	int skills_count = 0;
+
+	object_interface obj_if(this);
+	obj_if.RemoveFilter(FILTER_KIDFORM);
+
+	// 173full.txt:178-188 — packet skill list level âm để client gỡ icon kid skill.
+	int saved_count = _kid_transform_skill_state.saved_count;
+	if (saved_count < 0) saved_count = 0;
+	if (saved_count > 16) saved_count = 16;
+	for (int i = 0; i < saved_count; i++)
+	{
+		int sk_id = _kid_transform_skill_state.saved_skill_id[i];
+		int sk_lv = _kid_transform_skill_state.saved_kid_skill_level[i];
+		if (sk_id <= 0) continue;
+		_skills_shape[skills_count].id = sk_id;
+		_skills_shape[skills_count].level = -sk_lv;
+		skills_count++;
+	}
+
+	_kid_transformation = 0;
+	_kid_transformation_time = 0;
+	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
+
+	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
+
+	// 173full.txt:189 — PlayerGetProperty đẩy stats mới (đã được filter Impair*) về client.
+	PlayerGetProperty();
+}
+
+// =========================================================================
+// ActivateKidTransform — mirror player_kid::ActivateTransform
+// (173full.txt:11-172) + filter_Kidform::OnAttach (form.txt:196-255).
+// Build kid stats từ KID_PROPERTY_CONFIG + level/rank của Tiên Đồng đang chọn,
+// build skill list từ KID_SKILL_CONFIG, rồi SetKidFilter để OnAttach apply
+// Enhance* / ChangeShape2 / ActivateDynSkill cho player.
+// =========================================================================
+void
+gplayer_imp::ActivateKidTransform()
+{
 	const int KID_TRANSFORM_DURATION_SEC = 30;       // 173 filter_Kidform TTL
 
 	struct { int id; int level; } _skills_shape[16];
@@ -33711,48 +33749,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	memset(_skills_shape, 0, sizeof(_skills_shape));
 	object_interface obj_if(this);
-
-	// =========================================================================
-	// DeactivateTransform — mirror 173full.txt:174-191.
-	// RemoveFilter(FILTER_KIDFORM) → filter_Kidform::OnRelease (form.txt:257-355)
-	// xử lý Impair*, ChangeShape2(0,0), DeactivateDynSkill, post-buffs, HP rescale.
-	// =========================================================================
-	if (!mode)
-	{
-		if (!_kid_transformation)
-			return;
-
-		obj_if.RemoveFilter(FILTER_KIDFORM);
-
-		// 173full.txt:178-188 — packet skill list level âm để client gỡ icon kid skill.
-		int saved_count = _kid_transform_skill_state.saved_count;
-		if (saved_count < 0) saved_count = 0;
-		if (saved_count > 16) saved_count = 16;
-		for (int i = 0; i < saved_count; i++)
-		{
-			int sk_id = _kid_transform_skill_state.saved_skill_id[i];
-			int sk_lv = _kid_transform_skill_state.saved_kid_skill_level[i];
-			if (sk_id <= 0) continue;
-			_skills_shape[skills_count].id = sk_id;
-			_skills_shape[skills_count].level = -sk_lv;
-			skills_count++;
-		}
-
-		_kid_transformation = 0;
-		_kid_transformation_time = 0;
-		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-
-		_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
-
-		// 173full.txt:189 — PlayerGetProperty đẩy stats mới (đã được filter Impair*) về client.
-		PlayerGetProperty();
-		return;
-	}
-
-	// =========================================================================
-	// ActivateTransform — mirror player_kid::ActivateTransform (173full.txt:1910-2071)
-	// + filter_Kidform::OnAttach (173full.txt:2437-2496).
-	// =========================================================================
 
 	// 173: if (_select <= 5 && _kid_ess[_select]._tid)
 	int slot = _kid.GetActivity()->active_slot;
