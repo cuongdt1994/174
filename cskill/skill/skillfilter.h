@@ -15505,12 +15505,16 @@ public:
 		{
 			_parent.GetSkillWrapper().ActivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
 		}
-		_parent.SendClientAttackData();
-		_parent.UpdateDefenseData();
-		_parent.UpdateMagicData();
-		_parent.UpdateAttackData();
-		_parent.UpdateSpeedData();
-		_parent.SendClientCurSpeed();
+		// 173 cuối OnAttach: SendClientAttackData + UpdateDefenseData/MagicData/AttackData/
+		// SpeedData + SendClientCurSpeed. Trong 174, các packet update này race với cast
+		// state đang khởi động → client interrupt cast bar. Outer scope đã gọi
+		// PlayerGetProperty() sau SetKidFilter, đủ để đẩy stats về client. Bỏ block này.
+		// _parent.SendClientAttackData();
+		// _parent.UpdateDefenseData();
+		// _parent.UpdateMagicData();
+		// _parent.UpdateAttackData();
+		// _parent.UpdateSpeedData();
+		// _parent.SendClientCurSpeed();
 	}
 
 	// Mirror 173full.txt:208-306
