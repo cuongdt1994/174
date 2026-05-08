@@ -33679,24 +33679,27 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 }
 
 
-// Mirror chuẩn 173full.txt — port player_kid::ActivateTransform/DeactivateTransform
-// + filter_Kidform::OnAttach/OnRelease (174 KHÔNG có filter 4276229 nên inline).
+// Mirror chuẩn 173full.txt — port player_kid::ActivateTransform/DeactivateTransform.
+// 174 ĐÃ có filter_Kidform (skillfilter.h, 173full.txt:1-348) — gọi SetKidFilter
+// thay vì port OnAttach/OnRelease inline.
 //
 // 173 references:
 //   - player_kid::ActivateTransform     (173full.txt:1910-2071)
 //   - player_kid::DeactivateTransform   (173full.txt:2073-2090)
 //   - filter_Kidform::OnAttach          (173full.txt:2437-2496)
 //   - filter_Kidform::OnRelease         (173full.txt:2498-2596)
-//   - GNET::SkillWrapper::SetKidFilter  (173full.txt:2607-2647)
+//   - GNET::SkillWrapper::SetKidFilter  (ski.txt / 173full.txt:2607-2647)
 //
-// Activate (mode=1): kết hợp chỉ số Kid + người chơi, cấp kid skills, đổi shape kid form.
-// Deactivate (mode=0): vô hiệu hóa skills, trừ chỉ số đã cộng, gắn 6 bùa lợi 1 tiếng,
-//                      điều chỉnh HP hiện tại theo tỉ lệ HP/max_hp mới.
+// Activate (mode=1): tính kid stats, build buf[23+32], SetKidFilter → OnAttach
+//                    chạy ngay (EventChange, ChangeShape2, EnhanceMaxHP, EnhanceDamage,
+//                    DecPrayTime, IncImmuneMask, ActivateDynSkill, …).
+// Deactivate (mode=0): RemoveFilter(FILTER_KIDFORM) → OnRelease chạy (Impair*,
+//                      6 post-buffs 1h, HP-rebalance) + send skill-list packet
+//                      với level âm cho client gỡ kid skill bar.
 void
 gplayer_imp::KidCelestialTransformation(int mode)
 {
 	const int KID_TRANSFORM_DURATION_SEC = 30;       // 173 filter_Kidform TTL
-	const int KID_POSTBUFF_DURATION_SEC  = 3600;     // 173: 6 post-buff filters TTL 3600s
 
 	struct { int id; int level; } _skills_shape[16];
 	int skills_count = 0;
@@ -33705,41 +33708,26 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	object_interface obj_if(this);
 
 	// =========================================================================
-	// DeactivateTransform — mirror filter_Kidform::OnRelease (173full.txt:2498-2596).
-	// 174: Vì Enhance/Impair của obj_interface tác dụng vào _en_percent (% boost),
-	// dùng nó với absolute kid stat làm méo chỉ số (vd EnhanceMaxHP(140) = +140%).
-	// → Áp dụng pattern carrier/mount (player.cpp:26420): trả _cur_prop về base
-	// bằng property_policy::UpdatePlayer + RefreshEquipment. Sạch và chính xác.
+	// DeactivateTransform — RemoveFilter(FILTER_KIDFORM) → filter_Kidform::OnRelease.
 	// =========================================================================
 	if (!mode)
 	{
 		if (!_kid_transformation)
 			return;
 
-		// 173 line 2521-2524: EventChange(player, oldForm, 0) — về form thường
-		_skill.EventChange(obj_if, GetForm(), 0);
+		// 173: RemoveFilter(FILTER_KIDFORM) → OnRelease handles:
+		//   EventChange→0, unlock equip/mount/bind, ChangeShape2(0,0),
+		//   Impair* tất cả stats, IncPrayTime, DecImmuneMask, DeactivateDynSkill,
+		//   gắn 6 post-buffs (Giant/Blessmagic/Stoneskin/Incresist/Inchp/Ironshield)
+		//   TTL 3600s, HP-rebalance theo tỉ lệ max_hp mới.
+		obj_if.RemoveFilter(FILTER_KIDFORM);
 
-		// 173 line 2525-2527: cởi khóa equipment / mount / bind
-		obj_if.LockEquipment(false);
-		obj_if.SetNoMount(false);
-		obj_if.SetNoBind(false);
+		// 174-specific: gỡ HSTATE_530 marker (set bởi AddFilterKidIncTransformation)
+		// — không có trong 173. Comment lại y như cũ.
+		// obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
 
-
-		// 173 line 2528: ChangeShape2(0, 0) — về shape gốc + gửi packet
-		// kid_celestial_transformation(0, roleid, 0, 0) cho client gỡ kid form.
-		obj_if.ChangeShape2(0, 0);
-		// 173 line 2529-2530: lưu HP% trước khi tính lại max_hp
-		float hp_pct = 0.0f;
-		if (_cur_prop.max_hp > 0)
-			hp_pct = (float)_basic.hp / (float)_cur_prop.max_hp;
-		if (hp_pct < 0.0f) hp_pct = 0.0f;
-		if (hp_pct > 1.0f) hp_pct = 1.0f;
-
-		// 173 line 2548-2550: IncPrayTime — đảo ngược DecPrayTime của Activate
-		_skill.IncPrayTime(_kid_transform_skill_state.d_time_reduce);
-
-
-		// 173 line 2552-2559: DeactivateDynSkill cho từng kid skill
+		// 173 line 2056-equivalent: skill list packet với level âm để client gỡ
+		// kid skill khỏi UI. Lấy từ _kid_transform_skill_state đã lưu khi activate.
 		int saved_count = _kid_transform_skill_state.saved_count;
 		if (saved_count < 0) saved_count = 0;
 		if (saved_count > 16) saved_count = 16;
@@ -33748,49 +33736,17 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			int sk_id = _kid_transform_skill_state.saved_skill_id[i];
 			int sk_lv = _kid_transform_skill_state.saved_kid_skill_level[i];
 			if (sk_id <= 0) continue;
-
-			_skill.DeactivateDynSkill(sk_id, 1, obj_if, sk_lv);
-
-			// 173 packet (1,1,1,...): negate level → client gỡ skill khỏi UI
 			_skills_shape[skills_count].id = sk_id;
 			_skills_shape[skills_count].level = -sk_lv;
 			skills_count++;
 		}
-
-		// 173 line 2566-2583: gắn 6 bùa lợi bảo vệ TTL 3600s (1 tiếng):
-		//   filter_Giant (hóa khổng lồ), filter_Blessmagic (ban phước),
-		//   filter_Stoneskin (da đá), filter_Incresist (tăng kháng),
-		//   filter_Inchp (tăng HP), filter_Ironshield (khiên sắt).
-		// SkillWrapper::AddFilterKidDecTransformation đã wrap đủ với ratios
-		// 0.3/0.7/0.6/0.6/0.3/0.6 + cleardebuff (skillwrapper.cpp:1610).
-		_skill.AddFilterKidDecTransformation(obj_if, KID_POSTBUFF_DURATION_SEC);
-
-		// HSTATE_530 visible-state marker — gỡ
-		//obj_if.RemoveTeamVisibleState(GNET::HSTATE_530);
 
 		// State flags reset
 		_kid_transformation = 0;
 		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
-		// 173 line 2595: KidTransformEnd → packet (đã gửi qua ChangeShape2 ở trên).
-		// Chỉ còn skill list packet với level âm để client gỡ kid skills khỏi UI.
 		_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
-
-		// Recompute base/equipment-derived stats (carrier dismount pattern,
-		// player.cpp:26420). Trả _cur_prop về đúng giá trị nhân vật gốc.
-		property_policy::UpdatePlayer(GetPlayerClass(), this);
-		RefreshEquipment();
-
-		// 173 line 2584-2594: tự động điều chỉnh HP hiện tại theo tỉ lệ máu tối đa mới
-		// để tránh lỗi hiển thị (Heal nếu < hoặc DecHP nếu >).
-		if (_cur_prop.max_hp > 0)
-		{
-			int new_hp = (int)((float)_cur_prop.max_hp * hp_pct);
-			if (new_hp < 1) new_hp = 1;
-			if (new_hp > _cur_prop.max_hp) new_hp = _cur_prop.max_hp;
-			_basic.hp = new_hp;
-		}
 
 		PlayerGetProperty();
 		return;
@@ -33947,75 +33903,63 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 
 	// =====================================================================
-	// 173 SetKidFilter → mới filter_Kidform + OnAttach() chạy liền.
-	// 174 KHÔNG có filter_Kidform → port toàn bộ OnAttach inline (173full.txt:2437-2496).
+	// 173 SetKidFilter → tạo filter_Kidform + OnAttach() chạy ngay
+	// (mirror 173full.txt:2607-2647 / ski.txt).
+	//
+	// Build buf[23+32] khớp filter_Kidform ctor (173full.txt:317-348):
+	//   [0]=shape (raw, filter tự OR | (FORM_CLASS<<6))
+	//   [1]=attack_type, [2]=hp, [3..4]=damage_lo/hi,
+	//   [5..6]=damage_magic_lo/hi, [7]=defence, [8..12]=resistance[0..4],
+	//   [13]=crit_point, [14]=attack_speed_ratio, [15]=range(float),
+	//   [16]=speed(float), [17..20]=adj/ant degrees (kid không có → 0),
+	//   [21]=time_reduce, [22]=skill_count, [23..]=skill[(id,level)*N]
 	// =====================================================================
-
-	// 173 line 2451-2454: EventChange(skill, player, oldForm, 3=FORM_KID)
-	//   to=3 fire passive class-change skills lắng nghe FORM_KID (mirror 173).
-	_skill.EventChange(obj_if, GetForm(), 3);
-
-	// 173 line 2455-2457: khóa equipment + cấm cưỡi/bind
-	obj_if.LockEquipment(true);
-	obj_if.SetNoMount(true);
-	obj_if.SetNoBind(true);
-
-	// 173 line 2458-2460: shape = cfg->shape_type | 0xC0; ChangeShape2(shape, 30)
-	//   (174 ChangeShape: shape & 0xFF → shape_form, (shape & 0xC0) >> 6 → _cur_form)
-	// CRITICAL: dùng ChangeShape2 (kid-aware packet) THAY VÌ gactive_imp::ChangeShape
-	// (server-only). Phải gửi packet kid_celestial_transformation NGAY ở thời
-	// điểm này (trước ActivateDynSkill) để client biết form=3 trước khi nhận
-	// danh sách kid skill. Nếu chậm, client từ chối show kid skill bar / cast
-	// → server thấy như "tuyệt chiêu gián đoạn".
-	obj_if.ChangeShape2(_kid_transform_skill_state.d_shape, KID_TRANSFORM_DURATION_SEC);
-	// === Override _cur_prop trực tiếp (carrier/mount pattern: player.cpp:26368) ===
-	// 174 Enhance/Impair tác dụng vào _en_percent (% boost) → EnhanceMaxHP(140)
-	// có nghĩa là +140% HP, không phải set max_hp = 140 như 173.
-	// Áp dụng trực tiếp giống cưỡi quái (player_carrier_up): replace stats.
-	// Khi DeactivateTransform, property_policy::UpdatePlayer + RefreshEquipment
-	// sẽ tính lại _cur_prop từ _base_prop + equipment để khôi phục.
-	_cur_prop.max_hp            = kid_hp;
-	_cur_prop.damage_low        = kid_damage;
-	_cur_prop.damage_high       = kid_damage;
-	_cur_prop.damage_magic_low  = kid_magic;
-	_cur_prop.damage_magic_high = kid_magic;
-	_cur_prop.defense           = kid_defence;
-	for (int i = 0; i < 5; i++)
-		_cur_prop.resistance[i] = kid_resist;
-	_cur_prop.attack_speed      = (int)(cfg->attack_interval * 20.0f);
-	_cur_prop.attack_range      = cfg->attack_dist;
-	_cur_prop.run_speed         = cfg->walk_speed;
-	_cur_prop.walk_speed        = cfg->walk_speed;
-
-	// Crit của kid replace _crit_rate gốc (kid_crit là raw % * level * star_param)
-	// Lưu ý: hiển thị "Bạo kích" trong UI = _crit_rate + _base_crit_rate, để
-	// _base_crit_rate giữ nguyên — kid form sẽ hiện crit cộng dồn.
-	_crit_rate = kid_crit;
-
-	// 173 line 2478-2480: DecPrayTime (giảm thời gian niệm chú)
-	_skill.DecPrayTime(_kid_transform_skill_state.d_time_reduce);
-
-	// 173 line 2482-2489: cấp các kỹ năng mới của Kid qua ActivateDynSkill
-	//   (skillwrapper.cpp:1550 — overload 4-arg với level đúng).
-	for (int i = 0; i < skills_count; i++)
+	int kid_buf[23 + 32];
+	memset(kid_buf, 0, sizeof(kid_buf));
+	kid_buf[0]  = cfg->unk1 & 0x3F;
+	kid_buf[1]  = cfg->attack_type;
+	kid_buf[2]  = kid_hp;
+	kid_buf[3]  = kid_damage;
+	kid_buf[4]  = kid_damage;
+	kid_buf[5]  = kid_magic;
+	kid_buf[6]  = kid_magic;
+	kid_buf[7]  = kid_defence;
+	for (int ri = 0; ri < 5; ri++)
+		kid_buf[8 + ri] = kid_resist;
+	kid_buf[13] = kid_crit;
+	kid_buf[14] = (int)(cfg->attack_interval * 20.0f);
+	*((float*)&kid_buf[15]) = cfg->attack_dist;
+	*((float*)&kid_buf[16]) = (float)cfg->walk_speed;
+	// kid_buf[17..20] = 0 (không có degree adj cho kid form)
+	kid_buf[21] = dtr;
+	kid_buf[22] = skills_count;
+	for (int i = 0; i < skills_count && i < 16; i++)
 	{
-		if (_skills_shape[i].id > 0)
-			_skill.ActivateDynSkill(_skills_shape[i].id, 1, obj_if, _skills_shape[i].level);
+		kid_buf[23 + 2*i]     = _skills_shape[i].id;
+		kid_buf[23 + 2*i + 1] = _skills_shape[i].level;
 	}
 
-	// State flags (174-specific để track transform lifetime, 173 dùng filter_Kidform TTL)
+	// 173: SetKidFilter → filter_Kidform::OnAttach() chạy ngay:
+	//   EventChange→FORM_CLASS, lock equip/no-mount/no-bind, ChangeShape2(shape|0xC0,30),
+	//   EnhanceMaxHP/Damage/MagicDamage/Defense/Resistance/Crit/AttackSpeed/Range/Speed,
+	//   EnhanceAttackDegree/DefendDegree, IncAntiDefense/Resistance, DecPrayTime,
+	//   IncImmuneMask(0x3002000), ActivateDynSkill cho từng kid skill, client updates.
+	_skill.SetKidFilter(obj_if, kid_buf);
+
+	// 173 line 2055: this->_owner->_basic.hp = this->_owner->_cur_prop.max_hp; — hồi đầy HP
+	// (filter EnhanceMaxHP đã update _cur_prop.max_hp qua property_policy::UpdateLife)
+	_basic.hp = _cur_prop.max_hp;
+
+	// 174-specific state flags để track transform lifetime
 	_kid_transformation = 1;
 	_kid_transformation_time = KID_TRANSFORM_DURATION_SEC;
 
 	// HSTATE_530 visible-state marker (clientsync — bạn bè/team thấy đang nhập thể)
 	_skill.AddFilterKidIncTransformation(obj_if, KID_TRANSFORM_DURATION_SEC);
 
-	// 173: this->_owner->_basic.hp = this->_owner->_cur_prop.max_hp; — hồi đầy HP
-	_basic.hp = _cur_prop.max_hp;
-
-	// 173 line 2056: vptr+427(runner, 1, 1, 1, count, skill[]) — chỉ packet skill list.
-	// Packet shape (vptr+417 = kid_celestial_transformation) đã được ChangeShape2
-	// gửi ở trên — KHÔNG gửi lại để tránh client xử lý 2 lần.
+	// 173 line 2056: vptr+427(runner, 1, 1, 1, count, skill[]) — packet skill list.
+	// Packet kid_celestial_transformation đã được ChangeShape2 (trong filter::OnAttach)
+	// gửi rồi — KHÔNG gửi lại để tránh client xử lý 2 lần.
 	_runner->player_world_speak_info((char)1, (char)1, (char)1, skills_count, (int*)_skills_shape);
 
 	// 173: gplayer_imp::PlayerGetProperty(owner) — đẩy stats mới về client
