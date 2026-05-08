@@ -438,6 +438,13 @@ object_interface::ImpairDamage(int dmg)
 }
 
 void 
+object_interface::ImpairDamage2(int dmg, int dmg2)
+{
+	_imp->_en_point.damage_low -= dmg;
+	_imp->_en_point.damage_high -= dmg2;
+}
+
+void 
 object_interface::EnhancePercDamage(float dmg_low, float dmg_high)
 {
 	_imp->_en_point.damage_low += (_imp->_en_point.damage_low * dmg_low);
@@ -485,6 +492,13 @@ object_interface::ImpairMagicDamage(int dmg)
 {
 	_imp->_en_point.magic_dmg_low -= dmg;
 	_imp->_en_point.magic_dmg_high -= dmg;
+}
+
+void 
+object_interface::ImpairMagicDamage2(int dmg, int dmg2)
+{
+	_imp->_en_point.magic_dmg_low -= dmg;
+	_imp->_en_point.magic_dmg_high -= dmg2;
 }
 
 void 
