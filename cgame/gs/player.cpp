@@ -33579,7 +33579,7 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
     // Type-upgrade pass: consume stones to evolve celestial until id_kid_upgrade == 0 or stones exhausted
     while (total_count > 0 && config2->id_kid_upgrade != 0)
     {
-        int required_exp = config2->upgrade_exp;
+        int required_exp = config2->require_exp;
         if (required_exp <= 0) break;
 
         if (current_exp + base_stone_exp >= required_exp)
@@ -33606,10 +33606,10 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 
     // Star-upgrade pass: if celestial is fully evolved (id_kid_upgrade == 0) and star config exists,
     // continue consuming the remaining stones to push star rank — matches AddDebri recursion in 173 ref.
-    if (total_count > 0 && config2->id_kid_upgrade == 0 && config2->kid_upgrade_star_config != 0)
+    if (total_count > 0 && config2->id_kid_upgrade == 0 && config2->id_kid_upgrade_star != 0)
     {
         DATA_TYPE dt3;
-        const KID_UPGRADE_STAR_CONFIG *config3 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->kid_upgrade_star_config, ID_SPACE_CONFIG, dt3);
+        const KID_UPGRADE_STAR_CONFIG *config3 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->id_kid_upgrade_star, ID_SPACE_CONFIG, dt3);
         if (config3 && dt3 == DT_KID_UPGRADE_STAR_CONFIG)
         {
             while (total_count > 0)
@@ -33867,10 +33867,10 @@ gplayer_imp::ActivateKidTransform()
 
 	// [14] attack_speed = cur_prop.attack_speed - (int)(cfg->attack_interval*20 + 1e-5)
 	//                                                                173full.txt:105
-	kid_buf[14] = _cur_prop.attack_speed - (int)(cfg->attack_interval * 20.0f + 0.00001f);
+	kid_buf[14] = _cur_prop.attack_speed - (int)(cfg->attack_speed * 20.0f + 0.00001f);
 
-	// [15] attack_range(float) = cfg->attack_dist - cur_prop.attack_range   173full.txt:106
-	*((float*)&kid_buf[15]) = cfg->attack_dist - _cur_prop.attack_range;
+	// [15] attack_range(float) = cfg->attack_range - cur_prop.attack_range   173full.txt:106
+	*((float*)&kid_buf[15]) = cfg->attack_range - _cur_prop.attack_range;
 
 	// [16] speed(float) = cfg->walk_speed - cur_prop.run_speed  (IDA dùng walk_speed as kid-move-speed)
 	//                                                                173full.txt:107
@@ -33881,16 +33881,16 @@ gplayer_imp::ActivateKidTransform()
 	//          defend_adj = enh*cfg->defend_degree_inherit_rate - _defend_degree
 	//                                                                173full.txt:108-112
 	int enh_deg = _attack_degree + _defend_degree;
-	kid_buf[17] = (int)((float)enh_deg * cfg->attack_lvl_rank_param)  - _attack_degree;
-	kid_buf[18] = (int)((float)enh_deg * cfg->defence_lvl_rank_param) - _defend_degree;
+	kid_buf[17] = (int)((float)enh_deg * cfg->atack_degree_inherit_rate)  - _attack_degree;
+	kid_buf[18] = (int)((float)enh_deg * cfg->defend_degree_inherit_rate) - _defend_degree;
 
 	// [19..20] attack/defend_ant: enh = _anti_defense_degree + _anti_resistance_degree ;
 	//          phy_inherit = enh*cfg->physical_penetration_inherit_rate - _anti_defense_degree
 	//          mag_inherit = enh*cfg->magic_penetration_inherit_rate    - _anti_resistance_degree
 	//                                                                173full.txt:113-117
 	int enh_ant = _anti_defense_degree + _anti_resistance_degree;
-	kid_buf[19] = (int)((float)enh_ant * cfg->anti_defence_param) - _anti_defense_degree;
-	kid_buf[20] = (int)((float)enh_ant * cfg->anti_magic_param)   - _anti_resistance_degree;
+	kid_buf[19] = (int)((float)enh_ant * cfg->physical_penetration_inherit_rate) - _anti_defense_degree;
+	kid_buf[20] = (int)((float)enh_ant * cfg->magic_penetration_inherit_rate)   - _anti_resistance_degree;
 
 	// [21] time_reduce = (int)(cfg->enchant_time_reduce*100) - GetPraySpeed()
 	//                                                                173full.txt:118-119
