@@ -15368,6 +15368,221 @@ public:
 	}
 };
 
+// Mirror chuẩn 173full.txt:1-348 — filter_Kidform
+// Layout buf (24+ ints):
+//   [0]=shape, [1]=attack_type, [2]=hp, [3..4]=damage_lo/hi,
+//   [5..6]=damage_magic_lo/hi, [7]=defence, [8..12]=resistance[0..4],
+//   [13]=crit_point, [14]=attack_speed_ratio, [15]=range(float),
+//   [16]=speed(float), [17]=attack_adj, [18]=defend_adj,
+//   [19]=attack_ant, [20]=defend_ant, [21]=time_reduce,
+//   [22]=skill_count(clamp 16), [23..]=skill[(id,level)*N]
+class filter_Kidform : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_HEARTBEAT | FILTER_MASK_NOSAVE
+	};
+
+	int   _shape;
+	int   _attack_type;
+	int   _hp;
+	int   _damage_low;
+	int   _damage_high;
+	int   _damage_magic_low;
+	int   _damage_magic_high;
+	int   _defence;
+	int   _resistance[5];
+	int   _point;
+	int   _ratio;
+	float _range;
+	float _speed;
+	int   _attack_adj;
+	int   _defend_adj;
+	int   _attack_ant;
+	int   _defend_ant;
+	int   _time_reduce;
+	int   _skill_count;
+	int   _skill[32];
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _shape << _attack_type << _hp;
+		ar << _damage_low << _damage_high << _damage_magic_low << _damage_magic_high;
+		ar << _defence;
+		ar.push_back(_resistance, sizeof(_resistance));
+		ar << _point << _ratio << _range << _speed;
+		ar << _attack_adj << _defend_adj << _attack_ant << _defend_ant;
+		ar << _time_reduce << _skill_count;
+		ar.push_back(_skill, sizeof(_skill));
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _shape >> _attack_type >> _hp;
+		ar >> _damage_low >> _damage_high >> _damage_magic_low >> _damage_magic_high;
+		ar >> _defence;
+		ar.pop_back(_resistance, sizeof(_resistance));
+		ar >> _point >> _ratio >> _range >> _speed;
+		ar >> _attack_adj >> _defend_adj >> _attack_ant >> _defend_ant;
+		ar >> _time_reduce >> _skill_count;
+		ar.pop_back(_skill, sizeof(_skill));
+		return true;
+	}
+
+	filter_Kidform(){}
+public:
+	DECLARE_SUBSTANCE(filter_Kidform);
+	filter_Kidform(object_interface object, int* buf)
+		: timeout_filter(object, 30, FILTER_MASK)
+	{
+		_shape             = buf[0];
+		_attack_type       = buf[1];
+		_hp                = buf[2];
+		_damage_low        = buf[3];
+		_damage_high       = buf[4];
+		_damage_magic_low  = buf[5];
+		_damage_magic_high = buf[6];
+		_defence           = buf[7];
+		_resistance[0]     = buf[8];
+		_resistance[1]     = buf[9];
+		_resistance[2]     = buf[10];
+		_resistance[3]     = buf[11];
+		_resistance[4]     = buf[12];
+		_point             = buf[13];
+		_ratio             = buf[14];
+		*((int*)&_range)   = buf[15];
+		*((int*)&_speed)   = buf[16];
+		_attack_adj        = buf[17];
+		_defend_adj        = buf[18];
+		_attack_ant        = buf[19];
+		_defend_ant        = buf[20];
+		_time_reduce       = buf[21];
+		_skill_count       = buf[22];
+		if(_skill_count > 16) _skill_count = 16;
+		memset(_skill, 0, sizeof(_skill));
+		memcpy(_skill, buf + 23, 8 * _skill_count);
+		_filter_id = FILTER_KIDFORM;
+	}
+
+	// Mirror 173full.txt:147-206
+	void OnAttach()
+	{
+		int form = _parent.GetForm();
+		_parent.GetSkillWrapper().EventChange(_parent, form, FORM_CLASS);
+		_parent.LockEquipment(true);
+		_parent.SetNoMount(true);
+		_parent.SetNoBind(true);
+		_parent.ChangeShape2(_shape | (FORM_CLASS << 6), 30);
+		_parent.EnhanceMaxHP(_hp);
+		_parent.EnhanceDamage((_damage_low + _damage_high) / 2);
+		_parent.EnhanceMagicDamage((_damage_magic_low + _damage_magic_high) / 2);
+		_parent.EnhanceDefense(_defence);
+		_parent.EnhanceResistance(0, _resistance[0]);
+		_parent.EnhanceResistance(1, _resistance[1]);
+		_parent.EnhanceResistance(2, _resistance[2]);
+		_parent.EnhanceResistance(3, _resistance[3]);
+		_parent.EnhanceResistance(4, _resistance[4]);
+		_parent.EnhanceCrit(_point);
+		_parent.EnhanceAttackSpeed(_ratio);
+		_parent.EnhanceAttackRange(_range);
+		_parent.EnhanceSpeed0(_speed);
+		_parent.EnhanceAttackDegree(_attack_adj);
+		_parent.EnhanceDefendDegree(_defend_adj);
+		_parent.IncAntiDefenseDegree(_attack_ant);
+		_parent.IncAntiResistanceDegree(_defend_ant);
+		_parent.GetSkillWrapper().DecPrayTime(_time_reduce);
+		_parent.IncImmuneMask(0x3002000);
+		for(int i = 0; i < _skill_count; ++i)
+		{
+			_parent.GetSkillWrapper().ActivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
+		}
+		_parent.SendClientAttackData();
+		_parent.UpdateDefenseData();
+		_parent.UpdateMagicData();
+		_parent.UpdateAttackData();
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+	}
+
+	// Mirror 173full.txt:208-306
+	void OnRelease()
+	{
+		int form = _parent.GetForm();
+		_parent.GetSkillWrapper().EventChange(_parent, form, 0);
+		_parent.LockEquipment(false);
+		_parent.SetNoMount(false);
+		_parent.SetNoBind(false);
+		_parent.ChangeShape2(0, 0);
+
+		float hp_pct = 0.0f;
+		int max_hp_old = _parent.GetExtendProp().max_hp;
+		if(max_hp_old > 0)
+			hp_pct = (float)_parent.GetBasicProp().hp / (float)max_hp_old;
+
+		_parent.ImpairMaxHP(_hp);
+		_parent.ImpairDefense(_defence);
+		_parent.ImpairResistance(0, _resistance[0]);
+		_parent.ImpairResistance(1, _resistance[1]);
+		_parent.ImpairResistance(2, _resistance[2]);
+		_parent.ImpairResistance(3, _resistance[3]);
+		_parent.ImpairResistance(4, _resistance[4]);
+		_parent.ImpairDamage((_damage_low + _damage_high) / 2);
+		_parent.ImpairMagicDamage((_damage_magic_low + _damage_magic_high) / 2);
+		_parent.ImpairCrit(_point);
+		_parent.ImpairAttackSpeed(_ratio);
+		_parent.ImpairAttackRange(_range);
+		_parent.ImpairSpeed0(_speed);
+		_parent.ImpairAttackDegree(_attack_adj);
+		_parent.ImpairDefendDegree(_defend_adj);
+		_parent.DecAntiDefenseDegree(_attack_ant);
+		_parent.DecAntiResistanceDegree(_defend_ant);
+		_parent.GetSkillWrapper().IncPrayTime(_time_reduce);
+		_parent.DecImmuneMask(0x3002000);
+		for(int i = 0; i < _skill_count; ++i)
+		{
+			_parent.GetSkillWrapper().DeactivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
+		}
+		_parent.SendClientAttackData();
+		_parent.UpdateDefenseData();
+		_parent.UpdateMagicData();
+		_parent.UpdateAttackData();
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+
+		// 173full.txt:276-293 — 6 post-buffs TTL 3600s
+		_parent.AddFilter(new filter_Giant     (_parent, 30, 3600));
+		_parent.AddFilter(new filter_Blessmagic(_parent, 70, 3600));
+		_parent.AddFilter(new filter_Stoneskin (_parent, 60, 3600));
+		_parent.AddFilter(new filter_Incresist (_parent, 60, 3600));
+		_parent.AddFilter(new filter_Inchp     (_parent, 30, 3600));
+		_parent.AddFilter(new filter_Ironshield(_parent, 60, 3600));
+
+		// 173full.txt:294-304 — re-balance HP theo tỉ lệ max_hp mới
+		int max_hp_new = _parent.GetExtendProp().max_hp;
+		int diff = _parent.GetBasicProp().hp - (int)((float)max_hp_new * hp_pct);
+		if(diff > 0)
+			_parent.DecHP(diff);
+		else if(diff < 0)
+			_parent.Heal(-diff);
+
+		// 173: KidTransformEnd() — 174 không có method này; ChangeShape2(0,0) ở trên đã gửi
+		// kid_celestial_transformation packet cho client gỡ kid form.
+	}
+
+	void Heartbeat(int tick)
+	{
+		if(_timeout > 0)
+		{
+			_timeout -= tick;
+			if(_timeout <= 0) _is_deleted = true;
+		}
+	}
+};
+
 class filter_Palsy : public timeout_filter
 {
 protected:

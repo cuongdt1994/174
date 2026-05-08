@@ -1533,20 +1533,12 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter)
 		data.level = 1;
 		data.overridden = 0;
 		dyn_map[id] = data;
-		//no notice
-		//Notify the client that a new skill has been added
 		return;
 	}
 
 	it->second.ability += counter;
 }
 
-// Mirror chuẩn 173full.txt:2649-2735 — GNET::SkillWrapper::ActivateDynSkill (5 args)
-// Khác overload 2-arg ở chỗ:
-//   - Dùng level truyền vào (KHÔNG hardcode 1)
-//   - Với passive skill có EventFlag == EVENT_CHANGE: gọi TakeEffect, KHÔNG insert dyn_map
-//   - Với active skill: insert vào dyn_map ở level chính xác
-// Cần thiết cho kid skills (filter_Kidform::OnAttach gọi variant này với level đúng).
 void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player, int level)
 {
 	SkillKeeper skill = Skill::Create(id);
@@ -1558,7 +1550,6 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player,
 	const SkillStub *stub = SkillStub::GetStub(id);
 	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
 	{
-		// Passive skill có EVENT_CHANGE flag → TakeEffect ngay (không cần dyn_map)
 		PlayerWrapper w_player(player, this, skill, 0, 0);
 		w_player.SetSkill(skill);
 		skill->SetLevel(level);
@@ -1567,13 +1558,12 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player,
 	}
 	else
 	{
-		// Active skill → đăng ký dyn_map ở level đúng
 		StorageMap::iterator it = dyn_map.find(id);
 		if(it == dyn_map.end())
 		{
 			PersistentData data;
 			data.ability = counter;
-			data.level = level;        // ← chuẩn 173: dùng level truyền vào
+			data.level = level; 
 			data.overridden = 0;
 			dyn_map[id] = data;
 		}
@@ -1644,99 +1634,13 @@ void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int bu
 	}
 }
 
-void SkillWrapper::AddFilterKidTransformStats(object_interface player, int buff_period_sec,
-                                                float hp_ratio, float dmg_ratio, float def_ratio,
-                                                float mdef_ratio, float resist_ratio)
+// Mirror chuẩn ski.txt — GNET::SkillWrapper::SetKidFilter
+//   v3 = (filter_Kidform *)abase::ASmallObject::operator new(0xF4u);
+//   filter_Kidform::filter_Kidform(v3, player, buf);
+//   object_interface::AddFilter(&player, v3);
+void SkillWrapper::SetKidFilter(object_interface player, int* buf)
 {
-	if (buff_period_sec <= 0)
-		return;
-
-	PlayerWrapper w_player(player, 0, 0, 0, 0);
-	w_player.SetTime(1000.0f * buff_period_sec);
-	w_player.SetProbability(100.0);
-
-	if (hp_ratio > 0.0f)
-	{
-		w_player.SetRatio(hp_ratio);
-		w_player.SetGiant(1);
-	}
-	if (dmg_ratio > 0.0f)
-	{
-		w_player.SetRatio(dmg_ratio);
-		w_player.SetIncattack(1);
-	}
-	if (def_ratio > 0.0f)
-	{
-		w_player.SetRatio(def_ratio);
-		w_player.SetStoneskin(1);
-	}
-	if (mdef_ratio > 0.0f)
-	{
-		w_player.SetRatio(mdef_ratio);
-		w_player.SetBlessmagic(1);
-	}
-	if (resist_ratio > 0.0f)
-	{
-		w_player.SetRatio(resist_ratio);
-		w_player.SetIncresist(1);
-	}
-}
-
-void SkillWrapper::AddFilterKidTransformAdvancedStats(object_interface player, int buff_period_sec,
-                                                       int attack_degree_delta, int defend_degree_delta,
-                                                       float attack_range_delta, float run_speed_ratio,
-                                                       float attack_speed_ratio, float pray_speed_ratio)
-{
-	if (buff_period_sec <= 0)
-		return;
-
-	PlayerWrapper w_player(player, 0, 0, 0, 0);
-	w_player.SetTime(1000.0f * buff_period_sec);
-	w_player.SetProbability(100.0);
-	w_player.SetEnable(true);
-	w_player.SetShowicon(0);
-
-	// Attack degree (proficiency tấn công)
-	if (attack_degree_delta > 0)
-	{
-		w_player.SetValue((float)attack_degree_delta);
-		w_player.SetAddattackdegree(1);
-	}
-
-	// Defend degree (proficiency phòng ngự)
-	if (defend_degree_delta > 0)
-	{
-		w_player.SetValue((float)defend_degree_delta);
-		w_player.SetAdddefencedegree(1);
-	}
-
-	// Attack range (tầm đánh) — filter_Incattackrange dùng value (float)
-	if (attack_range_delta > 0.0f)
-	{
-		w_player.SetValue(attack_range_delta);
-		w_player.SetIncattackrange(1);
-	}
-
-	// Run speed (tốc độ di chuyển) — filter_Speedup dùng ratio*100
-	if (run_speed_ratio > 0.0f)
-	{
-		w_player.SetRatio(run_speed_ratio);
-		w_player.SetSpeedup(1);
-	}
-
-	// Attack speed — filter_Crazy dùng ratio*100
-	if (attack_speed_ratio > 0.0f)
-	{
-		w_player.SetRatio(attack_speed_ratio);
-		w_player.SetFastattack(1);
-	}
-
-	// Pray speed (giảm thời gian niệm) — filter_Fastpray dùng ratio*100
-	if (pray_speed_ratio > 0.0f)
-	{
-		w_player.SetRatio(pray_speed_ratio);
-		w_player.SetFastpray(1);
-	}
+	player.AddFilter(new filter_Kidform(player, buf));
 }
 
 void SkillWrapper::MnFactionAddFilter(object_interface player, float ratio)
