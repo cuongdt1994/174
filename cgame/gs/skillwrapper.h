@@ -639,6 +639,7 @@ public:
 	
 	void AddFilterKidIncTransformation(object_interface player, int buff_period); // Imune, debuffs, etc
     void AddFilterKidDecTransformation(object_interface player, int buff_period); // debuff, hp/mp,defense, etc
+    void SetKidFilter(object_interface player, int* buf); // mirror 173 — tạo filter_Kidform + AddFilter
     void AddFilterKidTransformStats(object_interface player, int buff_period_sec,
                                      float hp_ratio, float dmg_ratio, float def_ratio,
                                      float mdef_ratio, float resist_ratio); // kid celestial transform stat buff
