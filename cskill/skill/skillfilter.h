@@ -15472,11 +15472,13 @@ public:
 	void OnAttach()
 	{
 		int form = _parent.GetForm();
-		_parent.GetSkillWrapper().EventChange(_parent, form, FORM_CLASS);
+		// 173 EventChange(skill, player, oldForm, 3) — to=3 = kid form (NOT FORM_CLASS=1)
+		_parent.GetSkillWrapper().EventChange(_parent, form, 3);
 		_parent.LockEquipment(true);
 		_parent.SetNoMount(true);
 		_parent.SetNoBind(true);
-		_parent.ChangeShape2(_shape | (FORM_CLASS << 6), 30);
+		// 173: shape = _shape; LOBYTE(shape) |= 0xC0; — kid form mark = 3<<6 = 0xC0
+		_parent.ChangeShape2(_shape | 0xC0, 30);
 		_parent.EnhanceMaxHP(_hp);
 		_parent.EnhanceDamage((_damage_low + _damage_high) / 2);
 		_parent.EnhanceMagicDamage((_damage_magic_low + _damage_magic_high) / 2);
