@@ -33831,7 +33831,7 @@ gplayer_imp::ActivateKidTransform()
 
 	// [0] shape (IDA: tmp_data.shape = cfg->shape_type) — 174 dùng unk1 làm shape_type.
 	// filter OnAttach tự OR 0xC0 nên pass raw.
-	kid_buf[0]  = cfg->unk1;
+	kid_buf[0]  = cfg->shape_type;
 
 	// [1] attack_type (IDA: cfg->attack_type)
 	kid_buf[1]  = cfg->attack_type;
