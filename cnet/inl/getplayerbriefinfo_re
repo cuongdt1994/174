@@ -1,0 +1,50 @@
+	public:
+		int retcode;
+		int roleid;
+		unsigned int localsid;
+		PlayerBriefInfoVector playerlist;
+		unsigned char reason;
+		unsigned int reserve1;
+		enum { PROTOCOL_TYPE = PROTOCOL_GETPLAYERBRIEFINFO_RE };
+	public:
+		GetPlayerBriefInfo_Re() { type = PROTOCOL_GETPLAYERBRIEFINFO_RE; }
+		GetPlayerBriefInfo_Re(void*) : Protocol(PROTOCOL_GETPLAYERBRIEFINFO_RE) { }
+		GetPlayerBriefInfo_Re (int l_retcode,int l_roleid,unsigned int l_localsid,
+			PlayerBriefInfoVector l_playerlist,unsigned char l_reason,unsigned int l_reserve1)
+			 : retcode(l_retcode),roleid(l_roleid),localsid(l_localsid)
+			,playerlist(l_playerlist),reason(l_reason),reserve1(l_reserve1)
+		{
+			type = PROTOCOL_GETPLAYERBRIEFINFO_RE;
+		}
+
+		GetPlayerBriefInfo_Re(const GetPlayerBriefInfo_Re &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),localsid(rhs.localsid)
+			,playerlist(rhs.playerlist),reason(rhs.reason),reserve1(rhs.reserve1) { }
+
+		GNET::Protocol *Clone() const { return new GetPlayerBriefInfo_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << localsid;
+			os << playerlist;
+			os << reason;
+			os << reserve1;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> localsid;
+			os >> playerlist;
+			os >> reason;
+			os >> reserve1;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16384; }

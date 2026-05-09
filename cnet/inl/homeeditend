@@ -1,0 +1,47 @@
+	public:
+		int home_id;
+		HomeModuleVector homemodules;
+		Octets map1;
+		Octets map2;
+		int mask;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEEDITEND };
+	public:
+		HomeEditEnd() { type = PROTOCOL_HOMEEDITEND; }
+		HomeEditEnd(void*) : Protocol(PROTOCOL_HOMEEDITEND) { }
+		HomeEditEnd (int l_home_id,HomeModuleVector l_homemodules,const Octets& l_map1,
+			const Octets& l_map2,int l_mask)
+			 : home_id(l_home_id),homemodules(l_homemodules),map1(l_map1)
+			,map2(l_map2),mask(l_mask)
+		{
+			type = PROTOCOL_HOMEEDITEND;
+		}
+
+		HomeEditEnd(const HomeEditEnd &rhs)
+			: Protocol(rhs),home_id(rhs.home_id),homemodules(rhs.homemodules),map1(rhs.map1)
+			,map2(rhs.map2),mask(rhs.mask) { }
+
+		GNET::Protocol *Clone() const { return new HomeEditEnd(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << home_id;
+			os << homemodules;
+			os << map1;
+			os << map2;
+			os << mask;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> home_id;
+			os >> homemodules;
+			os >> map1;
+			os >> map2;
+			os >> mask;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

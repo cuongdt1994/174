@@ -1,0 +1,59 @@
+#ifndef __GNET_EC_SQLSETARENAPLAYERRES_RPCDATA
+#define __GNET_EC_SQLSETARENAPLAYERRES_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLSetArenaPlayerRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+
+	public:
+		EC_SQLSetArenaPlayerRes (int l_retcode = -1)
+			: retcode(l_retcode)
+		{
+		}
+
+		EC_SQLSetArenaPlayerRes(const EC_SQLSetArenaPlayerRes &rhs)
+			: retcode(rhs.retcode) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLSetArenaPlayerRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLSetArenaPlayerRes *r = dynamic_cast<const EC_SQLSetArenaPlayerRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+			}
+			return *this;
+		}
+
+		EC_SQLSetArenaPlayerRes& operator = (const EC_SQLSetArenaPlayerRes &rhs)
+		{
+			const EC_SQLSetArenaPlayerRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			return os;
+		}
+
+	};
+};
+#endif

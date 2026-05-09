@@ -1,0 +1,157 @@
+#ifndef __GNET_HOMEPROPERTY_RPCDATA
+#define __GNET_HOMEPROPERTY_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "homeequipment"
+#include "formulas"
+
+namespace GNET
+{
+	class HomeProperty : public GNET::Rpc::Data
+	{
+	public:
+		int level;
+		int exp;
+		int prosperous;
+		int clean;
+		int energy;
+		int timestamp;
+		HomeEquipmentVector homeequipments;
+		IntVector resource_num;
+		FormulasVector formula;
+		short hpos_x;
+		short hpos_z;
+		short gpos_x;
+		short gpos_z;
+		int reserved3;
+		int reserved4;
+		int reserved5;
+		int reserved6;
+		int reserved7;
+		int reserved8;
+
+	public:
+		HomeProperty ()
+		{
+		}
+
+		HomeProperty(const HomeProperty &rhs)
+			: level(rhs.level),exp(rhs.exp),prosperous(rhs.prosperous),
+			clean(rhs.clean),energy(rhs.energy),timestamp(rhs.timestamp),
+			homeequipments(rhs.homeequipments),resource_num(rhs.resource_num),formula(rhs.formula),
+			hpos_x(rhs.hpos_x),hpos_z(rhs.hpos_z),gpos_x(rhs.gpos_x),
+			gpos_z(rhs.gpos_z),reserved3(rhs.reserved3),reserved4(rhs.reserved4),
+			reserved5(rhs.reserved5),reserved6(rhs.reserved6),reserved7(rhs.reserved7),
+			reserved8(rhs.reserved8) { }
+
+		Rpc::Data *Clone() const { return new HomeProperty(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeProperty *r = dynamic_cast<const HomeProperty *>(&rhs);
+			if (r && r != this)
+			{
+				level = r->level;
+				exp = r->exp;
+				prosperous = r->prosperous;
+				clean = r->clean;
+				energy = r->energy;
+				timestamp = r->timestamp;
+				homeequipments = r->homeequipments;
+				resource_num = r->resource_num;
+				formula = r->formula;
+				hpos_x = r->hpos_x;
+				hpos_z = r->hpos_z;
+				gpos_x = r->gpos_x;
+				gpos_z = r->gpos_z;
+				reserved3 = r->reserved3;
+				reserved4 = r->reserved4;
+				reserved5 = r->reserved5;
+				reserved6 = r->reserved6;
+				reserved7 = r->reserved7;
+				reserved8 = r->reserved8;
+			}
+			return *this;
+		}
+
+		HomeProperty& operator = (const HomeProperty &rhs)
+		{
+			const HomeProperty *r = &rhs;
+			if (r && r != this)
+			{
+				level = r->level;
+				exp = r->exp;
+				prosperous = r->prosperous;
+				clean = r->clean;
+				energy = r->energy;
+				timestamp = r->timestamp;
+				homeequipments = r->homeequipments;
+				resource_num = r->resource_num;
+				formula = r->formula;
+				hpos_x = r->hpos_x;
+				hpos_z = r->hpos_z;
+				gpos_x = r->gpos_x;
+				gpos_z = r->gpos_z;
+				reserved3 = r->reserved3;
+				reserved4 = r->reserved4;
+				reserved5 = r->reserved5;
+				reserved6 = r->reserved6;
+				reserved7 = r->reserved7;
+				reserved8 = r->reserved8;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << level;
+			os << exp;
+			os << prosperous;
+			os << clean;
+			os << energy;
+			os << timestamp;
+			os << homeequipments;
+			os << resource_num;
+			os << formula;
+			os << hpos_x;
+			os << hpos_z;
+			os << gpos_x;
+			os << gpos_z;
+			os << reserved3;
+			os << reserved4;
+			os << reserved5;
+			os << reserved6;
+			os << reserved7;
+			os << reserved8;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> level;
+			os >> exp;
+			os >> prosperous;
+			os >> clean;
+			os >> energy;
+			os >> timestamp;
+			os >> homeequipments;
+			os >> resource_num;
+			os >> formula;
+			os >> hpos_x;
+			os >> hpos_z;
+			os >> gpos_x;
+			os >> gpos_z;
+			os >> reserved3;
+			os >> reserved4;
+			os >> reserved5;
+			os >> reserved6;
+			os >> reserved7;
+			os >> reserved8;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeProperty>	HomePropertyVector;
+};
+#endif

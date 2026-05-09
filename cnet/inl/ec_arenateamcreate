@@ -1,0 +1,62 @@
+	public:
+		int retcode;
+		int roleid;
+		int cls;
+		int team_type;
+		int reserve5;
+		int reserve6;
+		int reserve7;
+		Octets player_name;
+		Octets team_name;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMCREATE };
+	public:
+		EC_ArenaTeamCreate() { type = PROTOCOL_EC_ARENATEAMCREATE; }
+		EC_ArenaTeamCreate(void*) : Protocol(PROTOCOL_EC_ARENATEAMCREATE) { }
+		EC_ArenaTeamCreate (int l_retcode = 0,int l_roleid = 0,int l_cls = 0,
+			int l_team_type = 0,int l_reserve5 = 0,int l_reserve6 = 0,
+			int l_reserve7 = 0,const Octets& l_player_name = Octets(0),const Octets& l_team_name = Octets(0))
+			 : retcode(l_retcode),roleid(l_roleid),cls(l_cls)
+			,team_type(l_team_type),reserve5(l_reserve5),reserve6(l_reserve6)
+			,reserve7(l_reserve7),player_name(l_player_name),team_name(l_team_name)
+		{
+			type = PROTOCOL_EC_ARENATEAMCREATE;
+		}
+
+		EC_ArenaTeamCreate(const EC_ArenaTeamCreate &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),cls(rhs.cls)
+			,team_type(rhs.team_type),reserve5(rhs.reserve5),reserve6(rhs.reserve6)
+			,reserve7(rhs.reserve7),player_name(rhs.player_name),team_name(rhs.team_name) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamCreate(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << cls;
+			os << team_type;
+			os << reserve5;
+			os << reserve6;
+			os << reserve7;
+			os << player_name;
+			os << team_name;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> cls;
+			os >> team_type;
+			os >> reserve5;
+			os >> reserve6;
+			os >> reserve7;
+			os >> player_name;
+			os >> team_name;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 128; }

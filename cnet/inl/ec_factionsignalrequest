@@ -1,0 +1,38 @@
+	public:
+		unsigned int reserve1;
+		unsigned int reserve2;
+		unsigned char reserve3;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_FACTIONSIGNALREQUEST };
+	public:
+		EC_FactionSignalRequest() { type = PROTOCOL_EC_FACTIONSIGNALREQUEST; }
+		EC_FactionSignalRequest(void*) : Protocol(PROTOCOL_EC_FACTIONSIGNALREQUEST) { }
+		EC_FactionSignalRequest (unsigned int l_reserve1 = 0,unsigned int l_reserve2 = 0,unsigned char l_reserve3 = 0)
+			 : reserve1(l_reserve1),reserve2(l_reserve2),reserve3(l_reserve3)
+		{
+			type = PROTOCOL_EC_FACTIONSIGNALREQUEST;
+		}
+
+		EC_FactionSignalRequest(const EC_FactionSignalRequest &rhs)
+			: Protocol(rhs),reserve1(rhs.reserve1),reserve2(rhs.reserve2),reserve3(rhs.reserve3) { }
+
+		GNET::Protocol *Clone() const { return new EC_FactionSignalRequest(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reserve1;
+			os << reserve2;
+			os << reserve3;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reserve1;
+			os >> reserve2;
+			os >> reserve3;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

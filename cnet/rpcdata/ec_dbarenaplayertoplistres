@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_DBARENAPLAYERTOPLISTRES_RPCDATA
+#define __GNET_EC_DBARENAPLAYERTOPLISTRES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_arenaplayertoplist"
+
+namespace GNET
+{
+	class EC_DBArenaPlayerTopListRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		EC_ArenaPlayerTopListVector members;
+
+	public:
+		EC_DBArenaPlayerTopListRes (int l_retcode = -1,const EC_ArenaPlayerTopListVector& l_members = EC_ArenaPlayerTopListVector())
+			: retcode(l_retcode),members(l_members)
+		{
+		}
+
+		EC_DBArenaPlayerTopListRes(const EC_DBArenaPlayerTopListRes &rhs)
+			: retcode(rhs.retcode),members(rhs.members) { }
+
+		Rpc::Data *Clone() const { return new EC_DBArenaPlayerTopListRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_DBArenaPlayerTopListRes *r = dynamic_cast<const EC_DBArenaPlayerTopListRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				members = r->members;
+			}
+			return *this;
+		}
+
+		EC_DBArenaPlayerTopListRes& operator = (const EC_DBArenaPlayerTopListRes &rhs)
+		{
+			const EC_DBArenaPlayerTopListRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				members = r->members;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << members;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> members;
+			return os;
+		}
+
+	};
+};
+#endif

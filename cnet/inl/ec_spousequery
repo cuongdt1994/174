@@ -1,0 +1,35 @@
+	public:
+		unsigned int reserve1;
+		unsigned int reserve2;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_SPOUSEQUERY };
+	public:
+		EC_SpouseQuery() { type = PROTOCOL_EC_SPOUSEQUERY; }
+		EC_SpouseQuery(void*) : Protocol(PROTOCOL_EC_SPOUSEQUERY) { }
+		EC_SpouseQuery (unsigned int l_reserve1 = 0,unsigned int l_reserve2 = 0)
+			 : reserve1(l_reserve1),reserve2(l_reserve2)
+		{
+			type = PROTOCOL_EC_SPOUSEQUERY;
+		}
+
+		EC_SpouseQuery(const EC_SpouseQuery &rhs)
+			: Protocol(rhs),reserve1(rhs.reserve1),reserve2(rhs.reserve2) { }
+
+		GNET::Protocol *Clone() const { return new EC_SpouseQuery(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reserve1;
+			os << reserve2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reserve1;
+			os >> reserve2;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

@@ -1,0 +1,101 @@
+#ifndef __GNET_GUSECASHNOW_RPCDATA
+#define __GNET_GUSECASHNOW_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GUseCashNow : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int userid;
+		unsigned int zoneid;
+		int sn;
+		unsigned int aid;
+		int point;
+		int cash;
+		int status;
+		unsigned int creatime;
+
+	public:
+		GUseCashNow (unsigned int l_userid = 0,unsigned int l_zoneid = 0,int l_sn = -1
+			,unsigned int l_aid = 0,int l_point = 0,int l_cash = 0
+			,int l_status = 0,unsigned int l_creatime = 0)
+			: userid(l_userid),zoneid(l_zoneid),sn(l_sn)
+			,aid(l_aid),point(l_point),cash(l_cash)
+			,status(l_status),creatime(l_creatime)
+		{
+		}
+
+		GUseCashNow(const GUseCashNow &rhs)
+			: userid(rhs.userid),zoneid(rhs.zoneid),sn(rhs.sn),
+			aid(rhs.aid),point(rhs.point),cash(rhs.cash),
+			status(rhs.status),creatime(rhs.creatime) { }
+
+		Rpc::Data *Clone() const { return new GUseCashNow(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GUseCashNow *r = dynamic_cast<const GUseCashNow *>(&rhs);
+			if (r && r != this)
+			{
+				userid = r->userid;
+				zoneid = r->zoneid;
+				sn = r->sn;
+				aid = r->aid;
+				point = r->point;
+				cash = r->cash;
+				status = r->status;
+				creatime = r->creatime;
+			}
+			return *this;
+		}
+
+		GUseCashNow& operator = (const GUseCashNow &rhs)
+		{
+			const GUseCashNow *r = &rhs;
+			if (r && r != this)
+			{
+				userid = r->userid;
+				zoneid = r->zoneid;
+				sn = r->sn;
+				aid = r->aid;
+				point = r->point;
+				cash = r->cash;
+				status = r->status;
+				creatime = r->creatime;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << userid;
+			os << zoneid;
+			os << sn;
+			os << aid;
+			os << point;
+			os << cash;
+			os << status;
+			os << creatime;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> userid;
+			os >> zoneid;
+			os >> sn;
+			os >> aid;
+			os >> point;
+			os >> cash;
+			os >> status;
+			os >> creatime;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GUseCashNow>	GUseCashNowVector;
+};
+#endif

@@ -1,0 +1,62 @@
+	public:
+		int roleid;
+		int fashions_count;
+		Octets fashions;
+		int flys_count;
+		Octets flys;
+		int mounts_count;
+		Octets mounts;
+		int pets_count;
+		Octets pets;
+		enum { PROTOCOL_TYPE = PROTOCOL_GCODEXREQUESTSTORAGE };
+	public:
+		GCodexRequestStorage() { type = PROTOCOL_GCODEXREQUESTSTORAGE; }
+		GCodexRequestStorage(void*) : Protocol(PROTOCOL_GCODEXREQUESTSTORAGE) { }
+		GCodexRequestStorage (int l_roleid,int l_fashions_count,const Octets& l_fashions,
+			int l_flys_count,const Octets& l_flys,int l_mounts_count,
+			const Octets& l_mounts,int l_pets_count,const Octets& l_pets)
+			 : roleid(l_roleid),fashions_count(l_fashions_count),fashions(l_fashions)
+			,flys_count(l_flys_count),flys(l_flys),mounts_count(l_mounts_count)
+			,mounts(l_mounts),pets_count(l_pets_count),pets(l_pets)
+		{
+			type = PROTOCOL_GCODEXREQUESTSTORAGE;
+		}
+
+		GCodexRequestStorage(const GCodexRequestStorage &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),fashions_count(rhs.fashions_count),fashions(rhs.fashions)
+			,flys_count(rhs.flys_count),flys(rhs.flys),mounts_count(rhs.mounts_count)
+			,mounts(rhs.mounts),pets_count(rhs.pets_count),pets(rhs.pets) { }
+
+		GNET::Protocol *Clone() const { return new GCodexRequestStorage(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << fashions_count;
+			os << fashions;
+			os << flys_count;
+			os << flys;
+			os << mounts_count;
+			os << mounts;
+			os << pets_count;
+			os << pets;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> fashions_count;
+			os >> fashions;
+			os >> flys_count;
+			os >> flys;
+			os >> mounts_count;
+			os >> mounts;
+			os >> pets_count;
+			os >> pets;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 65536; }

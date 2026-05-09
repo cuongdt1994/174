@@ -1,0 +1,47 @@
+	public:
+		int localsid;
+		int home_id;
+		char query_type;
+		int cur_rid;
+		GFoundryFormulas data;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEFOUNDRYFORMULASSYNC };
+	public:
+		HomeFoundryFormulasSync() { type = PROTOCOL_HOMEFOUNDRYFORMULASSYNC; }
+		HomeFoundryFormulasSync(void*) : Protocol(PROTOCOL_HOMEFOUNDRYFORMULASSYNC) { }
+		HomeFoundryFormulasSync (int l_localsid,int l_home_id,char l_query_type,
+			int l_cur_rid,GFoundryFormulas l_data)
+			 : localsid(l_localsid),home_id(l_home_id),query_type(l_query_type)
+			,cur_rid(l_cur_rid),data(l_data)
+		{
+			type = PROTOCOL_HOMEFOUNDRYFORMULASSYNC;
+		}
+
+		HomeFoundryFormulasSync(const HomeFoundryFormulasSync &rhs)
+			: Protocol(rhs),localsid(rhs.localsid),home_id(rhs.home_id),query_type(rhs.query_type)
+			,cur_rid(rhs.cur_rid),data(rhs.data) { }
+
+		GNET::Protocol *Clone() const { return new HomeFoundryFormulasSync(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << localsid;
+			os << home_id;
+			os << query_type;
+			os << cur_rid;
+			os << data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> localsid;
+			os >> home_id;
+			os >> query_type;
+			os >> cur_rid;
+			os >> data;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

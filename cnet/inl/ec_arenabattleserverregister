@@ -1,0 +1,35 @@
+	public:
+		int server_id;
+		int world_tag;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENABATTLESERVERREGISTER };
+	public:
+		EC_ArenaBattleServerRegister() { type = PROTOCOL_EC_ARENABATTLESERVERREGISTER; }
+		EC_ArenaBattleServerRegister(void*) : Protocol(PROTOCOL_EC_ARENABATTLESERVERREGISTER) { }
+		EC_ArenaBattleServerRegister (int l_server_id,int l_world_tag)
+			 : server_id(l_server_id),world_tag(l_world_tag)
+		{
+			type = PROTOCOL_EC_ARENABATTLESERVERREGISTER;
+		}
+
+		EC_ArenaBattleServerRegister(const EC_ArenaBattleServerRegister &rhs)
+			: Protocol(rhs),server_id(rhs.server_id),world_tag(rhs.world_tag) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaBattleServerRegister(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << server_id;
+			os << world_tag;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> server_id;
+			os >> world_tag;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

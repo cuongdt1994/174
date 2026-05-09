@@ -1,0 +1,65 @@
+#ifndef __GNET_HOMEVISITORINFODATA_RPCDATA
+#define __GNET_HOMEVISITORINFODATA_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class HomeVisitorInfoData : public GNET::Rpc::Data
+	{
+	public:
+		int roleid;
+		Octets name;
+
+	public:
+		HomeVisitorInfoData (const Octets& l_name = Octets())
+			: name(l_name)
+		{
+		}
+
+		HomeVisitorInfoData(const HomeVisitorInfoData &rhs)
+			: roleid(rhs.roleid),name(rhs.name) { }
+
+		Rpc::Data *Clone() const { return new HomeVisitorInfoData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const HomeVisitorInfoData *r = dynamic_cast<const HomeVisitorInfoData *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		HomeVisitorInfoData& operator = (const HomeVisitorInfoData &rhs)
+		{
+			const HomeVisitorInfoData *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << name;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> name;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<HomeVisitorInfoData>	HomeVisitorInfoDataVector;
+};
+#endif

@@ -1,0 +1,87 @@
+#ifndef __GNET_GFACTIONEXTEND_RPCDATA
+#define __GNET_GFACTIONEXTEND_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GFactionExtend : public GNET::Rpc::Data
+	{
+	public:
+		int jointime;
+		int loyalty;
+		int logintime;
+		Octets uniqueinfo;
+		char reserved1;
+		short reserved2;
+
+	public:
+		GFactionExtend (int l_jointime = 0,int l_loyalty = 0,int l_logintime = 0
+			,const Octets& l_uniqueinfo = Octets(),char l_reserved1 = 0,short l_reserved2 = 0)
+			: jointime(l_jointime),loyalty(l_loyalty),logintime(l_logintime)
+			,uniqueinfo(l_uniqueinfo),reserved1(l_reserved1),reserved2(l_reserved2)
+		{
+		}
+
+		GFactionExtend(const GFactionExtend &rhs)
+			: jointime(rhs.jointime),loyalty(rhs.loyalty),logintime(rhs.logintime),
+			uniqueinfo(rhs.uniqueinfo),reserved1(rhs.reserved1),reserved2(rhs.reserved2) { }
+
+		Rpc::Data *Clone() const { return new GFactionExtend(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GFactionExtend *r = dynamic_cast<const GFactionExtend *>(&rhs);
+			if (r && r != this)
+			{
+				jointime = r->jointime;
+				loyalty = r->loyalty;
+				logintime = r->logintime;
+				uniqueinfo = r->uniqueinfo;
+				reserved1 = r->reserved1;
+				reserved2 = r->reserved2;
+			}
+			return *this;
+		}
+
+		GFactionExtend& operator = (const GFactionExtend &rhs)
+		{
+			const GFactionExtend *r = &rhs;
+			if (r && r != this)
+			{
+				jointime = r->jointime;
+				loyalty = r->loyalty;
+				logintime = r->logintime;
+				uniqueinfo = r->uniqueinfo;
+				reserved1 = r->reserved1;
+				reserved2 = r->reserved2;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << jointime;
+			os << loyalty;
+			os << logintime;
+			os << uniqueinfo;
+			os << reserved1;
+			os << reserved2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> jointime;
+			os >> loyalty;
+			os >> logintime;
+			os >> uniqueinfo;
+			os >> reserved1;
+			os >> reserved2;
+			return os;
+		}
+
+	};
+};
+#endif

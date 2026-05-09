@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_SQLGETARENATEAMRES_RPCDATA
+#define __GNET_EC_SQLGETARENATEAMRES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_sqlarenateam"
+
+namespace GNET
+{
+	class EC_SQLGetArenaTeamRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		EC_SQLArenaTeam team;
+
+	public:
+		EC_SQLGetArenaTeamRes (int l_retcode = -1,const EC_SQLArenaTeam& l_team = EC_SQLArenaTeam())
+			: retcode(l_retcode),team(l_team)
+		{
+		}
+
+		EC_SQLGetArenaTeamRes(const EC_SQLGetArenaTeamRes &rhs)
+			: retcode(rhs.retcode),team(rhs.team) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLGetArenaTeamRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLGetArenaTeamRes *r = dynamic_cast<const EC_SQLGetArenaTeamRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				team = r->team;
+			}
+			return *this;
+		}
+
+		EC_SQLGetArenaTeamRes& operator = (const EC_SQLGetArenaTeamRes &rhs)
+		{
+			const EC_SQLGetArenaTeamRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				team = r->team;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << team;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> team;
+			return os;
+		}
+
+	};
+};
+#endif

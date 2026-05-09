@@ -1,0 +1,64 @@
+#ifndef __GNET_SETNEWTRASHBOXRES_RPCDATA
+#define __GNET_SETNEWTRASHBOXRES_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class SetNewTrashBoxRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		int roleid;
+
+	public:
+		SetNewTrashBoxRes (int l_retcode = 0,int l_roleid = 0)
+			: retcode(l_retcode),roleid(l_roleid)
+		{
+		}
+
+		SetNewTrashBoxRes(const SetNewTrashBoxRes &rhs)
+			: retcode(rhs.retcode),roleid(rhs.roleid) { }
+
+		Rpc::Data *Clone() const { return new SetNewTrashBoxRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const SetNewTrashBoxRes *r = dynamic_cast<const SetNewTrashBoxRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		SetNewTrashBoxRes& operator = (const SetNewTrashBoxRes &rhs)
+		{
+			const SetNewTrashBoxRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			return os;
+		}
+
+	};
+};
+#endif

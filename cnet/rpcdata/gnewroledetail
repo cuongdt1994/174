@@ -1,0 +1,376 @@
+#ifndef __GNET_GNEWROLEDETAIL_RPCDATA
+#define __GNET_GNEWROLEDETAIL_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GNewRoleDetail : public GNET::Rpc::Data
+	{
+	public:
+		int roleid;
+		int pk_time;
+		int pk_status;
+		int money_silver;
+		int color_name;
+		int pvp_rank;
+		int pvp_rank_exp;
+		int player_kill;
+		int monster_kill;
+		int player_death;
+		int monster_death;
+		int diary_exp;
+		int realm_day_verify;
+		int verify_itens_valid;
+		char has_astrolabe_lock;
+		char enabled_fashion_weapon;
+		char double_factor_exp;
+		char double_factor_sp;
+		char double_factor_realm;
+		Octets autoswap;
+		Octets skillsender;
+		Octets glyph;
+		Octets carrier;
+		Octets repository;
+		Octets treasure;
+		Octets lottery;
+		Octets treasure_items;
+		Octets lib_items;
+		Octets pet_skill_temp;
+		Octets pet_skin;
+		Octets passwd_safe;
+		Octets day_world_points;
+		Octets activity;
+		Octets celestial;
+		Octets codex;
+		Octets reserve1;
+		Octets reserve2;
+		Octets reserve3;
+		Octets reserve4;
+		Octets reserve5;
+		Octets reserve6;
+		Octets reserve7;
+		Octets reserve8;
+		Octets reserve9;
+		int reserve10;
+		int reserve11;
+		int reserve12;
+		int reserve13;
+		int reserve14;
+		int reserve15;
+		int reserve16;
+		int reserve17;
+		int reserve18;
+		int reserve19;
+
+	public:
+		GNewRoleDetail (int l_roleid = 0,int l_pk_time = 0,int l_pk_status = 0
+			,int l_money_silver = 0,int l_color_name = 0,int l_pvp_rank = 0
+			,int l_pvp_rank_exp = 0,int l_player_kill = 0,int l_monster_kill = 0
+			,int l_player_death = 0,int l_monster_death = 0,int l_diary_exp = 0
+			,int l_realm_day_verify = 0,int l_verify_itens_valid = 0,char l_has_astrolabe_lock = 0
+			,char l_enabled_fashion_weapon = 0,char l_double_factor_exp = 0,char l_double_factor_sp = 0
+			,char l_double_factor_realm = 0,const Octets& l_autoswap = Octets(0),const Octets& l_skillsender = Octets(0)
+			,const Octets& l_glyph = Octets(0),const Octets& l_carrier = Octets(0),const Octets& l_repository = Octets(0)
+			,const Octets& l_treasure = Octets(0),const Octets& l_lottery = Octets(0),const Octets& l_treasure_items = Octets(0)
+			,const Octets& l_lib_items = Octets(0),const Octets& l_pet_skill_temp = Octets(0),const Octets& l_pet_skin = Octets(0)
+			,const Octets& l_passwd_safe = Octets(0),const Octets& l_day_world_points = Octets(0),const Octets& l_activity = Octets(0)
+			,const Octets& l_celestial = Octets(0),const Octets& l_codex = Octets(0),const Octets& l_reserve1 = Octets(0)
+			,const Octets& l_reserve2 = Octets(0),const Octets& l_reserve3 = Octets(0),const Octets& l_reserve4 = Octets(0)
+			,const Octets& l_reserve5 = Octets(0),const Octets& l_reserve6 = Octets(0),const Octets& l_reserve7 = Octets(0)
+			,const Octets& l_reserve8 = Octets(0),const Octets& l_reserve9 = Octets(0),int l_reserve10 = 0
+			,int l_reserve11 = 0,int l_reserve12 = 0,int l_reserve13 = 0
+			,int l_reserve14 = 0,int l_reserve15 = 0,int l_reserve16 = 0
+			,int l_reserve17 = 0,int l_reserve18 = 0,int l_reserve19 = 0)
+			: roleid(l_roleid),pk_time(l_pk_time),pk_status(l_pk_status)
+			,money_silver(l_money_silver),color_name(l_color_name),pvp_rank(l_pvp_rank)
+			,pvp_rank_exp(l_pvp_rank_exp),player_kill(l_player_kill),monster_kill(l_monster_kill)
+			,player_death(l_player_death),monster_death(l_monster_death),diary_exp(l_diary_exp)
+			,realm_day_verify(l_realm_day_verify),verify_itens_valid(l_verify_itens_valid),has_astrolabe_lock(l_has_astrolabe_lock)
+			,enabled_fashion_weapon(l_enabled_fashion_weapon),double_factor_exp(l_double_factor_exp),double_factor_sp(l_double_factor_sp)
+			,double_factor_realm(l_double_factor_realm),autoswap(l_autoswap),skillsender(l_skillsender)
+			,glyph(l_glyph),carrier(l_carrier),repository(l_repository)
+			,treasure(l_treasure),lottery(l_lottery),treasure_items(l_treasure_items)
+			,lib_items(l_lib_items),pet_skill_temp(l_pet_skill_temp),pet_skin(l_pet_skin)
+			,passwd_safe(l_passwd_safe),day_world_points(l_day_world_points),activity(l_activity)
+			,celestial(l_celestial),codex(l_codex),reserve1(l_reserve1)
+			,reserve2(l_reserve2),reserve3(l_reserve3),reserve4(l_reserve4)
+			,reserve5(l_reserve5),reserve6(l_reserve6),reserve7(l_reserve7)
+			,reserve8(l_reserve8),reserve9(l_reserve9),reserve10(l_reserve10)
+			,reserve11(l_reserve11),reserve12(l_reserve12),reserve13(l_reserve13)
+			,reserve14(l_reserve14),reserve15(l_reserve15),reserve16(l_reserve16)
+			,reserve17(l_reserve17),reserve18(l_reserve18),reserve19(l_reserve19)
+		{
+		}
+
+		GNewRoleDetail(const GNewRoleDetail &rhs)
+			: roleid(rhs.roleid),pk_time(rhs.pk_time),pk_status(rhs.pk_status),
+			money_silver(rhs.money_silver),color_name(rhs.color_name),pvp_rank(rhs.pvp_rank),
+			pvp_rank_exp(rhs.pvp_rank_exp),player_kill(rhs.player_kill),monster_kill(rhs.monster_kill),
+			player_death(rhs.player_death),monster_death(rhs.monster_death),diary_exp(rhs.diary_exp),
+			realm_day_verify(rhs.realm_day_verify),verify_itens_valid(rhs.verify_itens_valid),has_astrolabe_lock(rhs.has_astrolabe_lock),
+			enabled_fashion_weapon(rhs.enabled_fashion_weapon),double_factor_exp(rhs.double_factor_exp),double_factor_sp(rhs.double_factor_sp),
+			double_factor_realm(rhs.double_factor_realm),autoswap(rhs.autoswap),skillsender(rhs.skillsender),
+			glyph(rhs.glyph),carrier(rhs.carrier),repository(rhs.repository),
+			treasure(rhs.treasure),lottery(rhs.lottery),treasure_items(rhs.treasure_items),
+			lib_items(rhs.lib_items),pet_skill_temp(rhs.pet_skill_temp),pet_skin(rhs.pet_skin),
+			passwd_safe(rhs.passwd_safe),day_world_points(rhs.day_world_points),activity(rhs.activity),
+			celestial(rhs.celestial),codex(rhs.codex),reserve1(rhs.reserve1),
+			reserve2(rhs.reserve2),reserve3(rhs.reserve3),reserve4(rhs.reserve4),
+			reserve5(rhs.reserve5),reserve6(rhs.reserve6),reserve7(rhs.reserve7),
+			reserve8(rhs.reserve8),reserve9(rhs.reserve9),reserve10(rhs.reserve10),
+			reserve11(rhs.reserve11),reserve12(rhs.reserve12),reserve13(rhs.reserve13),
+			reserve14(rhs.reserve14),reserve15(rhs.reserve15),reserve16(rhs.reserve16),
+			reserve17(rhs.reserve17),reserve18(rhs.reserve18),reserve19(rhs.reserve19) { }
+
+		Rpc::Data *Clone() const { return new GNewRoleDetail(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GNewRoleDetail *r = dynamic_cast<const GNewRoleDetail *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				pk_time = r->pk_time;
+				pk_status = r->pk_status;
+				money_silver = r->money_silver;
+				color_name = r->color_name;
+				pvp_rank = r->pvp_rank;
+				pvp_rank_exp = r->pvp_rank_exp;
+				player_kill = r->player_kill;
+				monster_kill = r->monster_kill;
+				player_death = r->player_death;
+				monster_death = r->monster_death;
+				diary_exp = r->diary_exp;
+				realm_day_verify = r->realm_day_verify;
+				verify_itens_valid = r->verify_itens_valid;
+				has_astrolabe_lock = r->has_astrolabe_lock;
+				enabled_fashion_weapon = r->enabled_fashion_weapon;
+				double_factor_exp = r->double_factor_exp;
+				double_factor_sp = r->double_factor_sp;
+				double_factor_realm = r->double_factor_realm;
+				autoswap = r->autoswap;
+				skillsender = r->skillsender;
+				glyph = r->glyph;
+				carrier = r->carrier;
+				repository = r->repository;
+				treasure = r->treasure;
+				lottery = r->lottery;
+				treasure_items = r->treasure_items;
+				lib_items = r->lib_items;
+				pet_skill_temp = r->pet_skill_temp;
+				pet_skin = r->pet_skin;
+				passwd_safe = r->passwd_safe;
+				day_world_points = r->day_world_points;
+				activity = r->activity;
+				celestial = r->celestial;
+				codex = r->codex;
+				reserve1 = r->reserve1;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+				reserve4 = r->reserve4;
+				reserve5 = r->reserve5;
+				reserve6 = r->reserve6;
+				reserve7 = r->reserve7;
+				reserve8 = r->reserve8;
+				reserve9 = r->reserve9;
+				reserve10 = r->reserve10;
+				reserve11 = r->reserve11;
+				reserve12 = r->reserve12;
+				reserve13 = r->reserve13;
+				reserve14 = r->reserve14;
+				reserve15 = r->reserve15;
+				reserve16 = r->reserve16;
+				reserve17 = r->reserve17;
+				reserve18 = r->reserve18;
+				reserve19 = r->reserve19;
+			}
+			return *this;
+		}
+
+		GNewRoleDetail& operator = (const GNewRoleDetail &rhs)
+		{
+			const GNewRoleDetail *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				pk_time = r->pk_time;
+				pk_status = r->pk_status;
+				money_silver = r->money_silver;
+				color_name = r->color_name;
+				pvp_rank = r->pvp_rank;
+				pvp_rank_exp = r->pvp_rank_exp;
+				player_kill = r->player_kill;
+				monster_kill = r->monster_kill;
+				player_death = r->player_death;
+				monster_death = r->monster_death;
+				diary_exp = r->diary_exp;
+				realm_day_verify = r->realm_day_verify;
+				verify_itens_valid = r->verify_itens_valid;
+				has_astrolabe_lock = r->has_astrolabe_lock;
+				enabled_fashion_weapon = r->enabled_fashion_weapon;
+				double_factor_exp = r->double_factor_exp;
+				double_factor_sp = r->double_factor_sp;
+				double_factor_realm = r->double_factor_realm;
+				autoswap = r->autoswap;
+				skillsender = r->skillsender;
+				glyph = r->glyph;
+				carrier = r->carrier;
+				repository = r->repository;
+				treasure = r->treasure;
+				lottery = r->lottery;
+				treasure_items = r->treasure_items;
+				lib_items = r->lib_items;
+				pet_skill_temp = r->pet_skill_temp;
+				pet_skin = r->pet_skin;
+				passwd_safe = r->passwd_safe;
+				day_world_points = r->day_world_points;
+				activity = r->activity;
+				celestial = r->celestial;
+				codex = r->codex;
+				reserve1 = r->reserve1;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+				reserve4 = r->reserve4;
+				reserve5 = r->reserve5;
+				reserve6 = r->reserve6;
+				reserve7 = r->reserve7;
+				reserve8 = r->reserve8;
+				reserve9 = r->reserve9;
+				reserve10 = r->reserve10;
+				reserve11 = r->reserve11;
+				reserve12 = r->reserve12;
+				reserve13 = r->reserve13;
+				reserve14 = r->reserve14;
+				reserve15 = r->reserve15;
+				reserve16 = r->reserve16;
+				reserve17 = r->reserve17;
+				reserve18 = r->reserve18;
+				reserve19 = r->reserve19;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << pk_time;
+			os << pk_status;
+			os << money_silver;
+			os << color_name;
+			os << pvp_rank;
+			os << pvp_rank_exp;
+			os << player_kill;
+			os << monster_kill;
+			os << player_death;
+			os << monster_death;
+			os << diary_exp;
+			os << realm_day_verify;
+			os << verify_itens_valid;
+			os << has_astrolabe_lock;
+			os << enabled_fashion_weapon;
+			os << double_factor_exp;
+			os << double_factor_sp;
+			os << double_factor_realm;
+			os << autoswap;
+			os << skillsender;
+			os << glyph;
+			os << carrier;
+			os << repository;
+			os << treasure;
+			os << lottery;
+			os << treasure_items;
+			os << lib_items;
+			os << pet_skill_temp;
+			os << pet_skin;
+			os << passwd_safe;
+			os << day_world_points;
+			os << activity;
+			os << celestial;
+			os << codex;
+			os << reserve1;
+			os << reserve2;
+			os << reserve3;
+			os << reserve4;
+			os << reserve5;
+			os << reserve6;
+			os << reserve7;
+			os << reserve8;
+			os << reserve9;
+			os << reserve10;
+			os << reserve11;
+			os << reserve12;
+			os << reserve13;
+			os << reserve14;
+			os << reserve15;
+			os << reserve16;
+			os << reserve17;
+			os << reserve18;
+			os << reserve19;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> pk_time;
+			os >> pk_status;
+			os >> money_silver;
+			os >> color_name;
+			os >> pvp_rank;
+			os >> pvp_rank_exp;
+			os >> player_kill;
+			os >> monster_kill;
+			os >> player_death;
+			os >> monster_death;
+			os >> diary_exp;
+			os >> realm_day_verify;
+			os >> verify_itens_valid;
+			os >> has_astrolabe_lock;
+			os >> enabled_fashion_weapon;
+			os >> double_factor_exp;
+			os >> double_factor_sp;
+			os >> double_factor_realm;
+			os >> autoswap;
+			os >> skillsender;
+			os >> glyph;
+			os >> carrier;
+			os >> repository;
+			os >> treasure;
+			os >> lottery;
+			os >> treasure_items;
+			os >> lib_items;
+			os >> pet_skill_temp;
+			os >> pet_skin;
+			os >> passwd_safe;
+			os >> day_world_points;
+			os >> activity;
+			os >> celestial;
+			os >> codex;
+			os >> reserve1;
+			os >> reserve2;
+			os >> reserve3;
+			os >> reserve4;
+			os >> reserve5;
+			os >> reserve6;
+			os >> reserve7;
+			os >> reserve8;
+			os >> reserve9;
+			os >> reserve10;
+			os >> reserve11;
+			os >> reserve12;
+			os >> reserve13;
+			os >> reserve14;
+			os >> reserve15;
+			os >> reserve16;
+			os >> reserve17;
+			os >> reserve18;
+			os >> reserve19;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GNewRoleDetail>	GNewRoleDetailVector;
+};
+#endif

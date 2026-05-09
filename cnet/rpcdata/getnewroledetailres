@@ -1,0 +1,65 @@
+#ifndef __GNET_GETNEWROLEDETAILRES_RPCDATA
+#define __GNET_GETNEWROLEDETAILRES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gnewroledetail"
+
+namespace GNET
+{
+	class GetNewRoleDetailRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		GNewRoleDetail detail;
+
+	public:
+		GetNewRoleDetailRes (int l_retcode = -1,const GNewRoleDetail& l_detail = GNewRoleDetail())
+			: retcode(l_retcode),detail(l_detail)
+		{
+		}
+
+		GetNewRoleDetailRes(const GetNewRoleDetailRes &rhs)
+			: retcode(rhs.retcode),detail(rhs.detail) { }
+
+		Rpc::Data *Clone() const { return new GetNewRoleDetailRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GetNewRoleDetailRes *r = dynamic_cast<const GetNewRoleDetailRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				detail = r->detail;
+			}
+			return *this;
+		}
+
+		GetNewRoleDetailRes& operator = (const GetNewRoleDetailRes &rhs)
+		{
+			const GetNewRoleDetailRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				detail = r->detail;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << detail;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> detail;
+			return os;
+		}
+
+	};
+};
+#endif

@@ -1,0 +1,38 @@
+	public:
+		int id;
+		Octets datakey;
+		Octets data;
+		enum { PROTOCOL_TYPE = PROTOCOL_LICENSEDATA_RE };
+	public:
+		LicenseData_Re() { type = PROTOCOL_LICENSEDATA_RE; }
+		LicenseData_Re(void*) : Protocol(PROTOCOL_LICENSEDATA_RE) { }
+		LicenseData_Re (int l_id = 0,const Octets& l_datakey = Octets(),const Octets& l_data = Octets())
+			 : id(l_id),datakey(l_datakey),data(l_data)
+		{
+			type = PROTOCOL_LICENSEDATA_RE;
+		}
+
+		LicenseData_Re(const LicenseData_Re &rhs)
+			: Protocol(rhs),id(rhs.id),datakey(rhs.datakey),data(rhs.data) { }
+
+		GNET::Protocol *Clone() const { return new LicenseData_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << datakey;
+			os << data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> datakey;
+			os >> data;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16384; }

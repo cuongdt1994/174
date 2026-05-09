@@ -1,0 +1,105 @@
+#ifndef __GNET_GFACTIONBASEINFO_RPCDATA
+#define __GNET_GFACTIONBASEINFO_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GFactionBaseInfo : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int fid;
+		Octets name;
+		char level;
+		short mem_num;
+		int reserved0;
+		int reserved1;
+		int reserved2;
+		int reserved3;
+		int reserved4;
+
+	public:
+		GFactionBaseInfo (unsigned int l_fid = 0,const Octets& l_name = Octets(0),char l_level = 0
+			,short l_mem_num = 0,int l_reserved0 = 0,int l_reserved1 = 0
+			,int l_reserved2 = 0,int l_reserved3 = 0,int l_reserved4 = 0)
+			: fid(l_fid),name(l_name),level(l_level)
+			,mem_num(l_mem_num),reserved0(l_reserved0),reserved1(l_reserved1)
+			,reserved2(l_reserved2),reserved3(l_reserved3),reserved4(l_reserved4)
+		{
+		}
+
+		GFactionBaseInfo(const GFactionBaseInfo &rhs)
+			: fid(rhs.fid),name(rhs.name),level(rhs.level),
+			mem_num(rhs.mem_num),reserved0(rhs.reserved0),reserved1(rhs.reserved1),
+			reserved2(rhs.reserved2),reserved3(rhs.reserved3),reserved4(rhs.reserved4) { }
+
+		Rpc::Data *Clone() const { return new GFactionBaseInfo(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GFactionBaseInfo *r = dynamic_cast<const GFactionBaseInfo *>(&rhs);
+			if (r && r != this)
+			{
+				fid = r->fid;
+				name = r->name;
+				level = r->level;
+				mem_num = r->mem_num;
+				reserved0 = r->reserved0;
+				reserved1 = r->reserved1;
+				reserved2 = r->reserved2;
+				reserved3 = r->reserved3;
+				reserved4 = r->reserved4;
+			}
+			return *this;
+		}
+
+		GFactionBaseInfo& operator = (const GFactionBaseInfo &rhs)
+		{
+			const GFactionBaseInfo *r = &rhs;
+			if (r && r != this)
+			{
+				fid = r->fid;
+				name = r->name;
+				level = r->level;
+				mem_num = r->mem_num;
+				reserved0 = r->reserved0;
+				reserved1 = r->reserved1;
+				reserved2 = r->reserved2;
+				reserved3 = r->reserved3;
+				reserved4 = r->reserved4;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << fid;
+			os << name;
+			os << level;
+			os << mem_num;
+			os << reserved0;
+			os << reserved1;
+			os << reserved2;
+			os << reserved3;
+			os << reserved4;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> fid;
+			os >> name;
+			os >> level;
+			os >> mem_num;
+			os >> reserved0;
+			os >> reserved1;
+			os >> reserved2;
+			os >> reserved3;
+			os >> reserved4;
+			return os;
+		}
+
+	};
+};
+#endif

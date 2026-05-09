@@ -1,0 +1,44 @@
+	public:
+		unsigned int id;
+		unsigned int userid;
+		unsigned int roleid;
+		std::vector<Octets> input_str;
+		enum { PROTOCOL_TYPE = PROTOCOL_MYSQLSTORAGE };
+	public:
+		MySQLStorage() { type = PROTOCOL_MYSQLSTORAGE; }
+		MySQLStorage(void*) : Protocol(PROTOCOL_MYSQLSTORAGE) { }
+		MySQLStorage (unsigned int l_id = 0,unsigned int l_userid = 0,unsigned int l_roleid = 0,
+			std::vector<Octets> l_input_str = std::vector<Octets>())
+			 : id(l_id),userid(l_userid),roleid(l_roleid)
+			,input_str(l_input_str)
+		{
+			type = PROTOCOL_MYSQLSTORAGE;
+		}
+
+		MySQLStorage(const MySQLStorage &rhs)
+			: Protocol(rhs),id(rhs.id),userid(rhs.userid),roleid(rhs.roleid)
+			,input_str(rhs.input_str) { }
+
+		GNET::Protocol *Clone() const { return new MySQLStorage(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << userid;
+			os << roleid;
+			os << input_str;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> userid;
+			os >> roleid;
+			os >> input_str;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

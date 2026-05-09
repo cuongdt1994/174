@@ -1,0 +1,44 @@
+	public:
+		int roleid;
+		char flag;
+		short cross_type;
+		int64_t unifid;
+		enum { PROTOCOL_TYPE = PROTOCOL_TRYCHANGEDS };
+	public:
+		TryChangeDS() { type = PROTOCOL_TRYCHANGEDS; }
+		TryChangeDS(void*) : Protocol(PROTOCOL_TRYCHANGEDS) { }
+		TryChangeDS (int l_roleid,char l_flag = 0,short l_cross_type = -1,
+			int64_t l_unifid = 0)
+			 : roleid(l_roleid),flag(l_flag),cross_type(l_cross_type)
+			,unifid(l_unifid)
+		{
+			type = PROTOCOL_TRYCHANGEDS;
+		}
+
+		TryChangeDS(const TryChangeDS &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),flag(rhs.flag),cross_type(rhs.cross_type)
+			,unifid(rhs.unifid) { }
+
+		GNET::Protocol *Clone() const { return new TryChangeDS(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << flag;
+			os << cross_type;
+			os << unifid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> flag;
+			os >> cross_type;
+			os >> unifid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

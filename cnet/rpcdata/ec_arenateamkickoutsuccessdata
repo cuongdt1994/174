@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_ARENATEAMKICKOUTSUCCESSDATA_RPCDATA
+#define __GNET_EC_ARENATEAMKICKOUTSUCCESSDATA_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaTeamKickoutSuccessData : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int roleid;
+		unsigned int kickout_id;
+
+	public:
+		EC_ArenaTeamKickoutSuccessData (unsigned int l_roleid = 0,unsigned int l_kickout_id = 0)
+			: roleid(l_roleid),kickout_id(l_kickout_id)
+		{
+		}
+
+		EC_ArenaTeamKickoutSuccessData(const EC_ArenaTeamKickoutSuccessData &rhs)
+			: roleid(rhs.roleid),kickout_id(rhs.kickout_id) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaTeamKickoutSuccessData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaTeamKickoutSuccessData *r = dynamic_cast<const EC_ArenaTeamKickoutSuccessData *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				kickout_id = r->kickout_id;
+			}
+			return *this;
+		}
+
+		EC_ArenaTeamKickoutSuccessData& operator = (const EC_ArenaTeamKickoutSuccessData &rhs)
+		{
+			const EC_ArenaTeamKickoutSuccessData *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				kickout_id = r->kickout_id;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << kickout_id;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> kickout_id;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaTeamKickoutSuccessData>	EC_ArenaTeamKickoutSuccessDataVector;
+};
+#endif

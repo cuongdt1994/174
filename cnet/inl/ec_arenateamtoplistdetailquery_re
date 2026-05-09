@@ -1,0 +1,44 @@
+	public:
+		int retcode;
+		int roleid;
+		long long teamid;
+		EC_ArenaPlayerTopListVector playerlist;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMTOPLISTDETAILQUERY_RE };
+	public:
+		EC_ArenaTeamTopListDetailQuery_Re() { type = PROTOCOL_EC_ARENATEAMTOPLISTDETAILQUERY_RE; }
+		EC_ArenaTeamTopListDetailQuery_Re(void*) : Protocol(PROTOCOL_EC_ARENATEAMTOPLISTDETAILQUERY_RE) { }
+		EC_ArenaTeamTopListDetailQuery_Re (int l_retcode = 0,int l_roleid = 0,long long l_teamid = 0,
+			const EC_ArenaPlayerTopListVector& l_playerlist = EC_ArenaPlayerTopListVector())
+			 : retcode(l_retcode),roleid(l_roleid),teamid(l_teamid)
+			,playerlist(l_playerlist)
+		{
+			type = PROTOCOL_EC_ARENATEAMTOPLISTDETAILQUERY_RE;
+		}
+
+		EC_ArenaTeamTopListDetailQuery_Re(const EC_ArenaTeamTopListDetailQuery_Re &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),teamid(rhs.teamid)
+			,playerlist(rhs.playerlist) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamTopListDetailQuery_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << teamid;
+			os << playerlist;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> teamid;
+			os >> playerlist;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

@@ -1,0 +1,82 @@
+#ifndef __GNET_MATRIXTOKENARG_RPCDATA
+#define __GNET_MATRIXTOKENARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class MatrixTokenArg : public GNET::Rpc::Data
+	{
+	public:
+		Octets account;
+		Octets token;
+		int loginip;
+		Octets challenge;
+		Octets hwid;
+
+	public:
+		MatrixTokenArg (const Octets& l_account = Octets(0),const Octets& l_token = Octets(0),int l_loginip = 0
+			,const Octets& l_challenge = Octets(0),const Octets& l_hwid = Octets(0))
+			: account(l_account),token(l_token),loginip(l_loginip)
+			,challenge(l_challenge),hwid(l_hwid)
+		{
+		}
+
+		MatrixTokenArg(const MatrixTokenArg &rhs)
+			: account(rhs.account),token(rhs.token),loginip(rhs.loginip),
+			challenge(rhs.challenge),hwid(rhs.hwid) { }
+
+		Rpc::Data *Clone() const { return new MatrixTokenArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const MatrixTokenArg *r = dynamic_cast<const MatrixTokenArg *>(&rhs);
+			if (r && r != this)
+			{
+				account = r->account;
+				token = r->token;
+				loginip = r->loginip;
+				challenge = r->challenge;
+				hwid = r->hwid;
+			}
+			return *this;
+		}
+
+		MatrixTokenArg& operator = (const MatrixTokenArg &rhs)
+		{
+			const MatrixTokenArg *r = &rhs;
+			if (r && r != this)
+			{
+				account = r->account;
+				token = r->token;
+				loginip = r->loginip;
+				challenge = r->challenge;
+				hwid = r->hwid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << account;
+			os << token;
+			os << loginip;
+			os << challenge;
+			os << hwid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> account;
+			os >> token;
+			os >> loginip;
+			os >> challenge;
+			os >> hwid;
+			return os;
+		}
+
+	};
+};
+#endif

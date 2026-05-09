@@ -1,0 +1,47 @@
+	public:
+		unsigned int reserve1;
+		unsigned int reserve2;
+		unsigned int reserve3;
+		unsigned int reserve4;
+		unsigned int reserve5;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_LDBATTLECLIENTOPERATE };
+	public:
+		EC_LDBattleClientOperate() { type = PROTOCOL_EC_LDBATTLECLIENTOPERATE; }
+		EC_LDBattleClientOperate(void*) : Protocol(PROTOCOL_EC_LDBATTLECLIENTOPERATE) { }
+		EC_LDBattleClientOperate (unsigned int l_reserve1 = 0,unsigned int l_reserve2 = 0,unsigned int l_reserve3 = 0,
+			unsigned int l_reserve4 = 0,unsigned int l_reserve5 = 0)
+			 : reserve1(l_reserve1),reserve2(l_reserve2),reserve3(l_reserve3)
+			,reserve4(l_reserve4),reserve5(l_reserve5)
+		{
+			type = PROTOCOL_EC_LDBATTLECLIENTOPERATE;
+		}
+
+		EC_LDBattleClientOperate(const EC_LDBattleClientOperate &rhs)
+			: Protocol(rhs),reserve1(rhs.reserve1),reserve2(rhs.reserve2),reserve3(rhs.reserve3)
+			,reserve4(rhs.reserve4),reserve5(rhs.reserve5) { }
+
+		GNET::Protocol *Clone() const { return new EC_LDBattleClientOperate(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reserve1;
+			os << reserve2;
+			os << reserve3;
+			os << reserve4;
+			os << reserve5;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reserve1;
+			os >> reserve2;
+			os >> reserve3;
+			os >> reserve4;
+			os >> reserve5;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

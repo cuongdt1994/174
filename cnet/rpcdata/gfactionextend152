@@ -1,0 +1,77 @@
+#ifndef __GNET_GFACTIONEXTEND152_RPCDATA
+#define __GNET_GFACTIONEXTEND152_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GFactionExtend152 : public GNET::Rpc::Data
+	{
+	public:
+		int jointime;
+		int loyalty;
+		int logintime;
+		int reserved1;
+
+	public:
+		GFactionExtend152 (int l_jointime = 0,int l_loyalty = 0,int l_logintime = 0
+			,int l_reserved1 = 0)
+			: jointime(l_jointime),loyalty(l_loyalty),logintime(l_logintime)
+			,reserved1(l_reserved1)
+		{
+		}
+
+		GFactionExtend152(const GFactionExtend152 &rhs)
+			: jointime(rhs.jointime),loyalty(rhs.loyalty),logintime(rhs.logintime),
+			reserved1(rhs.reserved1) { }
+
+		Rpc::Data *Clone() const { return new GFactionExtend152(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GFactionExtend152 *r = dynamic_cast<const GFactionExtend152 *>(&rhs);
+			if (r && r != this)
+			{
+				jointime = r->jointime;
+				loyalty = r->loyalty;
+				logintime = r->logintime;
+				reserved1 = r->reserved1;
+			}
+			return *this;
+		}
+
+		GFactionExtend152& operator = (const GFactionExtend152 &rhs)
+		{
+			const GFactionExtend152 *r = &rhs;
+			if (r && r != this)
+			{
+				jointime = r->jointime;
+				loyalty = r->loyalty;
+				logintime = r->logintime;
+				reserved1 = r->reserved1;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << jointime;
+			os << loyalty;
+			os << logintime;
+			os << reserved1;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> jointime;
+			os >> loyalty;
+			os >> logintime;
+			os >> reserved1;
+			return os;
+		}
+
+	};
+};
+#endif

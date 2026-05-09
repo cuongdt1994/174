@@ -1,0 +1,131 @@
+#ifndef __GNET_GTOPROLE_RPCDATA
+#define __GNET_GTOPROLE_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GTopRole : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int roleid;
+		int cls;
+		Octets name;
+		int level;
+		int reputation;
+		int online;
+		int tasks_count;
+		int player_kill;
+		int monster_kill;
+		int reserve0;
+		int reserve1;
+		int reserve2;
+		int reserve3;
+
+	public:
+		GTopRole (unsigned int l_roleid = 0,int l_cls = 0,const Octets& l_name = Octets()
+			,int l_level = 0,int l_reputation = 0,int l_online = 0
+			,int l_tasks_count = 0,int l_player_kill = 0,int l_monster_kill = 0
+			,int l_reserve0 = 0,int l_reserve1 = 0,int l_reserve2 = 0
+			,int l_reserve3 = 0)
+			: roleid(l_roleid),cls(l_cls),name(l_name)
+			,level(l_level),reputation(l_reputation),online(l_online)
+			,tasks_count(l_tasks_count),player_kill(l_player_kill),monster_kill(l_monster_kill)
+			,reserve0(l_reserve0),reserve1(l_reserve1),reserve2(l_reserve2)
+			,reserve3(l_reserve3)
+		{
+		}
+
+		GTopRole(const GTopRole &rhs)
+			: roleid(rhs.roleid),cls(rhs.cls),name(rhs.name),
+			level(rhs.level),reputation(rhs.reputation),online(rhs.online),
+			tasks_count(rhs.tasks_count),player_kill(rhs.player_kill),monster_kill(rhs.monster_kill),
+			reserve0(rhs.reserve0),reserve1(rhs.reserve1),reserve2(rhs.reserve2),
+			reserve3(rhs.reserve3) { }
+
+		Rpc::Data *Clone() const { return new GTopRole(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GTopRole *r = dynamic_cast<const GTopRole *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				cls = r->cls;
+				name = r->name;
+				level = r->level;
+				reputation = r->reputation;
+				online = r->online;
+				tasks_count = r->tasks_count;
+				player_kill = r->player_kill;
+				monster_kill = r->monster_kill;
+				reserve0 = r->reserve0;
+				reserve1 = r->reserve1;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+			}
+			return *this;
+		}
+
+		GTopRole& operator = (const GTopRole &rhs)
+		{
+			const GTopRole *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				cls = r->cls;
+				name = r->name;
+				level = r->level;
+				reputation = r->reputation;
+				online = r->online;
+				tasks_count = r->tasks_count;
+				player_kill = r->player_kill;
+				monster_kill = r->monster_kill;
+				reserve0 = r->reserve0;
+				reserve1 = r->reserve1;
+				reserve2 = r->reserve2;
+				reserve3 = r->reserve3;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << cls;
+			os << name;
+			os << level;
+			os << reputation;
+			os << online;
+			os << tasks_count;
+			os << player_kill;
+			os << monster_kill;
+			os << reserve0;
+			os << reserve1;
+			os << reserve2;
+			os << reserve3;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> cls;
+			os >> name;
+			os >> level;
+			os >> reputation;
+			os >> online;
+			os >> tasks_count;
+			os >> player_kill;
+			os >> monster_kill;
+			os >> reserve0;
+			os >> reserve1;
+			os >> reserve2;
+			os >> reserve3;
+			return os;
+		}
+
+	};
+};
+#endif

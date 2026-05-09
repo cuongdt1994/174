@@ -1,0 +1,59 @@
+#ifndef __GNET_SETNEWTRASHBOXARG_RPCDATA
+#define __GNET_SETNEWTRASHBOXARG_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gnewtrashbox"
+
+namespace GNET
+{
+	class SetNewTrashBoxArg : public GNET::Rpc::Data
+	{
+	public:
+		GNewTrashBox value;
+
+	public:
+		SetNewTrashBoxArg ()
+		{
+		}
+
+		SetNewTrashBoxArg(const SetNewTrashBoxArg &rhs)
+			: value(rhs.value) { }
+
+		Rpc::Data *Clone() const { return new SetNewTrashBoxArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const SetNewTrashBoxArg *r = dynamic_cast<const SetNewTrashBoxArg *>(&rhs);
+			if (r && r != this)
+			{
+				value = r->value;
+			}
+			return *this;
+		}
+
+		SetNewTrashBoxArg& operator = (const SetNewTrashBoxArg &rhs)
+		{
+			const SetNewTrashBoxArg *r = &rhs;
+			if (r && r != this)
+			{
+				value = r->value;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << value;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> value;
+			return os;
+		}
+
+	};
+};
+#endif

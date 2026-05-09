@@ -1,0 +1,38 @@
+	public:
+		int idx;
+		int roleid;
+		int team_type;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMLEAVE };
+	public:
+		EC_ArenaTeamLeave() { type = PROTOCOL_EC_ARENATEAMLEAVE; }
+		EC_ArenaTeamLeave(void*) : Protocol(PROTOCOL_EC_ARENATEAMLEAVE) { }
+		EC_ArenaTeamLeave (int l_idx = 0,int l_roleid = 0,int l_team_type = 0)
+			 : idx(l_idx),roleid(l_roleid),team_type(l_team_type)
+		{
+			type = PROTOCOL_EC_ARENATEAMLEAVE;
+		}
+
+		EC_ArenaTeamLeave(const EC_ArenaTeamLeave &rhs)
+			: Protocol(rhs),idx(rhs.idx),roleid(rhs.roleid),team_type(rhs.team_type) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamLeave(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << idx;
+			os << roleid;
+			os << team_type;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> idx;
+			os >> roleid;
+			os >> team_type;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

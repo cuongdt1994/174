@@ -1,0 +1,50 @@
+	public:
+		int serial_id;
+		int role_id;
+		int home_id;
+		int formulas_id;
+		int produce_times;
+		int foundry_money;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEFOUNDRYFACTORYPRODUCEREQUEST };
+	public:
+		HomeFoundryFactoryProduceRequest() { type = PROTOCOL_HOMEFOUNDRYFACTORYPRODUCEREQUEST; }
+		HomeFoundryFactoryProduceRequest(void*) : Protocol(PROTOCOL_HOMEFOUNDRYFACTORYPRODUCEREQUEST) { }
+		HomeFoundryFactoryProduceRequest (int l_serial_id,int l_role_id,int l_home_id,
+			int l_formulas_id,int l_produce_times,int l_foundry_money)
+			 : serial_id(l_serial_id),role_id(l_role_id),home_id(l_home_id)
+			,formulas_id(l_formulas_id),produce_times(l_produce_times),foundry_money(l_foundry_money)
+		{
+			type = PROTOCOL_HOMEFOUNDRYFACTORYPRODUCEREQUEST;
+		}
+
+		HomeFoundryFactoryProduceRequest(const HomeFoundryFactoryProduceRequest &rhs)
+			: Protocol(rhs),serial_id(rhs.serial_id),role_id(rhs.role_id),home_id(rhs.home_id)
+			,formulas_id(rhs.formulas_id),produce_times(rhs.produce_times),foundry_money(rhs.foundry_money) { }
+
+		GNET::Protocol *Clone() const { return new HomeFoundryFactoryProduceRequest(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << serial_id;
+			os << role_id;
+			os << home_id;
+			os << formulas_id;
+			os << produce_times;
+			os << foundry_money;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> serial_id;
+			os >> role_id;
+			os >> home_id;
+			os >> formulas_id;
+			os >> produce_times;
+			os >> foundry_money;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 128; }

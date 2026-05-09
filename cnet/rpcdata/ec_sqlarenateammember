@@ -1,0 +1,65 @@
+#ifndef __GNET_EC_SQLARENATEAMMEMBER_RPCDATA
+#define __GNET_EC_SQLARENATEAMMEMBER_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLArenaTeamMember : public GNET::Rpc::Data
+	{
+	public:
+		int player_id;
+		short award_count;
+
+	public:
+		EC_SQLArenaTeamMember (int l_player_id = 0,short l_award_count = 0)
+			: player_id(l_player_id),award_count(l_award_count)
+		{
+		}
+
+		EC_SQLArenaTeamMember(const EC_SQLArenaTeamMember &rhs)
+			: player_id(rhs.player_id),award_count(rhs.award_count) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLArenaTeamMember(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLArenaTeamMember *r = dynamic_cast<const EC_SQLArenaTeamMember *>(&rhs);
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				award_count = r->award_count;
+			}
+			return *this;
+		}
+
+		EC_SQLArenaTeamMember& operator = (const EC_SQLArenaTeamMember &rhs)
+		{
+			const EC_SQLArenaTeamMember *r = &rhs;
+			if (r && r != this)
+			{
+				player_id = r->player_id;
+				award_count = r->award_count;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << player_id;
+			os << award_count;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> player_id;
+			os >> award_count;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_SQLArenaTeamMember>	EC_SQLArenaTeamMemberVector;
+};
+#endif

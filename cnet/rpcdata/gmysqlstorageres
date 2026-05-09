@@ -1,0 +1,65 @@
+#ifndef __GNET_GMYSQLSTORAGERES_RPCDATA
+#define __GNET_GMYSQLSTORAGERES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gmysqlrow"
+
+namespace GNET
+{
+	class GMySQLStorageRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		std::vector<GMysqlRow> ioutput_str;
+
+	public:
+		GMySQLStorageRes (int l_retcode = -1,std::vector<GMysqlRow> l_ioutput_str = std::vector<GMysqlRow>())
+			: retcode(l_retcode),ioutput_str(l_ioutput_str)
+		{
+		}
+
+		GMySQLStorageRes(const GMySQLStorageRes &rhs)
+			: retcode(rhs.retcode),ioutput_str(rhs.ioutput_str) { }
+
+		Rpc::Data *Clone() const { return new GMySQLStorageRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GMySQLStorageRes *r = dynamic_cast<const GMySQLStorageRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				ioutput_str = r->ioutput_str;
+			}
+			return *this;
+		}
+
+		GMySQLStorageRes& operator = (const GMySQLStorageRes &rhs)
+		{
+			const GMySQLStorageRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				ioutput_str = r->ioutput_str;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << ioutput_str;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> ioutput_str;
+			return os;
+		}
+
+	};
+};
+#endif

@@ -1,0 +1,65 @@
+#ifndef __GNET_GETNEWTRASHBOXRES_RPCDATA
+#define __GNET_GETNEWTRASHBOXRES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gnewtrashbox"
+
+namespace GNET
+{
+	class GetNewTrashBoxRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		GNewTrashBox value;
+
+	public:
+		GetNewTrashBoxRes (int l_retcode = -1)
+			: retcode(l_retcode)
+		{
+		}
+
+		GetNewTrashBoxRes(const GetNewTrashBoxRes &rhs)
+			: retcode(rhs.retcode),value(rhs.value) { }
+
+		Rpc::Data *Clone() const { return new GetNewTrashBoxRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GetNewTrashBoxRes *r = dynamic_cast<const GetNewTrashBoxRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				value = r->value;
+			}
+			return *this;
+		}
+
+		GetNewTrashBoxRes& operator = (const GetNewTrashBoxRes &rhs)
+		{
+			const GetNewTrashBoxRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				value = r->value;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << value;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> value;
+			return os;
+		}
+
+	};
+};
+#endif

@@ -1,0 +1,70 @@
+#ifndef __GNET_EC_ARENATEAMMATCHSUCCESSDATA_RPCDATA
+#define __GNET_EC_ARENATEAMMATCHSUCCESSDATA_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_ArenaTeamMatchSuccessData : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int sucess_msg;
+		Int64Vector members;
+		unsigned int queue_time;
+
+	public:
+		EC_ArenaTeamMatchSuccessData (unsigned int l_sucess_msg = 0,const Int64Vector& l_members = Int64Vector(),unsigned int l_queue_time = 0)
+			: sucess_msg(l_sucess_msg),members(l_members),queue_time(l_queue_time)
+		{
+		}
+
+		EC_ArenaTeamMatchSuccessData(const EC_ArenaTeamMatchSuccessData &rhs)
+			: sucess_msg(rhs.sucess_msg),members(rhs.members),queue_time(rhs.queue_time) { }
+
+		Rpc::Data *Clone() const { return new EC_ArenaTeamMatchSuccessData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_ArenaTeamMatchSuccessData *r = dynamic_cast<const EC_ArenaTeamMatchSuccessData *>(&rhs);
+			if (r && r != this)
+			{
+				sucess_msg = r->sucess_msg;
+				members = r->members;
+				queue_time = r->queue_time;
+			}
+			return *this;
+		}
+
+		EC_ArenaTeamMatchSuccessData& operator = (const EC_ArenaTeamMatchSuccessData &rhs)
+		{
+			const EC_ArenaTeamMatchSuccessData *r = &rhs;
+			if (r && r != this)
+			{
+				sucess_msg = r->sucess_msg;
+				members = r->members;
+				queue_time = r->queue_time;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << sucess_msg;
+			os << members;
+			os << queue_time;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> sucess_msg;
+			os >> members;
+			os >> queue_time;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_ArenaTeamMatchSuccessData>	EC_ArenaTeamMatchSuccessDataVector;
+};
+#endif

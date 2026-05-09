@@ -1,0 +1,32 @@
+	public:
+		Octets challenge;
+		enum { PROTOCOL_TYPE = PROTOCOL_LICENSECHALLENGE };
+	public:
+		LicenseChallenge() { type = PROTOCOL_LICENSECHALLENGE; }
+		LicenseChallenge(void*) : Protocol(PROTOCOL_LICENSECHALLENGE) { }
+		LicenseChallenge (const Octets& l_challenge = Octets())
+			 : challenge(l_challenge)
+		{
+			type = PROTOCOL_LICENSECHALLENGE;
+		}
+
+		LicenseChallenge(const LicenseChallenge &rhs)
+			: Protocol(rhs),challenge(rhs.challenge) { }
+
+		GNET::Protocol *Clone() const { return new LicenseChallenge(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << challenge;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> challenge;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

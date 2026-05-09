@@ -1,0 +1,59 @@
+#ifndef __GNET_GETNEWROLEDETAILARG_RPCDATA
+#define __GNET_GETNEWROLEDETAILARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GetNewRoleDetailArg : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int roleid;
+
+	public:
+		GetNewRoleDetailArg (unsigned int l_roleid = 0)
+			: roleid(l_roleid)
+		{
+		}
+
+		GetNewRoleDetailArg(const GetNewRoleDetailArg &rhs)
+			: roleid(rhs.roleid) { }
+
+		Rpc::Data *Clone() const { return new GetNewRoleDetailArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GetNewRoleDetailArg *r = dynamic_cast<const GetNewRoleDetailArg *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		GetNewRoleDetailArg& operator = (const GetNewRoleDetailArg &rhs)
+		{
+			const GetNewRoleDetailArg *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			return os;
+		}
+
+	};
+};
+#endif

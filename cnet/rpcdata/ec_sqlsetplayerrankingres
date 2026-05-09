@@ -1,0 +1,59 @@
+#ifndef __GNET_EC_SQLSETPLAYERRANKINGRES_RPCDATA
+#define __GNET_EC_SQLSETPLAYERRANKINGRES_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLSetPlayerRankingRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+
+	public:
+		EC_SQLSetPlayerRankingRes (int l_retcode = -1)
+			: retcode(l_retcode)
+		{
+		}
+
+		EC_SQLSetPlayerRankingRes(const EC_SQLSetPlayerRankingRes &rhs)
+			: retcode(rhs.retcode) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLSetPlayerRankingRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLSetPlayerRankingRes *r = dynamic_cast<const EC_SQLSetPlayerRankingRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+			}
+			return *this;
+		}
+
+		EC_SQLSetPlayerRankingRes& operator = (const EC_SQLSetPlayerRankingRes &rhs)
+		{
+			const EC_SQLSetPlayerRankingRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			return os;
+		}
+
+	};
+};
+#endif

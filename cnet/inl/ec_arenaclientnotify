@@ -1,0 +1,47 @@
+	public:
+		int retcode;
+		int roleid;
+		int error_msg;
+		int success_type;
+		Octets success_data;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENACLIENTNOTIFY };
+	public:
+		EC_ArenaClientNotify() { type = PROTOCOL_EC_ARENACLIENTNOTIFY; }
+		EC_ArenaClientNotify(void*) : Protocol(PROTOCOL_EC_ARENACLIENTNOTIFY) { }
+		EC_ArenaClientNotify (int l_retcode = 0,int l_roleid = 0,int l_error_msg = 0,
+			int l_success_type = 0,const Octets& l_success_data = Octets(0))
+			 : retcode(l_retcode),roleid(l_roleid),error_msg(l_error_msg)
+			,success_type(l_success_type),success_data(l_success_data)
+		{
+			type = PROTOCOL_EC_ARENACLIENTNOTIFY;
+		}
+
+		EC_ArenaClientNotify(const EC_ArenaClientNotify &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),error_msg(rhs.error_msg)
+			,success_type(rhs.success_type),success_data(rhs.success_data) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaClientNotify(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << error_msg;
+			os << success_type;
+			os << success_data;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> error_msg;
+			os >> success_type;
+			os >> success_data;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 10240; }

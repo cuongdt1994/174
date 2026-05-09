@@ -1,0 +1,142 @@
+#ifndef __GNET_EC_SQLPLAYERRANKING_RPCDATA
+#define __GNET_EC_SQLPLAYERRANKING_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_SQLPlayerRanking : public GNET::Rpc::Data
+	{
+	public:
+		int role_id;
+		int user_id;
+		char cls;
+		int score_pve;
+		int score_pvp;
+		int kill_monsters;
+		int die_monsters;
+		int kill_players;
+		int die_players;
+		int score_pve_level;
+		int score_pvp_level;
+		int fama_score;
+		int level;
+		int level2;
+		Octets name;
+
+	public:
+		EC_SQLPlayerRanking (int l_role_id = 0,int l_user_id = 0,char l_cls = 0
+			,int l_score_pve = 0,int l_score_pvp = 0,int l_kill_monsters = 0
+			,int l_die_monsters = 0,int l_kill_players = 0,int l_die_players = 0
+			,int l_score_pve_level = 0,int l_score_pvp_level = 0,int l_fama_score = 0
+			,int l_level = 0,int l_level2 = 0,const Octets& l_name = Octets(0))
+			: role_id(l_role_id),user_id(l_user_id),cls(l_cls)
+			,score_pve(l_score_pve),score_pvp(l_score_pvp),kill_monsters(l_kill_monsters)
+			,die_monsters(l_die_monsters),kill_players(l_kill_players),die_players(l_die_players)
+			,score_pve_level(l_score_pve_level),score_pvp_level(l_score_pvp_level),fama_score(l_fama_score)
+			,level(l_level),level2(l_level2),name(l_name)
+		{
+		}
+
+		EC_SQLPlayerRanking(const EC_SQLPlayerRanking &rhs)
+			: role_id(rhs.role_id),user_id(rhs.user_id),cls(rhs.cls),
+			score_pve(rhs.score_pve),score_pvp(rhs.score_pvp),kill_monsters(rhs.kill_monsters),
+			die_monsters(rhs.die_monsters),kill_players(rhs.kill_players),die_players(rhs.die_players),
+			score_pve_level(rhs.score_pve_level),score_pvp_level(rhs.score_pvp_level),fama_score(rhs.fama_score),
+			level(rhs.level),level2(rhs.level2),name(rhs.name) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLPlayerRanking(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLPlayerRanking *r = dynamic_cast<const EC_SQLPlayerRanking *>(&rhs);
+			if (r && r != this)
+			{
+				role_id = r->role_id;
+				user_id = r->user_id;
+				cls = r->cls;
+				score_pve = r->score_pve;
+				score_pvp = r->score_pvp;
+				kill_monsters = r->kill_monsters;
+				die_monsters = r->die_monsters;
+				kill_players = r->kill_players;
+				die_players = r->die_players;
+				score_pve_level = r->score_pve_level;
+				score_pvp_level = r->score_pvp_level;
+				fama_score = r->fama_score;
+				level = r->level;
+				level2 = r->level2;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		EC_SQLPlayerRanking& operator = (const EC_SQLPlayerRanking &rhs)
+		{
+			const EC_SQLPlayerRanking *r = &rhs;
+			if (r && r != this)
+			{
+				role_id = r->role_id;
+				user_id = r->user_id;
+				cls = r->cls;
+				score_pve = r->score_pve;
+				score_pvp = r->score_pvp;
+				kill_monsters = r->kill_monsters;
+				die_monsters = r->die_monsters;
+				kill_players = r->kill_players;
+				die_players = r->die_players;
+				score_pve_level = r->score_pve_level;
+				score_pvp_level = r->score_pvp_level;
+				fama_score = r->fama_score;
+				level = r->level;
+				level2 = r->level2;
+				name = r->name;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << role_id;
+			os << user_id;
+			os << cls;
+			os << score_pve;
+			os << score_pvp;
+			os << kill_monsters;
+			os << die_monsters;
+			os << kill_players;
+			os << die_players;
+			os << score_pve_level;
+			os << score_pvp_level;
+			os << fama_score;
+			os << level;
+			os << level2;
+			os << name;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> role_id;
+			os >> user_id;
+			os >> cls;
+			os >> score_pve;
+			os >> score_pvp;
+			os >> kill_monsters;
+			os >> die_monsters;
+			os >> kill_players;
+			os >> die_players;
+			os >> score_pve_level;
+			os >> score_pvp_level;
+			os >> fama_score;
+			os >> level;
+			os >> level2;
+			os >> name;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_SQLPlayerRanking>	EC_SQLPlayerRankingVector;
+};
+#endif

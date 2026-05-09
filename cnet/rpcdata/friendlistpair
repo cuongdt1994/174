@@ -1,0 +1,85 @@
+#ifndef __GNET_FRIENDLISTPAIR_RPCDATA
+#define __GNET_FRIENDLISTPAIR_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "roleid"
+#include "gfriendlist"
+#include "gfriendextinfo"
+#include "gsendaumailrecord"
+#include "genemylist"
+
+namespace GNET
+{
+	class FriendListPair : public GNET::Rpc::Data
+	{
+	public:
+		RoleId key;
+		GFriendList value;
+		GFriendExtInfoVector extra_info;
+		GSendAUMailRecordVector sendmail_info;
+		GEnemyListVector enemylist_info;
+
+	public:
+		FriendListPair (const GEnemyListVector& l_enemylist_info = GEnemyListVector())
+			: enemylist_info(l_enemylist_info)
+		{
+		}
+
+		FriendListPair(const FriendListPair &rhs)
+			: key(rhs.key),value(rhs.value),extra_info(rhs.extra_info),
+			sendmail_info(rhs.sendmail_info),enemylist_info(rhs.enemylist_info) { }
+
+		Rpc::Data *Clone() const { return new FriendListPair(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const FriendListPair *r = dynamic_cast<const FriendListPair *>(&rhs);
+			if (r && r != this)
+			{
+				key = r->key;
+				value = r->value;
+				extra_info = r->extra_info;
+				sendmail_info = r->sendmail_info;
+				enemylist_info = r->enemylist_info;
+			}
+			return *this;
+		}
+
+		FriendListPair& operator = (const FriendListPair &rhs)
+		{
+			const FriendListPair *r = &rhs;
+			if (r && r != this)
+			{
+				key = r->key;
+				value = r->value;
+				extra_info = r->extra_info;
+				sendmail_info = r->sendmail_info;
+				enemylist_info = r->enemylist_info;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << key;
+			os << value;
+			os << extra_info;
+			os << sendmail_info;
+			os << enemylist_info;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> key;
+			os >> value;
+			os >> extra_info;
+			os >> sendmail_info;
+			os >> enemylist_info;
+			return os;
+		}
+
+	};
+};
+#endif

@@ -1,0 +1,32 @@
+	public:
+		Octets nonce;
+		enum { PROTOCOL_TYPE = PROTOCOL_PANELRESPONSE };
+	public:
+		PanelResponse() { type = PROTOCOL_PANELRESPONSE; }
+		PanelResponse(void*) : Protocol(PROTOCOL_PANELRESPONSE) { }
+		PanelResponse (const Octets& l_nonce = Octets())
+			 : nonce(l_nonce)
+		{
+			type = PROTOCOL_PANELRESPONSE;
+		}
+
+		PanelResponse(const PanelResponse &rhs)
+			: Protocol(rhs),nonce(rhs.nonce) { }
+
+		GNET::Protocol *Clone() const { return new PanelResponse(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << nonce;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> nonce;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

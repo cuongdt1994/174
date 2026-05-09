@@ -1,0 +1,35 @@
+	public:
+		int roleid;
+		int dest_roleid;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAPLAYERTOTALINFOQUERY };
+	public:
+		EC_ArenaPlayerTotalInfoQuery() { type = PROTOCOL_EC_ARENAPLAYERTOTALINFOQUERY; }
+		EC_ArenaPlayerTotalInfoQuery(void*) : Protocol(PROTOCOL_EC_ARENAPLAYERTOTALINFOQUERY) { }
+		EC_ArenaPlayerTotalInfoQuery (int l_roleid = 0,int l_dest_roleid = 0)
+			 : roleid(l_roleid),dest_roleid(l_dest_roleid)
+		{
+			type = PROTOCOL_EC_ARENAPLAYERTOTALINFOQUERY;
+		}
+
+		EC_ArenaPlayerTotalInfoQuery(const EC_ArenaPlayerTotalInfoQuery &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),dest_roleid(rhs.dest_roleid) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaPlayerTotalInfoQuery(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << dest_roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> dest_roleid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

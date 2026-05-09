@@ -1,0 +1,75 @@
+#ifndef __GNET_GFOUNDRYFORMULASDATA_RPCDATA
+#define __GNET_GFOUNDRYFORMULASDATA_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GFoundryFormulasData : public GNET::Rpc::Data
+	{
+	public:
+		int formulas_id;
+		int number;
+		int price;
+		int timestamp;
+
+	public:
+		GFoundryFormulasData ()
+		{
+		}
+
+		GFoundryFormulasData(const GFoundryFormulasData &rhs)
+			: formulas_id(rhs.formulas_id),number(rhs.number),price(rhs.price),
+			timestamp(rhs.timestamp) { }
+
+		Rpc::Data *Clone() const { return new GFoundryFormulasData(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GFoundryFormulasData *r = dynamic_cast<const GFoundryFormulasData *>(&rhs);
+			if (r && r != this)
+			{
+				formulas_id = r->formulas_id;
+				number = r->number;
+				price = r->price;
+				timestamp = r->timestamp;
+			}
+			return *this;
+		}
+
+		GFoundryFormulasData& operator = (const GFoundryFormulasData &rhs)
+		{
+			const GFoundryFormulasData *r = &rhs;
+			if (r && r != this)
+			{
+				formulas_id = r->formulas_id;
+				number = r->number;
+				price = r->price;
+				timestamp = r->timestamp;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << formulas_id;
+			os << number;
+			os << price;
+			os << timestamp;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> formulas_id;
+			os >> number;
+			os >> price;
+			os >> timestamp;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<GFoundryFormulasData>	GFoundryFormulasDataVector;
+};
+#endif

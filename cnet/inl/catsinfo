@@ -1,0 +1,32 @@
+	public:
+		GCatsRole cats;
+		enum { PROTOCOL_TYPE = PROTOCOL_CATSINFO };
+	public:
+		CatsInfo() { type = PROTOCOL_CATSINFO; }
+		CatsInfo(void*) : Protocol(PROTOCOL_CATSINFO) { }
+		CatsInfo (const GCatsRole& l_cats)
+			 : cats(l_cats)
+		{
+			type = PROTOCOL_CATSINFO;
+		}
+
+		CatsInfo(const CatsInfo &rhs)
+			: Protocol(rhs),cats(rhs.cats) { }
+
+		GNET::Protocol *Clone() const { return new CatsInfo(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << cats;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> cats;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

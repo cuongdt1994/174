@@ -1,0 +1,32 @@
+	public:
+		int roleid;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAQUERY };
+	public:
+		EC_ArenaQuery() { type = PROTOCOL_EC_ARENAQUERY; }
+		EC_ArenaQuery(void*) : Protocol(PROTOCOL_EC_ARENAQUERY) { }
+		EC_ArenaQuery (int l_roleid = 0)
+			 : roleid(l_roleid)
+		{
+			type = PROTOCOL_EC_ARENAQUERY;
+		}
+
+		EC_ArenaQuery(const EC_ArenaQuery &rhs)
+			: Protocol(rhs),roleid(rhs.roleid) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaQuery(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16; }

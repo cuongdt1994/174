@@ -1,0 +1,47 @@
+	public:
+		unsigned int id;
+		unsigned int userid;
+		unsigned int roleid;
+		int retcode;
+		std::vector<GMysqlRow> output_str;
+		enum { PROTOCOL_TYPE = PROTOCOL_MYSQLSTORAGE_RE };
+	public:
+		MySQLStorage_Re() { type = PROTOCOL_MYSQLSTORAGE_RE; }
+		MySQLStorage_Re(void*) : Protocol(PROTOCOL_MYSQLSTORAGE_RE) { }
+		MySQLStorage_Re (unsigned int l_id = 0,unsigned int l_userid = 0,unsigned int l_roleid = 0,
+			int l_retcode = -1,std::vector<GMysqlRow> l_output_str = std::vector<GMysqlRow>())
+			 : id(l_id),userid(l_userid),roleid(l_roleid)
+			,retcode(l_retcode),output_str(l_output_str)
+		{
+			type = PROTOCOL_MYSQLSTORAGE_RE;
+		}
+
+		MySQLStorage_Re(const MySQLStorage_Re &rhs)
+			: Protocol(rhs),id(rhs.id),userid(rhs.userid),roleid(rhs.roleid)
+			,retcode(rhs.retcode),output_str(rhs.output_str) { }
+
+		GNET::Protocol *Clone() const { return new MySQLStorage_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << userid;
+			os << roleid;
+			os << retcode;
+			os << output_str;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> userid;
+			os >> roleid;
+			os >> retcode;
+			os >> output_str;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

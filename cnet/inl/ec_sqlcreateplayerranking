@@ -1,0 +1,9 @@
+		GNET::Protocol *Clone() const {  return new EC_SQLCreatePlayerRanking(*this); }
+	public:
+		enum { PROTOCOL_TYPE = RPC_EC_SQLCREATEPLAYERRANKING };
+		EC_SQLCreatePlayerRanking(Type type, Rpc::Data *argument, Rpc::Data *result)
+			: RPC_BASECLASS(type, argument, result ) { }
+		EC_SQLCreatePlayerRanking(const EC_SQLCreatePlayerRanking &rhs) : RPC_BASECLASS(rhs) { }
+		int  PriorPolicy( ) const { return 1; }
+		bool SizePolicy(size_t size) const { return size <= 31744; }
+		bool TimePolicy(int timeout) const { return timeout <= 20; }

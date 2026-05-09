@@ -1,0 +1,9 @@
+		GNET::Protocol *Clone() const {  return new EC_DBArenaPlayerTopList(*this); }
+	public:
+		enum { PROTOCOL_TYPE = RPC_EC_DBARENAPLAYERTOPLIST };
+		EC_DBArenaPlayerTopList(Type type, Rpc::Data *argument, Rpc::Data *result)
+			: RPC_BASECLASS(type, argument, result ) { }
+		EC_DBArenaPlayerTopList(const EC_DBArenaPlayerTopList &rhs) : RPC_BASECLASS(rhs) { }
+		int  PriorPolicy( ) const { return 1; }
+		bool SizePolicy(size_t size) const { return size <= 31744; }
+		bool TimePolicy(int timeout) const { return timeout <= 120; }

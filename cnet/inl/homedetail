@@ -1,0 +1,47 @@
+	public:
+		unsigned int localsid;
+		HomeBase home_base;
+		HomeProperty home_property;
+		HomeCropperVector homecroppers;
+		HomeItemVector homeitems;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEDETAIL };
+	public:
+		HomeDetail() { type = PROTOCOL_HOMEDETAIL; }
+		HomeDetail(void*) : Protocol(PROTOCOL_HOMEDETAIL) { }
+		HomeDetail (unsigned int l_localsid,HomeBase l_home_base,HomeProperty l_home_property,
+			HomeCropperVector l_homecroppers,HomeItemVector l_homeitems)
+			 : localsid(l_localsid),home_base(l_home_base),home_property(l_home_property)
+			,homecroppers(l_homecroppers),homeitems(l_homeitems)
+		{
+			type = PROTOCOL_HOMEDETAIL;
+		}
+
+		HomeDetail(const HomeDetail &rhs)
+			: Protocol(rhs),localsid(rhs.localsid),home_base(rhs.home_base),home_property(rhs.home_property)
+			,homecroppers(rhs.homecroppers),homeitems(rhs.homeitems) { }
+
+		GNET::Protocol *Clone() const { return new HomeDetail(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << localsid;
+			os << home_base;
+			os << home_property;
+			os << homecroppers;
+			os << homeitems;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> localsid;
+			os >> home_base;
+			os >> home_property;
+			os >> homecroppers;
+			os >> homeitems;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }

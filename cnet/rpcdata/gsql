@@ -1,0 +1,83 @@
+#ifndef __GNET_GSQL_RPCDATA
+#define __GNET_GSQL_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gmysqlrow"
+
+namespace GNET
+{
+	class GSQL : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int id;
+		unsigned int uid;
+		unsigned int rid;
+		std::vector<Octets> istr;
+		std::vector<GMysqlRow> ostr;
+
+	public:
+		GSQL (unsigned int l_id = 0,unsigned int l_uid = 0,unsigned int l_rid = 0
+			,std::vector<Octets> l_istr = std::vector<Octets>(),std::vector<GMysqlRow> l_ostr = std::vector<GMysqlRow>())
+			: id(l_id),uid(l_uid),rid(l_rid)
+			,istr(l_istr),ostr(l_ostr)
+		{
+		}
+
+		GSQL(const GSQL &rhs)
+			: id(rhs.id),uid(rhs.uid),rid(rhs.rid),
+			istr(rhs.istr),ostr(rhs.ostr) { }
+
+		Rpc::Data *Clone() const { return new GSQL(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GSQL *r = dynamic_cast<const GSQL *>(&rhs);
+			if (r && r != this)
+			{
+				id = r->id;
+				uid = r->uid;
+				rid = r->rid;
+				istr = r->istr;
+				ostr = r->ostr;
+			}
+			return *this;
+		}
+
+		GSQL& operator = (const GSQL &rhs)
+		{
+			const GSQL *r = &rhs;
+			if (r && r != this)
+			{
+				id = r->id;
+				uid = r->uid;
+				rid = r->rid;
+				istr = r->istr;
+				ostr = r->ostr;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << uid;
+			os << rid;
+			os << istr;
+			os << ostr;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> uid;
+			os >> rid;
+			os >> istr;
+			os >> ostr;
+			return os;
+		}
+
+	};
+};
+#endif

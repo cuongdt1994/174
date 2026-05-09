@@ -1,0 +1,70 @@
+#ifndef __GNET_EC_DBARENATEAMTOPLISTRES_RPCDATA
+#define __GNET_EC_DBARENATEAMTOPLISTRES_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_arenateamtoplist"
+
+namespace GNET
+{
+	class EC_DBArenaTeamTopListRes : public GNET::Rpc::Data
+	{
+	public:
+		int retcode;
+		int team_type;
+		EC_ArenaTeamTopListVector teams;
+
+	public:
+		EC_DBArenaTeamTopListRes (int l_retcode = -1,int l_team_type = 0,const EC_ArenaTeamTopListVector& l_teams = EC_ArenaTeamTopListVector())
+			: retcode(l_retcode),team_type(l_team_type),teams(l_teams)
+		{
+		}
+
+		EC_DBArenaTeamTopListRes(const EC_DBArenaTeamTopListRes &rhs)
+			: retcode(rhs.retcode),team_type(rhs.team_type),teams(rhs.teams) { }
+
+		Rpc::Data *Clone() const { return new EC_DBArenaTeamTopListRes(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_DBArenaTeamTopListRes *r = dynamic_cast<const EC_DBArenaTeamTopListRes *>(&rhs);
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				team_type = r->team_type;
+				teams = r->teams;
+			}
+			return *this;
+		}
+
+		EC_DBArenaTeamTopListRes& operator = (const EC_DBArenaTeamTopListRes &rhs)
+		{
+			const EC_DBArenaTeamTopListRes *r = &rhs;
+			if (r && r != this)
+			{
+				retcode = r->retcode;
+				team_type = r->team_type;
+				teams = r->teams;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << team_type;
+			os << teams;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> team_type;
+			os >> teams;
+			return os;
+		}
+
+	};
+};
+#endif

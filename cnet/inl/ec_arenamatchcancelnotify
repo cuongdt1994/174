@@ -1,0 +1,44 @@
+	public:
+		int retcode;
+		int roleid;
+		int reserve3;
+		int reserve4;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAMATCHCANCELNOTIFY };
+	public:
+		EC_ArenaMatchCancelNotify() { type = PROTOCOL_EC_ARENAMATCHCANCELNOTIFY; }
+		EC_ArenaMatchCancelNotify(void*) : Protocol(PROTOCOL_EC_ARENAMATCHCANCELNOTIFY) { }
+		EC_ArenaMatchCancelNotify (int l_retcode = 0,int l_roleid = 0,int l_reserve3 = 0,
+			int l_reserve4 = 0)
+			 : retcode(l_retcode),roleid(l_roleid),reserve3(l_reserve3)
+			,reserve4(l_reserve4)
+		{
+			type = PROTOCOL_EC_ARENAMATCHCANCELNOTIFY;
+		}
+
+		EC_ArenaMatchCancelNotify(const EC_ArenaMatchCancelNotify &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),reserve3(rhs.reserve3)
+			,reserve4(rhs.reserve4) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaMatchCancelNotify(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << reserve3;
+			os << reserve4;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> reserve3;
+			os >> reserve4;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

@@ -1,0 +1,50 @@
+	public:
+		int arena_id;
+		int end_time;
+		EC_SQLArenaTeam red_team;
+		EC_SQLArenaPlayerVector red_members;
+		EC_SQLArenaTeam blue_team;
+		EC_SQLArenaPlayerVector blue_members;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENABATTLESTART };
+	public:
+		EC_ArenaBattleStart() { type = PROTOCOL_EC_ARENABATTLESTART; }
+		EC_ArenaBattleStart(void*) : Protocol(PROTOCOL_EC_ARENABATTLESTART) { }
+		EC_ArenaBattleStart (int l_arena_id,int l_end_time,const EC_SQLArenaTeam& l_red_team = EC_SQLArenaTeam(),
+			const EC_SQLArenaPlayerVector& l_red_members = EC_SQLArenaPlayerVector(),const EC_SQLArenaTeam& l_blue_team = EC_SQLArenaTeam(),const EC_SQLArenaPlayerVector& l_blue_members = EC_SQLArenaPlayerVector())
+			 : arena_id(l_arena_id),end_time(l_end_time),red_team(l_red_team)
+			,red_members(l_red_members),blue_team(l_blue_team),blue_members(l_blue_members)
+		{
+			type = PROTOCOL_EC_ARENABATTLESTART;
+		}
+
+		EC_ArenaBattleStart(const EC_ArenaBattleStart &rhs)
+			: Protocol(rhs),arena_id(rhs.arena_id),end_time(rhs.end_time),red_team(rhs.red_team)
+			,red_members(rhs.red_members),blue_team(rhs.blue_team),blue_members(rhs.blue_members) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaBattleStart(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << arena_id;
+			os << end_time;
+			os << red_team;
+			os << red_members;
+			os << blue_team;
+			os << blue_members;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> arena_id;
+			os >> end_time;
+			os >> red_team;
+			os >> red_members;
+			os >> blue_team;
+			os >> blue_members;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

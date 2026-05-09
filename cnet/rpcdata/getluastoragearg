@@ -1,0 +1,64 @@
+#ifndef __GNET_GETLUASTORAGEARG_RPCDATA
+#define __GNET_GETLUASTORAGEARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class GetLuaStorageArg : public GNET::Rpc::Data
+	{
+	public:
+		unsigned int key;
+		int data_mask;
+
+	public:
+		GetLuaStorageArg (unsigned int l_key = 0,int l_data_mask = 0)
+			: key(l_key),data_mask(l_data_mask)
+		{
+		}
+
+		GetLuaStorageArg(const GetLuaStorageArg &rhs)
+			: key(rhs.key),data_mask(rhs.data_mask) { }
+
+		Rpc::Data *Clone() const { return new GetLuaStorageArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const GetLuaStorageArg *r = dynamic_cast<const GetLuaStorageArg *>(&rhs);
+			if (r && r != this)
+			{
+				key = r->key;
+				data_mask = r->data_mask;
+			}
+			return *this;
+		}
+
+		GetLuaStorageArg& operator = (const GetLuaStorageArg &rhs)
+		{
+			const GetLuaStorageArg *r = &rhs;
+			if (r && r != this)
+			{
+				key = r->key;
+				data_mask = r->data_mask;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << key;
+			os << data_mask;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> key;
+			os >> data_mask;
+			return os;
+		}
+
+	};
+};
+#endif

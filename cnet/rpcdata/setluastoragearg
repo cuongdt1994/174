@@ -1,0 +1,65 @@
+#ifndef __GNET_SETLUASTORAGEARG_RPCDATA
+#define __GNET_SETLUASTORAGEARG_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "gluastorage"
+
+namespace GNET
+{
+	class SetLuaStorageArg : public GNET::Rpc::Data
+	{
+	public:
+		int data_mask;
+		GLuaStorage value;
+
+	public:
+		SetLuaStorageArg (int l_data_mask = 0)
+			: data_mask(l_data_mask)
+		{
+		}
+
+		SetLuaStorageArg(const SetLuaStorageArg &rhs)
+			: data_mask(rhs.data_mask),value(rhs.value) { }
+
+		Rpc::Data *Clone() const { return new SetLuaStorageArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const SetLuaStorageArg *r = dynamic_cast<const SetLuaStorageArg *>(&rhs);
+			if (r && r != this)
+			{
+				data_mask = r->data_mask;
+				value = r->value;
+			}
+			return *this;
+		}
+
+		SetLuaStorageArg& operator = (const SetLuaStorageArg &rhs)
+		{
+			const SetLuaStorageArg *r = &rhs;
+			if (r && r != this)
+			{
+				data_mask = r->data_mask;
+				value = r->value;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << data_mask;
+			os << value;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> data_mask;
+			os >> value;
+			return os;
+		}
+
+	};
+};
+#endif

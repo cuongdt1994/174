@@ -1,0 +1,64 @@
+#ifndef __GNET_EC_DBARENATEAMTOPLISTDETAILARG_RPCDATA
+#define __GNET_EC_DBARENATEAMTOPLISTDETAILARG_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class EC_DBArenaTeamTopListDetailArg : public GNET::Rpc::Data
+	{
+	public:
+		int roleid;
+		long long teamid;
+
+	public:
+		EC_DBArenaTeamTopListDetailArg (int l_roleid = 0,long long l_teamid = 0)
+			: roleid(l_roleid),teamid(l_teamid)
+		{
+		}
+
+		EC_DBArenaTeamTopListDetailArg(const EC_DBArenaTeamTopListDetailArg &rhs)
+			: roleid(rhs.roleid),teamid(rhs.teamid) { }
+
+		Rpc::Data *Clone() const { return new EC_DBArenaTeamTopListDetailArg(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_DBArenaTeamTopListDetailArg *r = dynamic_cast<const EC_DBArenaTeamTopListDetailArg *>(&rhs);
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				teamid = r->teamid;
+			}
+			return *this;
+		}
+
+		EC_DBArenaTeamTopListDetailArg& operator = (const EC_DBArenaTeamTopListDetailArg &rhs)
+		{
+			const EC_DBArenaTeamTopListDetailArg *r = &rhs;
+			if (r && r != this)
+			{
+				roleid = r->roleid;
+				teamid = r->teamid;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << teamid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> teamid;
+			return os;
+		}
+
+	};
+};
+#endif

@@ -1,0 +1,44 @@
+	public:
+		int retcode;
+		int roleid;
+		int cmd_mode;
+		EC_ArenaPlayerTopListVector members;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY_RE };
+	public:
+		EC_ArenaPlayerTopListQuery_Re() { type = PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY_RE; }
+		EC_ArenaPlayerTopListQuery_Re(void*) : Protocol(PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY_RE) { }
+		EC_ArenaPlayerTopListQuery_Re (int l_retcode = 0,int l_roleid = 0,int l_cmd_mode = 0,
+			const EC_ArenaPlayerTopListVector& l_members = EC_ArenaPlayerTopListVector())
+			 : retcode(l_retcode),roleid(l_roleid),cmd_mode(l_cmd_mode)
+			,members(l_members)
+		{
+			type = PROTOCOL_EC_ARENAPLAYERTOPLISTQUERY_RE;
+		}
+
+		EC_ArenaPlayerTopListQuery_Re(const EC_ArenaPlayerTopListQuery_Re &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),cmd_mode(rhs.cmd_mode)
+			,members(rhs.members) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaPlayerTopListQuery_Re(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << cmd_mode;
+			os << members;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> cmd_mode;
+			os >> members;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 31744; }

@@ -1,0 +1,44 @@
+	public:
+		int roleid;
+		int team_type;
+		int invited_roleid;
+		int idx;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENATEAMINVITEREQUEST };
+	public:
+		EC_ArenaTeamInviteRequest() { type = PROTOCOL_EC_ARENATEAMINVITEREQUEST; }
+		EC_ArenaTeamInviteRequest(void*) : Protocol(PROTOCOL_EC_ARENATEAMINVITEREQUEST) { }
+		EC_ArenaTeamInviteRequest (int l_roleid = 0,int l_team_type = 0,int l_invited_roleid = 0,
+			int l_idx = 0)
+			 : roleid(l_roleid),team_type(l_team_type),invited_roleid(l_invited_roleid)
+			,idx(l_idx)
+		{
+			type = PROTOCOL_EC_ARENATEAMINVITEREQUEST;
+		}
+
+		EC_ArenaTeamInviteRequest(const EC_ArenaTeamInviteRequest &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),team_type(rhs.team_type),invited_roleid(rhs.invited_roleid)
+			,idx(rhs.idx) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaTeamInviteRequest(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << team_type;
+			os << invited_roleid;
+			os << idx;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> team_type;
+			os >> invited_roleid;
+			os >> idx;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 32; }

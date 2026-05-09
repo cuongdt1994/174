@@ -1,0 +1,38 @@
+	public:
+		int retcode;
+		int roleid;
+		EC_ArenaTeamMemberOnlineInfoVector members;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAONLINEINFONOTIFY };
+	public:
+		EC_ArenaOnlineInfoNotify() { type = PROTOCOL_EC_ARENAONLINEINFONOTIFY; }
+		EC_ArenaOnlineInfoNotify(void*) : Protocol(PROTOCOL_EC_ARENAONLINEINFONOTIFY) { }
+		EC_ArenaOnlineInfoNotify (int l_retcode = 0,int l_roleid = 0,const EC_ArenaTeamMemberOnlineInfoVector& l_members = EC_ArenaTeamMemberOnlineInfoVector())
+			 : retcode(l_retcode),roleid(l_roleid),members(l_members)
+		{
+			type = PROTOCOL_EC_ARENAONLINEINFONOTIFY;
+		}
+
+		EC_ArenaOnlineInfoNotify(const EC_ArenaOnlineInfoNotify &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),members(rhs.members) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaOnlineInfoNotify(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << members;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> members;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 10240; }

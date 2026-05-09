@@ -1,0 +1,64 @@
+#ifndef __GNET_FORMULAS_RPCDATA
+#define __GNET_FORMULAS_RPCDATA
+
+#include "rpcdefs.h"
+
+
+namespace GNET
+{
+	class Formulas : public GNET::Rpc::Data
+	{
+	public:
+		int id;
+		int count;
+
+	public:
+		Formulas ()
+		{
+		}
+
+		Formulas(const Formulas &rhs)
+			: id(rhs.id),count(rhs.count) { }
+
+		Rpc::Data *Clone() const { return new Formulas(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const Formulas *r = dynamic_cast<const Formulas *>(&rhs);
+			if (r && r != this)
+			{
+				id = r->id;
+				count = r->count;
+			}
+			return *this;
+		}
+
+		Formulas& operator = (const Formulas &rhs)
+		{
+			const Formulas *r = &rhs;
+			if (r && r != this)
+			{
+				id = r->id;
+				count = r->count;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << count;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> count;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<Formulas>	FormulasVector;
+};
+#endif

@@ -1,0 +1,133 @@
+#ifndef __GNET_EC_SQLARENATEAM_RPCDATA
+#define __GNET_EC_SQLARENATEAM_RPCDATA
+
+#include "rpcdefs.h"
+
+#include "ec_sqlarenateammember"
+
+namespace GNET
+{
+	class EC_SQLArenaTeam : public GNET::Rpc::Data
+	{
+	public:
+		int team_id;
+		int captain_id;
+		char team_type;
+		int score;
+		int last_visite;
+		int win_count;
+		int team_score;
+		int week_battle_count;
+		int create_time;
+		int battle_count;
+		Octets name;
+		EC_SQLArenaTeamMemberVector members;
+		IntVector teams;
+
+	public:
+		EC_SQLArenaTeam (int l_team_id = 0,int l_captain_id = 0,char l_team_type = 0
+			,int l_score = 0,int l_last_visite = 0,int l_win_count = 0
+			,int l_team_score = 0,int l_week_battle_count = 0,int l_create_time = 0
+			,int l_battle_count = 0,const Octets& l_name = Octets(0),const EC_SQLArenaTeamMemberVector& l_members = EC_SQLArenaTeamMemberVector()
+			,const IntVector& l_teams = IntVector())
+			: team_id(l_team_id),captain_id(l_captain_id),team_type(l_team_type)
+			,score(l_score),last_visite(l_last_visite),win_count(l_win_count)
+			,team_score(l_team_score),week_battle_count(l_week_battle_count),create_time(l_create_time)
+			,battle_count(l_battle_count),name(l_name),members(l_members)
+			,teams(l_teams)
+		{
+		}
+
+		EC_SQLArenaTeam(const EC_SQLArenaTeam &rhs)
+			: team_id(rhs.team_id),captain_id(rhs.captain_id),team_type(rhs.team_type),
+			score(rhs.score),last_visite(rhs.last_visite),win_count(rhs.win_count),
+			team_score(rhs.team_score),week_battle_count(rhs.week_battle_count),create_time(rhs.create_time),
+			battle_count(rhs.battle_count),name(rhs.name),members(rhs.members),
+			teams(rhs.teams) { }
+
+		Rpc::Data *Clone() const { return new EC_SQLArenaTeam(*this); }
+
+		Rpc::Data& operator = (const Rpc::Data &rhs)
+		{
+			const EC_SQLArenaTeam *r = dynamic_cast<const EC_SQLArenaTeam *>(&rhs);
+			if (r && r != this)
+			{
+				team_id = r->team_id;
+				captain_id = r->captain_id;
+				team_type = r->team_type;
+				score = r->score;
+				last_visite = r->last_visite;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				week_battle_count = r->week_battle_count;
+				create_time = r->create_time;
+				battle_count = r->battle_count;
+				name = r->name;
+				members = r->members;
+				teams = r->teams;
+			}
+			return *this;
+		}
+
+		EC_SQLArenaTeam& operator = (const EC_SQLArenaTeam &rhs)
+		{
+			const EC_SQLArenaTeam *r = &rhs;
+			if (r && r != this)
+			{
+				team_id = r->team_id;
+				captain_id = r->captain_id;
+				team_type = r->team_type;
+				score = r->score;
+				last_visite = r->last_visite;
+				win_count = r->win_count;
+				team_score = r->team_score;
+				week_battle_count = r->week_battle_count;
+				create_time = r->create_time;
+				battle_count = r->battle_count;
+				name = r->name;
+				members = r->members;
+				teams = r->teams;
+			}
+			return *this;
+		}
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << team_id;
+			os << captain_id;
+			os << team_type;
+			os << score;
+			os << last_visite;
+			os << win_count;
+			os << team_score;
+			os << week_battle_count;
+			os << create_time;
+			os << battle_count;
+			os << name;
+			os << members;
+			os << teams;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> team_id;
+			os >> captain_id;
+			os >> team_type;
+			os >> score;
+			os >> last_visite;
+			os >> win_count;
+			os >> team_score;
+			os >> week_battle_count;
+			os >> create_time;
+			os >> battle_count;
+			os >> name;
+			os >> members;
+			os >> teams;
+			return os;
+		}
+
+	};
+	typedef GNET::RpcDataVector<EC_SQLArenaTeam>	EC_SQLArenaTeamVector;
+};
+#endif

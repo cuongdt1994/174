@@ -1,0 +1,44 @@
+	public:
+		int roleid;
+		int cls;
+		Octets name;
+		IntVector members;
+		enum { PROTOCOL_TYPE = PROTOCOL_EC_ARENAENTERQUEUE };
+	public:
+		EC_ArenaEnterQueue() { type = PROTOCOL_EC_ARENAENTERQUEUE; }
+		EC_ArenaEnterQueue(void*) : Protocol(PROTOCOL_EC_ARENAENTERQUEUE) { }
+		EC_ArenaEnterQueue (int l_roleid = 0,int l_cls = 0,const Octets& l_name = Octets(0),
+			const IntVector& l_members = IntVector())
+			 : roleid(l_roleid),cls(l_cls),name(l_name)
+			,members(l_members)
+		{
+			type = PROTOCOL_EC_ARENAENTERQUEUE;
+		}
+
+		EC_ArenaEnterQueue(const EC_ArenaEnterQueue &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),cls(rhs.cls),name(rhs.name)
+			,members(rhs.members) { }
+
+		GNET::Protocol *Clone() const { return new EC_ArenaEnterQueue(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << cls;
+			os << name;
+			os << members;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> cls;
+			os >> name;
+			os >> members;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 64; }

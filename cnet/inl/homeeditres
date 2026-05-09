@@ -1,0 +1,44 @@
+	public:
+		int home_id;
+		int mask;
+		int res;
+		int localsid;
+		enum { PROTOCOL_TYPE = PROTOCOL_HOMEEDITRES };
+	public:
+		HomeEditRes() { type = PROTOCOL_HOMEEDITRES; }
+		HomeEditRes(void*) : Protocol(PROTOCOL_HOMEEDITRES) { }
+		HomeEditRes (int l_home_id,int l_mask,int l_res,
+			int l_localsid)
+			 : home_id(l_home_id),mask(l_mask),res(l_res)
+			,localsid(l_localsid)
+		{
+			type = PROTOCOL_HOMEEDITRES;
+		}
+
+		HomeEditRes(const HomeEditRes &rhs)
+			: Protocol(rhs),home_id(rhs.home_id),mask(rhs.mask),res(rhs.res)
+			,localsid(rhs.localsid) { }
+
+		GNET::Protocol *Clone() const { return new HomeEditRes(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << home_id;
+			os << mask;
+			os << res;
+			os << localsid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> home_id;
+			os >> mask;
+			os >> res;
+			os >> localsid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 131072; }
