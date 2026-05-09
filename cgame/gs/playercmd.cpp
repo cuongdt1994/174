@@ -5775,10 +5775,15 @@ gplayer_controller::CommandHandler(int cmd_type,const void * buf, unsigned int s
 
 					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_TRANSFORM:
 					{
-						if (cmd.val1)
-							pImp->ActivateKidTransform();
-						else
-							pImp->DeactivateKidTransform();
+						// 173 player_kid::KidModify case 4 (player_kid.txt:867-869) chỉ
+						// gọi ActivateTransform; hàm tự toggle qua GetForm():
+						//   GetForm() != 0 → RemoveFilter(FILTER_KIDFORM) (OnRelease deactivate)
+						//   else + cooldown OK → activate
+						//   else → error_message(53)
+						// cmd.val1 từ client không reliable (mặc định 0); branch theo val1
+						// luôn rơi vào DeactivateKidTransform → OnRelease áp 6 post-buff 1h
+						// (3600s) ngay cả khi player chưa từng transform.
+						pImp->ActivateKidTransform();
 					} break;
 
 					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_GET_ADDON:
