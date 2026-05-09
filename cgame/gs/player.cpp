@@ -33760,11 +33760,11 @@ gplayer_imp::ActivateKidTransform()
 
 	object_interface obj_if(this);
 
-	// 173full.txt:28-31 — if (GetForm(owner)) { RemoveFilter(4550); } else if ...
-	// Form != 0 (cannon/dual/other) => chỉ RemoveFilter(4550), KHÔNG activate.
+	// 173full.txt:28-31 — if (GetForm(owner)) { RemoveFilter(4772); } else if ...
+	// Form != 0 (cannon/dual/other) => chỉ RemoveFilter(4772), KHÔNG activate.
 	if (GetForm())
 	{
-		_filters.RemoveFilter(FILTER_CANNONFORM);   // 4550
+		_filters.RemoveFilter(FILTER_KIDFORM);   // 4772
 		return;
 	}
 

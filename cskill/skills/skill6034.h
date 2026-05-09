@@ -168,7 +168,7 @@ namespace GNET
         gfxtarget           = 0; 
         feature             = 1303; 
         extra_effect        = 0; 
-        immune_casting      = 0; 
+        immune_casting      = 1; 
         restrict_weapons.push_back (1); 
         restrict_weapons.push_back (5); 
         restrict_weapons.push_back (9); 
