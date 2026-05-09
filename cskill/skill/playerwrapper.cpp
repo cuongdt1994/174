@@ -1,6 +1,6 @@
 
 #include "common/types.h"
-#include "obj_interface.h"
+#include "../cgame/gs/obj_interface.h"
 
 #include "filter.h"
 #include "playerwrapper.h"

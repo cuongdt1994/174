@@ -13,7 +13,7 @@
 #include <ASSERT.h>
 #include "range.h"
 #include "common/types.h"
-#include "attack.h"
+#include "../cgame/gs/attack.h"
 #include "playerwrapper.h"
 #include "targetwrapper.h"
 

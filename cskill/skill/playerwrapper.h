@@ -2,7 +2,7 @@
 #define __SKILL_PLAYERWRAPPER_H
 
 #include "common/types.h"
-#include "obj_interface.h"
+#include "../cgame/gs/obj_interface.h"
 
 #include "skilllevel.h"
 #include "callup.h"

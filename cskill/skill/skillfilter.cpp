@@ -1,4 +1,4 @@
-#include "skillwrapper.h"
+#include "../cgame/gs/skillwrapper.h"
 #include "skill.h"
 #include "skillfilter.h"
 #include "playerwrapper.h"
