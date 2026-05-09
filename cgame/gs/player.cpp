@@ -33761,10 +33761,22 @@ gplayer_imp::ActivateKidTransform()
 	object_interface obj_if(this);
 
 	// 173full.txt:28-31 — if (GetForm(owner)) { RemoveFilter(4772); } else if ...
-	// Form != 0 (cannon/dual/other) => chỉ RemoveFilter(4772), KHÔNG activate.
+	// Phân biệt: đang ở KID form (toggle off) vs form khác (cấm).
+	// Dùng _kid_transformation flag thay vì GetForm() vì _cur_form có thể ≠ 0
+	// do mount/cannon/dual/state cũ → first-press sẽ rơi vào RemoveFilter
+	// và OnRelease chạy deactivate semantics dù player chưa từng transform.
+	if (_kid_transformation)
+	{
+		obj_if.RemoveFilter(FILTER_KIDFORM);   // 4772 → OnRelease deactivate
+		_kid_transformation = 0;
+		_kid_transformation_time = 0;
+		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
+		return;
+	}
 	if (GetForm())
 	{
-		_filters.RemoveFilter(FILTER_KIDFORM);   // 4772
+		// Đang ở form khác (mount/cannon/dual) → không cho transform.
+		_runner->error_message(53);
 		return;
 	}
 
