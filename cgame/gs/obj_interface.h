@@ -386,14 +386,12 @@ public:
     void DecAntiResistanceDegree(int val);
 
 	void EnhanceDamage(int dmg);
-	void EnhanceDamage2(int dmg, int dmg2);
 	void ImpairDamage(int dmg);
 
 	void EnhancePercDamage(float dmg_low, float dmg_high);
 	void ImpairPercDamage(float dmg_low, float dmg_high);
 
 	void EnhanceMagicDamage(int dmg);
-	void EnhanceMagicDamage2(int dmg, int dmg2);
 	void ImpairMagicDamage(int dmg);
 
 	void EnhanceScaleDamage(int dmg);
