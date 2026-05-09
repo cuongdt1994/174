@@ -110,19 +110,19 @@ bool SkillStub::LearnCondition(Skill * skill ) const
 
 bool SkillStub::Learn(Skill * skill) const
 {
-	LuaSkill * lua = LuaSkill::GetInstance();
+	//LuaSkill * lua = LuaSkill::GetInstance();
 	
 	PlayerWrapper * player = skill->GetPlayer();
 	int next_level = skill->GetLevel();
 
 	int Sp = GetRequiredSp(skill);
-	if (!lua->GetConfig()->FREE_SP && player->GetSp() < Sp)
+	if (/*!lua->GetConfig()->FREE_SP &&*/ player->GetSp() < Sp)
 	{
 		return false;
 	}
 	
 	int money = GetRequiredMoney(skill);
-	if( !lua->GetConfig()->FREE_MONEY && player->GetMoney() < money)
+	if( /*!lua->GetConfig()->FREE_MONEY &&*/ player->GetMoney() < money)
 	{
 		return false;
 	}
@@ -133,20 +133,20 @@ bool SkillStub::Learn(Skill * skill) const
 	}
 
 	int item = GetRequiredItem(skill);
-	if( !lua->GetConfig()->FREE_ITEM && item != 0 && !player->SetUseitem(item))
+	if( /*!lua->GetConfig()->FREE_ITEM &&*/ item != 0 && !player->SetUseitem(item))
 	{
 		return false;
 	}
 	
-	if( !lua->GetConfig()->FREE_MONEY )
-	{
+	//if( !lua->GetConfig()->FREE_MONEY )
+	//{
 		player->SetUsemoney(money);
-	}
+	//}
 	
-	if( !lua->GetConfig()->FREE_SP )
-	{
+	//if( !lua->GetConfig()->FREE_SP )
+	//{
 		player->SetDecsp(Sp);
-	}
+	//}
 
 	if(IsPassive())
 	{
@@ -910,18 +910,20 @@ bool Skill::TakeEffect(PlayerWrapper* player, int arg )
 {
 	player->SetEnable(true);
 	player->SetIntarg(arg);
-	double res = LuaSkill::GetInstance()->TakeEffect(this, id) ; 
-	res != -0 ? res = true : res = GetStub()->TakeEffect(this);
-	return res;
+	return GetStub()->TakeEffect(this);
+	//double res = LuaSkill::GetInstance()->TakeEffect(this, id) ; 
+	//res != -0 ? res = true : res = GetStub()->TakeEffect(this);
+	//return res;
 }
 
 bool Skill::UndoEffect(PlayerWrapper* player, int arg)
 {
 	player->SetEnable(false);
 	player->SetIntarg(arg);
-	double res = LuaSkill::GetInstance()->TakeEffect(this, id) ; 
-	res != -0 ? res = true : res = GetStub()->TakeEffect(this);
-	return res;
+	return GetStub()->TakeEffect(this);
+	//double res = LuaSkill::GetInstance()->TakeEffect(this, id) ; 
+	//res != -0 ? res = true : res = GetStub()->TakeEffect(this);
+	//return res;
 }
 
 char Skill::GetForceattack()
@@ -980,11 +982,12 @@ int Skill::FirstRun( int & next_interval, int prayspeed )
 	SetStateindex(nextindex);
 	if( nextindex < 0 )
 		return -1;
-	//const SkillStub::State * state = stub->GetState(0);
-	//Run( state );
+	const SkillStub::State * state = stub->GetState(0);
+	Run( state );
+	int time = state->GetTime(this);
 	
-	r_Calculate(0);
-	int time = r_GetTime(0);
+	//r_Calculate(0);
+	//int time = r_GetTime(0);
 	
 	pdata->skippable = IsWarmup();
 
@@ -1005,7 +1008,7 @@ int Skill::FirstRun( int & next_interval, int prayspeed )
 
 	nextindex = NextState(nextindex);
 	if( nextindex >= 0 )
-		next_interval = r_GetTime(nextindex); //stub->GetState(nextindex)->GetTime(this);
+		next_interval = stub->GetState(nextindex)->GetTime(this); //next_interval = r_GetTime(nextindex); //stub->GetState(nextindex)->GetTime(this);
 	else
 		time = -1;
 	SetNextindex(nextindex);
@@ -1021,11 +1024,12 @@ int Skill::Run( int & next_interval )
 	if( newindex < 0 )
 		return -1;
 
-	//const SkillStub::State * state = stub->GetState(newindex);
-	//Run( state );
+	const SkillStub::State * state = stub->GetState(newindex);
+	Run( state );
+	int time = state->GetTime(this);
 	
-	r_Calculate(newindex);
-	int time = r_GetTime(newindex);
+	//r_Calculate(newindex);
+	//int time = r_GetTime(newindex);
 
  	pdata->skippable = IsWarmup();
 	if(pdata->skippable)
@@ -1033,7 +1037,7 @@ int Skill::Run( int & next_interval )
 	
 	int nextindex = NextState(newindex);
 	if( nextindex >= 0 )
-		next_interval = r_GetTime(nextindex); //stub->GetState(nextindex)->GetTime(this);
+		next_interval = stub->GetState(nextindex)->GetTime(this); //next_interval = r_GetTime(nextindex); //stub->GetState(nextindex)->GetTime(this);
 	else // over
 		time = -1;
 
@@ -1087,9 +1091,9 @@ int Skill::NextState( int index )
 		return -1;
 	if( index < 0 )
 		index = -1;
-	if( index >=0 && r_Loop(index) )
+	if( index >=0 && stub->GetState(index)->Loop(this) )
 	{	
-		if( r_Quit(index)) 
+		if( stub->GetState(index)->Quit(this)) 
 			return -1;
 		else 
 			return index;
@@ -1098,9 +1102,9 @@ int Skill::NextState( int index )
 	{
 		while( ++ index < statesize )
 		{
-			if( r_Quit(index) )
+			if( stub->GetState(index)->Quit(this) )
 				return -1;
-			if( !r_Bypass(index) )
+			if( !stub->GetState(index)->Bypass(this) )
 				return index;
 		}
 	}
