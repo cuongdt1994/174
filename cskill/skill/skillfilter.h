@@ -15368,6 +15368,211 @@ public:
 	}
 };
 
+class filter_Kidform : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_HEARTBEAT | FILTER_MASK_NOSAVE
+	};
+
+	int   _shape;
+	int   _attack_type;
+	int   _hp;
+	int   _damage_low;
+	int   _damage_high;
+	int   _damage_magic_low;
+	int   _damage_magic_high;
+	int   _defence;
+	int   _resistance[5];
+	int   _point;
+	int   _ratio;
+	float _range;
+	float _speed;
+	int   _attack_adj;
+	int   _defend_adj;
+	int   _attack_ant;
+	int   _defend_ant;
+	int   _time_reduce;
+	int   _skill_count;
+	int   _skill[32];
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _shape << _attack_type << _hp;
+		ar << _damage_low << _damage_high << _damage_magic_low << _damage_magic_high;
+		ar << _defence;
+		ar.push_back(_resistance, sizeof(_resistance));
+		ar << _point << _ratio << _range << _speed;
+		ar << _attack_adj << _defend_adj << _attack_ant << _defend_ant;
+		ar << _time_reduce << _skill_count;
+		ar.push_back(_skill, sizeof(_skill));
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _shape >> _attack_type >> _hp;
+		ar >> _damage_low >> _damage_high >> _damage_magic_low >> _damage_magic_high;
+		ar >> _defence;
+		ar.pop_back(_resistance, sizeof(_resistance));
+		ar >> _point >> _ratio >> _range >> _speed;
+		ar >> _attack_adj >> _defend_adj >> _attack_ant >> _defend_ant;
+		ar >> _time_reduce >> _skill_count;
+		ar.pop_back(_skill, sizeof(_skill));
+		return true;
+	}
+
+	filter_Kidform(){}
+public:
+	DECLARE_SUBSTANCE(filter_Kidform);
+	filter_Kidform(object_interface object, int* buf)
+		: timeout_filter(object, 30, FILTER_MASK)
+	{
+		_shape             = buf[0];
+		_attack_type       = buf[1];
+		_hp                = buf[2];
+		_damage_low        = buf[3];
+		_damage_high       = buf[4];
+		_damage_magic_low  = buf[5];
+		_damage_magic_high = buf[6];
+		_defence           = buf[7];
+		_resistance[0]     = buf[8];
+		_resistance[1]     = buf[9];
+		_resistance[2]     = buf[10];
+		_resistance[3]     = buf[11];
+		_resistance[4]     = buf[12];
+		_point             = buf[13];
+		_ratio             = buf[14];
+		*((int*)&_range)   = buf[15];
+		*((int*)&_speed)   = buf[16];
+		_attack_adj        = buf[17];
+		_defend_adj        = buf[18];
+		_attack_ant        = buf[19];
+		_defend_ant        = buf[20];
+		_time_reduce       = buf[21];
+		_skill_count       = buf[22];
+		if(_skill_count > 16) _skill_count = 16;
+		memset(_skill, 0, sizeof(_skill));
+		memcpy(_skill, buf + 23, 8 * _skill_count);
+		_filter_id = FILTER_KIDFORM;
+	}
+
+	void OnAttach()
+	{
+		int form = _parent.GetForm();
+		_parent.GetSkillWrapper().EventChange(_parent, form, 3);
+		_parent.LockEquipment(true);
+		_parent.SetNoMount(true);
+		_parent.SetNoBind(true);
+		_parent.ChangeShape2(_shape | 0xC0, 30);
+
+		_parent.EnhanceMaxHP(_hp);
+		_parent.EnhanceDamage2(_damage_low,_damage_high);
+		_parent.EnhanceMagicDamage2(_damage_magic_low,_damage_magic_high);
+		_parent.EnhanceDefense(_defence);
+		_parent.EnhanceResistance(0, _resistance[0]);
+		_parent.EnhanceResistance(1, _resistance[1]);
+		_parent.EnhanceResistance(2, _resistance[2]);
+		_parent.EnhanceResistance(3, _resistance[3]);
+		_parent.EnhanceResistance(4, _resistance[4]);
+		_parent.EnhanceCrit(_point);
+		_parent.EnhanceAttackSpeed(_ratio);
+		_parent.EnhanceAttackRange(_range);
+		_parent.EnhanceSpeed0(_speed);
+		_parent.EnhanceAttackDegree(_attack_adj);
+		_parent.EnhanceDefendDegree(_defend_adj);
+		_parent.IncAntiDefenseDegree(_attack_ant);
+		_parent.IncAntiResistanceDegree(_defend_ant);
+
+		_parent.GetSkillWrapper().DecPrayTime(_time_reduce);
+		_parent.IncImmuneMask(0x3002000);
+
+		for(int i = 0; i < _skill_count; ++i)
+		{
+			_parent.GetSkillWrapper().ActivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
+		}
+
+		_parent.SendClientAttackData();
+		_parent.UpdateDefenseData();
+		_parent.UpdateMagicData();
+		_parent.UpdateAttackData();
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+	}
+
+	void OnRelease()
+	{
+		int form = _parent.GetForm();
+		_parent.GetSkillWrapper().EventChange(_parent, form, 0);
+		_parent.LockEquipment(false);
+		_parent.SetNoMount(false);
+		_parent.SetNoBind(false);
+		_parent.ChangeShape2(0, 0);
+
+		float cur_hp = (float)_parent.GetBasicProp().hp;
+		float ratio  = cur_hp / (float)_parent.GetExtendProp().max_hp;
+
+		_parent.ImpairMaxHP(_hp);
+		_parent.ImpairDefense(_defence);
+		_parent.ImpairResistance(0, _resistance[0]);
+		_parent.ImpairResistance(1, _resistance[1]);
+		_parent.ImpairResistance(2, _resistance[2]);
+		_parent.ImpairResistance(3, _resistance[3]);
+		_parent.ImpairResistance(4, _resistance[4]);
+		_parent.ImpairDamage2(_damage_low,_damage_high);
+		_parent.ImpairMagicDamage2(_damage_magic_low,_damage_magic_high);
+		_parent.ImpairCrit(_point);
+		_parent.ImpairAttackSpeed(_ratio);
+		_parent.ImpairAttackRange(_range);
+		_parent.ImpairSpeed0(_speed);
+		_parent.ImpairAttackDegree(_attack_adj);
+		_parent.ImpairDefendDegree(_defend_adj);
+		_parent.DecAntiDefenseDegree(_attack_ant);
+		_parent.DecAntiResistanceDegree(_defend_ant);
+
+		_parent.GetSkillWrapper().IncPrayTime(_time_reduce);
+		_parent.DecImmuneMask(0x3002000);
+
+		for(int i = 0; i < _skill_count; ++i)
+		{
+			_parent.GetSkillWrapper().DeactivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
+		}
+
+		_parent.SendClientAttackData();
+		_parent.UpdateDefenseData();
+		_parent.UpdateMagicData();
+		_parent.UpdateAttackData();
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+
+		_parent.AddFilter(new filter_Giant     (_parent, 30, 3600));
+		_parent.AddFilter(new filter_Blessmagic(_parent, 70, 3600));
+		_parent.AddFilter(new filter_Stoneskin (_parent, 60, 3600));
+		_parent.AddFilter(new filter_Incresist (_parent, 60, 3600));
+		_parent.AddFilter(new filter_Inchp     (_parent, 30, 3600));
+		_parent.AddFilter(new filter_Ironshield(_parent, 60, 3600));
+
+		int new_hp = (int)((float)_parent.GetExtendProp().max_hp * ratio);
+		int delta  = _parent.GetBasicProp().hp - new_hp;
+		if (delta > 0)
+			_parent.DecHP(delta);
+		else if (delta < 0)
+			_parent.Heal((unsigned int)(-delta));
+	}
+
+	void Heartbeat(int tick)
+	{
+		if(_timeout > 0)
+		{
+			_timeout -= tick;
+			if(_timeout <= 0) _is_deleted = true;
+		}
+	}
+};
+
 class filter_Palsy : public timeout_filter
 {
 protected:

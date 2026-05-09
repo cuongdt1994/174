@@ -2,7 +2,7 @@
 #define __SKILL_PLAYERWRAPPER_H
 
 #include "common/types.h"
-#include "../cgame/gs/obj_interface.h"
+#include "obj_interface.h"
 
 #include "skilllevel.h"
 #include "callup.h"
@@ -1194,7 +1194,7 @@ public:
 
 	// Passe de Batalha 
 	bool SetBattlePassEffect(bool);
-
+	bool InsertTeamVisibleState(int value, bool inc);
 };
 
 

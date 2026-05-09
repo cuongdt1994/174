@@ -1,4 +1,4 @@
-#include "../cgame/gs/skillwrapper.h"
+#include "skillwrapper.h"
 #include "skill.h"
 #include "skillfilter.h"
 #include "playerwrapper.h"
@@ -267,6 +267,7 @@ DEFINE_SUBSTANCE(filter_Immunesoil2,filter,CLASS_IMMUNESOIL2);
 DEFINE_SUBSTANCE(filter_Retort2,filter,CLASS_RETORT2);
 DEFINE_SUBSTANCE(filter_Addattackdefenddegree,filter,CLASS_ADDATTACKDEFENDDEGREE);
 DEFINE_SUBSTANCE(filter_Chariotform,filter,CLASS_CHARIOTFORM);
+DEFINE_SUBSTANCE(filter_Kidform,filter,CLASS_KIDFORM);
 DEFINE_SUBSTANCE(filter_Palsy, filter, CLASS_PALSY);
 DEFINE_SUBSTANCE(filter_Apgencont2 ,filter,CLASS_APGENCONT2);
 DEFINE_SUBSTANCE(filter_Inchurtfromskill,filter,CLASS_INCHURTFROMSKILL);

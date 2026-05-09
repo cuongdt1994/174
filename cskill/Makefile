@@ -10,7 +10,7 @@ SHAREOBJ =
 LOGSTUB = 
 LOGOBJ = 
 
-OBJS = ./skill/skill.o ./skill/skillwrapper.o ./skill/playerwrapper.o ./skill/skillfilter.o #./skill/skilllua.o
+OBJS = ./skill/skill.o ./skill/skillwrapper.o ./skill/playerwrapper.o ./skill/skillfilter.o ./skill/skilllua.o
 
 STUBOBJS =  ./skills/stubs0.o
 STUBOBJS += ./skills/stubs1.o
@@ -52,7 +52,7 @@ STUBOBJS += ./skills/stubs36.o
 
 CLEAN += ./skills/*.o 
 
-INCLUDES += -I./skill -I./header -I./header/include -I./lua/src -I./lua/LuaBridge
+INCLUDES += -I./skill -I./header -I./header/include -I./lua/src -I./lua/LuaBridge -I../cgame/gs
 DEFINES	+=-D_SKILL_SERVER 
 CFLAGS += -fPIC
 
@@ -62,8 +62,8 @@ dlib : $(OBJS) $(STUBOBJS)
 	rm libskill.so -f
 	$(LD) -shared -fPIC $(LDFLAGS) $(OBJS) $(STUBOBJS) -o libskill.so
 
-	#rm -rf /home/gamed/libskill.so
-	#cp libskill.so /home/gamed/libskill.so
+	rm -rf /home/gamed/libskill.so
+	cp libskill.so /home/gamed/libskill.so
 
 
 include ./mk/gcc.rules.mk

@@ -3,7 +3,7 @@
  *
  * DESCRIPTION: header for terrain class on server side
  *
- * CREATED BY: Hedi, 2004/11/22 
+ * CREATED BY: Hedi, 2004/11/22
  *
  * HISTORY:
  *
@@ -13,52 +13,67 @@
 #ifndef _TERRAIN_H_
 #define _TERRAIN_H_
 
+#include <stdint.h>
+
 typedef struct _TERRAINCONFIG
 {
-	int			nNumAreas;		// µØÍ¼Ò»¹²¶àÉÙ¿éÑ½
-	int			nNumRows;		// ·Ö¼¸ĞĞÑ½
-	int			nNumCols;		// ·Ö¼¸ÁĞÑ½
-	int			nAreaWidth;		// Ã¿¿éµÄ¿í¶È£¨ÒÔ¸ñ¼ÆËã£©
-	int			nAreaHeight;	// Ã¿¿éµÄ¸ß¶È£¨ÒÔ¸ñ¼ÆËã£©
-	float		vGridSize;		// Ã¿Ğ¡¸ñµÄ³ß´ç
+	int			nNumAreas;		// åœ°å›¾ä¸€å…±æœ‰å¤šå°‘å—
+	int			nNumRows;		// å‡ è¡Œå‡ å—
+	int			nNumCols;		// å‡ åˆ—å‡ å—
+	int			nAreaWidth;		// æ¯å—çš„å®½åº¦ï¼ˆä»¥æ ¼ç‚¹ï¼‰
+	int			nAreaHeight;	// æ¯å—çš„é«˜åº¦ï¼ˆä»¥æ ¼ç‚¹ï¼‰
+	float		vGridSize;		// æ¯å°æ ¼çš„å°ºå¯¸
 
-	float		vHeightMin;		// 0.0 ¶ÔÓ¦µÄ¸ß¶È
-	float		vHeightMax;		// 1.0 ¶ÔÓ¦µÄ¸ß¶È
+	float		vHeightMin;		// 0.0 å¯¹åº”çš„é«˜åº¦
+	float		vHeightMax;		// 1.0 å¯¹åº”çš„é«˜åº¦
 
-	char		szMapPath[256];	// µØÍ¼ÔÚÄÇÀïÑ½£¬²»Òª×îºóÒ»¸öĞ±¸ÜÑ½
+	char		szMapPath[256];	// åœ°å›¾æ•°æ®çš„è·¯å¾„ï¼Œä¸è¦åŠ æœ€åä¸€ä¸ªæ–œçº¿
 
 } TERRAINCONFIG;
 
 class CTerrain
 {
 private:
-	// height map buffer and width height of it
-	float *				m_pHeights;			// height map points of this terrain object
-	int					m_nNumVertX;		// how many points in one row of this terrain object
-	int					m_nNumVertZ;		// how many points in one column of this terrain object
+	// Heights stored as quantized uint16 to save 50% memory vs float.
+	// actual_height = m_pHeights[i] * m_fHeightScale + m_fHeightOffset
+	uint16_t *		m_pHeights;
+	float			m_fHeightScale;		// (vHeightMax - vHeightMin) / 65535.0f
+	float			m_fHeightOffset;	// vHeightMin
 
-	// range of this terrain object
-	float				m_ox;				// origin (left-top point) of this terrain object
-	float				m_oz;
-	
-	float				m_vGridSizeInv;		// value to be multiplied to get grid coords.
+	int				m_nNumVertX;		// how many points in one row
+	int				m_nNumVertZ;		// how many points in one column
 
-	// configuration data
-	TERRAINCONFIG		m_config;			// terrain configuration data
+	float			m_ox;				// origin left-top x
+	float			m_oz;				// origin left-top z
+
+	float			m_vGridSizeInv;
+
+	TERRAINCONFIG	m_config;
+
+	// Piece-reference mode: assembled terrains reference source pieces
+	// instead of copying data, saving memory for random/maze world instances.
+	bool			m_bPieceRef;
+	CTerrain **		m_ppPieces;		// borrowed pointer to piece array (not owned)
+	int *			m_pPieceIdx;	// owned copy of piece index array
+	int				m_nPieceRows;
+	int				m_nPieceCols;
+
+	float GetHeightAtPieceRef(float x, float z);
+	inline float DequantHeight(uint16_t q) const { return q * m_fHeightScale + m_fHeightOffset; }
 
 public:
-	inline float * GetHeights()			{ return m_pHeights; }
-	inline int GetNumVertX()			{ return m_nNumVertX; }
-	inline int GetNumVertZ()			{ return m_nNumVertZ; }
-
-protected:
+	inline int GetNumVertX()	{ return m_nNumVertX; }
+	inline int GetNumVertZ()	{ return m_nNumVertZ; }
 
 public:
 	CTerrain();
 	~CTerrain();
 
+	// Load full or partial map from hmap files
 	bool Init(const TERRAINCONFIG& config, float xmin, float zmin, float xmax, float zmax);
+	// Load a single piece (for random/maze maps)
 	bool InitPiece(const TERRAINCONFIG& config, int piece_idx);
+	// Assemble from pieces â€” uses piece-reference mode (zero copy)
 	bool Init(int row, int col, const int * piece_indexes, CTerrain ** terrain_pieces);
 	bool Release();
 
@@ -66,4 +81,3 @@ public:
 };
 
 #endif//_TERRAIN_H_
-

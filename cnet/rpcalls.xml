@@ -250,14 +250,14 @@
 
 		<!-- storage reserve -->
 		
-		<variable name="reserve1" type="Octets" attr="ref" default="Octets(0)"/>
+		<variable name="kid" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve2" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve3" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve4" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve5" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve6" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve7" type="Octets" attr="ref" default="Octets(0)"/>
-		<variable name="reserve8" type="Octets" attr="ref" default="Octets(0)"/>
+		<variable name="kid_addon" type="Octets" attr="ref" default="Octets(0)"/>
 		<variable name="reserve9" type="Octets" attr="ref" default="Octets(0)"/>
 
 		<variable name="reserve10" type="int" default="0"/>		

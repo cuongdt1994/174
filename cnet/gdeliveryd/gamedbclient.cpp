@@ -123,7 +123,7 @@ void GameDBClient::OnAbortSession(Session::ID sid)
 	conn_state = false;
 	Reconnect();
 	//TODO
-	Log::log(LOG_ERR,"gdelivery:: connect GameDB failed\n");
+	//Log::log(LOG_ERR,"gdelivery:: connect GameDB failed\n");
 }
 
 void GameDBClient::OnCheckAddress(SockAddr &sa) const

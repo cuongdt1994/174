@@ -1,0 +1,15 @@
+#include <common/utf.h>
+#include <threadpool.h>
+#include <malloc.h>
+#include <unordered_map>
+#include <db_if.h>
+#include "threadusage.h"
+#include "world.h"
+#include "worldmanager.h"
+#include "arandomgen.h"
+#include "threadusage.h"
+#include "player_imp.h"
+#include "usermsg.h"
+#include "public_quest.h"
+#include "luamanager.h"
+#include "player_kid.h"

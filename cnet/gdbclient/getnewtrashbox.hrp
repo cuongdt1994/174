@@ -73,17 +73,17 @@ class GetNewTrashBox : public Rpc
 			list4.count = GDB::convert_item(res->value.box4, box4, TRASHBOX_MAX_SIZE);
 		}
 
-		if ( res->value.size4 && res->value.size5 < TRASHBOX_MAX_SIZE )
+		if ( res->value.size5 && res->value.size5 < TRASHBOX_MAX_SIZE )
 		{
 			list5.count = GDB::convert_item(res->value.box5, box5, TRASHBOX_MAX_SIZE);
-		}		
+		}
 
-		if ( res->value.size4 && res->value.size6 < TRASHBOX_MAX_SIZE )
+		if ( res->value.size6 && res->value.size6 < TRASHBOX_MAX_SIZE )
 		{
 			list6.count = GDB::convert_item(res->value.box6, box6, TRASHBOX_MAX_SIZE);
-		}		
+		}
 
-		if ( res->value.size4 && res->value.size7 < TRASHBOX_MAX_SIZE )
+		if ( res->value.size7 && res->value.size7 < TRASHBOX_MAX_SIZE )
 		{
 			list7.count = GDB::convert_item(res->value.box7, box7, TRASHBOX_MAX_SIZE);
 		}

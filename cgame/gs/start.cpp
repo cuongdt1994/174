@@ -27,6 +27,7 @@
 #include "celestial_memorial_manager.h"
 #include "emulate_settings.h"
 #include "codex_manager.h"
+#include "kid_manager.h"
 
 using namespace GNET;
 
@@ -182,6 +183,9 @@ int main(int argn , char ** argv)
 		LuaManager::GetInstance()->Init();
 	
 
+	EmulateSettings::GetInstance()->Init();
+	EmulateSettings * emulate = EmulateSettings::GetInstance();
+
 	//�ֻ��û��������̶�ǰ׺Ϊ"ms"
 	const char * mobile_prefix = "ms";
 	if(strncmp(servername, mobile_prefix, strlen(mobile_prefix)) == 0)
@@ -288,6 +292,7 @@ int main(int argn , char ** argv)
 		EmulateSettings::GetInstance()->Init();
 		CodexConfig::GetInstance()->Init();
 	
+	KidManager::GetInstance()->Init();
 
 	while(1) 
 	{

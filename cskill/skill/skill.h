@@ -13,11 +13,11 @@
 #include <ASSERT.h>
 #include "range.h"
 #include "common/types.h"
-#include "../cgame/gs/attack.h"
+#include "attack.h"
 #include "playerwrapper.h"
 #include "targetwrapper.h"
 
-//#include "skilllua.h"
+#include "skilllua.h"
 
 #ifdef INTEPRETED_EXPR 
 #include "marshal.h"
@@ -494,7 +494,48 @@ public:
 	virtual int GetCoolDownLimit (Skill * skill) const { return 0; }
 	virtual int GetCostShieldEnergy (Skill * skill) const { return 0; }
 #endif
-
+	void SkillEdit(int type, double value)
+	{
+	switch (type)
+		{
+		case LuaSkill::CREATE_CLS                : { cls                 = value; break; }
+		case LuaSkill::CREATE_MAX_LEVEL          : { max_level           = value; break; }
+		case LuaSkill::CREATE_TYPE               : { type                = value; break; }
+		case LuaSkill::CREATE_ATTR               : { attr                = value; break; }
+		case LuaSkill::CREATE_RANK               : { rank                = value; break; }
+		case LuaSkill::CREATE_EVENTFLAG          : { eventflag           = value; break; }
+		case LuaSkill::CREATE_NPCDELAY           : { npcdelay            = value; break; }
+		case LuaSkill::CREATE_SHOWORDER          : { showorder           = value; break; }
+		case LuaSkill::CREATE_APGAIN             : { apgain              = value; break; }
+		case LuaSkill::CREATE_APCOST             : { apcost              = value; break; }
+		case LuaSkill::CREATE_ARROWCOST          : { arrowcost           = value; break; }
+		case LuaSkill::CREATE_IS_SENIOR          : { is_senior           = value; break; }
+		case LuaSkill::CREATE_IS_INHERENT        : { is_inherent         = value; break; }
+		case LuaSkill::CREATE_IS_MOVINGCAST      : { is_movingcast       = value; break; }
+		case LuaSkill::CREATE_ALLOW_LAND         : { allow_land          = value; break; }
+		case LuaSkill::CREATE_ALLOW_AIR          : { allow_air           = value; break; }
+		case LuaSkill::CREATE_ALLOW_WATER        : { allow_water         = value; break; }
+		case LuaSkill::CREATE_ALLOW_RIDE         : { allow_ride          = value; break; }
+		case LuaSkill::CREATE_NOTUSE_IN_COMBAT   : { notuse_in_combat    = value; break; }
+		case LuaSkill::CREATE_RESTRICT_CORPSE    : { restrict_corpse     = value; break; }
+		case LuaSkill::CREATE_AUTO_ATTACK        : { auto_attack         = value; break; }
+		case LuaSkill::CREATE_TIME_TYPE          : { time_type           = value; break; }
+		case LuaSkill::CREATE_ALLOW_FORMS        : { allow_forms         = value; break; }
+		case LuaSkill::CREATE_LONG_RANGE         : { long_range          = value; break; }
+		case LuaSkill::CREATE_POSDOUBLE          : { posdouble           = value; break; }
+		case LuaSkill::CREATE_CLSLIMIT           : { clslimit            = value; break; }
+		case LuaSkill::CREATE_RANGE              : { range.type          = value; break; }
+		case LuaSkill::CREATE_DOENCHANT          : { doenchant           = value; break; }
+		case LuaSkill::CREATE_DOBLESS            : { dobless             = value; break; }
+		case LuaSkill::CREATE_COMMONCOOLDOWN     : { commoncooldown      = value; break; }
+		case LuaSkill::CREATE_COMMONCOOLDOWNTIME : { commoncooldowntime  = value; break; }
+		case LuaSkill::CREATE_ITEMCOST           : { itemcost            = value; break; }
+		case LuaSkill::CREATE_COMBOSK_PRESKILL   : { combosk_preskill    = value; break; }
+		case LuaSkill::CREATE_COMBOSK_INTERVAL   : { combosk_interval    = value; break; }
+		case LuaSkill::CREATE_COMBOSK_NOBREAK    : { combosk_nobreak     = value; break; }
+		default: { printf("SkillEdit: ERROR TYPE %d ! \n", type);   return; 			break; }
+		}
+	}
 };
 
 class Skill
@@ -579,9 +620,9 @@ public:
 
 	static Skill * Create(ID i)
 	{
-		//return LuaSkill::GetInstance()->Create(i);
-		const Skill * sk = GetStub(i);
-		return sk?sk->Clone():NULL;
+		return LuaSkill::GetInstance()->Create(i);
+		//const Skill * sk = GetStub(i);
+		//return sk?sk->Clone():NULL;
 	}
 
 	void SetId(ID i) { id = i; }
@@ -621,14 +662,154 @@ public:
 	void SetData(SKILL::Data* data) { pdata = data; }
 	const SKILL::Data& GetData() { return *pdata; }
 
+	time_t r_GetTime(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->GetTime(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->GetTime( this );
+				}
+			}
+		}
+		return (time_t) res;
+	}
+	
+	bool r_Quit(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Quit(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->Quit( this );
+				}
+			}
+		}
+		return res;
+	}
+	
+	bool r_Loop(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Loop(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->Loop( this );
+				}
+			}
+		}
+		return res;
+	}
+	
+	bool r_Bypass(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Bypass(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->Bypass( this );
+				}
+			}
+		}
+		return res;
+	}
+		
+	bool r_Calculate(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Calculate(this, id, index) ;
+				if (res == -0)
+				{
+					state->Calculate( this );
+				}
+			}
+		}
+		return res;
+	}
+
+	bool r_Interrupt(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Interrupt(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->Interrupt( this );
+				}
+			}
+		}
+		return res;
+	}
+	
+	bool r_Cancel(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Cancel(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->Cancel( this );
+				}
+			}
+		}
+		return res;
+	}
+	
+	bool r_Skip(int index)
+	{
+		double res = 0;
+		if ( index < GetStateSize() )
+		{
+			const SkillStub::State * state = stub->GetState(index);
+			if(state)
+			{
+				res = LuaSkill::GetInstance()->Skip(this, id, index) ;
+				if (res == -0)
+				{
+					res = state->Skip( this );
+				}
+			}
+		}
+		return res;
+	}
 
 	bool Learn()              	{ return stub->Learn(this); }
 	bool Push()          		{ return stub->Push(this); }
-
-	bool StateAttack()        { return stub->StateAttack(this); }
-	bool BlessMe()            { return stub->BlessMe(this); }
-	//bool StateAttack()        	{ double res = LuaSkill::GetInstance()->StateAttack(this, id) ; res != -0 ? res = true : res = stub->StateAttack(this); return res; }
-	//bool BlessMe()            	{ double res = LuaSkill::GetInstance()->BlessMe(this, id) 	; res != -0 ? res = true : res = stub->BlessMe(this); 	return res; }
+	bool StateAttack()        	{ double res = LuaSkill::GetInstance()->StateAttack(this, id) ; res != -0 ? res = true : res = stub->StateAttack(this); return res; }
+	bool BlessMe()            	{ double res = LuaSkill::GetInstance()->BlessMe(this, id) 	; res != -0 ? res = true : res = stub->BlessMe(this); 	return res; }
 	bool IsInstant()          	{ return stub->time_type==1; }
 	bool IsDurative()         	{ return stub->time_type==2; }
 	bool IsWarmup()           	{ return stub->time_type==3; }
@@ -638,18 +819,16 @@ public:
 	bool IsProduceSkill()     	{ return stub->type==TYPE_PRODUCE; }
 	int Condition()           	{ return stub->Condition(this); }
 	int ElfCondition()        	{ return stub->ElfCondition(this); }
-	//int GetCoolingtime()      	{ double res = LuaSkill::GetInstance()->GetCoolingtime(this, id) 			; res != -0 ? res = 0.001 * res : res = 0.001 * stub->GetCoolingtime(this) ; return (int) res; }	
-	//int GetExecutetime()      	{ double res = LuaSkill::GetInstance()->GetExecutetime(this, id) 			; res != -0 ? res : res = stub->GetExecutetime(this); 			return (int) res; }
-	int GetExecutetime()      	{ return stub->GetExecutetime(this); }
-	int GetCoolingtime()      	{ return (int)(0.001*stub->GetCoolingtime(this)); }
-	int GetEnmity()           	{ return stub->GetEnmity(this); }
-	int GetRequiredSp()       	{ return stub->GetRequiredSp(this); }
-	int GetRequiredLevel()    	{ return stub->GetRequiredLevel(this); }
-	int GetRequiredItem()     	{ return stub->GetRequiredItem(this); }
-	int GetRequiredMoney()    	{ return stub->GetRequiredMoney(this); }
-	int GetMaxability()       	{ return stub->GetMaxAbility(this); }
-	int GetRequiredRealmLevel()	{ return stub->GetRequiredRealmLevel(this); }
-	int GetAttackspeed()      	{ return stub->GetAttackspeed(this); }
+	int GetCoolingtime()      	{ double res = LuaSkill::GetInstance()->GetCoolingtime(this, id) 			; res != -0 ? res = 0.001 * res : res = 0.001 * stub->GetCoolingtime(this) ; return (int) res; }	
+	int GetExecutetime()      	{ double res = LuaSkill::GetInstance()->GetExecutetime(this, id) 			; res != -0 ? res : res = stub->GetExecutetime(this); 			return (int) res; }
+	int GetEnmity()           	{ double res = LuaSkill::GetInstance()->GetEnmity(this, id) 				; res != -0 ? res : res = stub->GetEnmity(this); 				return (int) res; }
+	int GetRequiredSp()       	{ double res = LuaSkill::GetInstance()->GetRequiredSp(this, id) 			; res != -0 ? res : res = stub->GetRequiredSp(this); 			return (int) res; }
+	int GetRequiredLevel()    	{ double res = LuaSkill::GetInstance()->GetRequiredLevel(this, id)		; res != -0 ? res : res = stub->GetRequiredLevel(this); 		return (int) res; }
+	int GetRequiredItem()     	{ double res = LuaSkill::GetInstance()->GetRequiredItem(this, id) 		; res != -0 ? res : res = stub->GetRequiredItem(this); 			return (int) res; }
+	int GetRequiredMoney()    	{ double res = LuaSkill::GetInstance()->GetRequiredMoney(this, id)		; res != -0 ? res : res = stub->GetRequiredMoney(this); 		return (int) res; }
+	int GetMaxability()       	{ double res = LuaSkill::GetInstance()->GetMaxability(this, id) 			; res != -0 ? res : res = stub->GetMaxAbility(this); 			return (int) res; }
+	int GetRequiredRealmLevel()	{ double res = LuaSkill::GetInstance()->GetRequiredRealmLevel(this, id) 	; res != -0 ? res : res = stub->GetRequiredRealmLevel(this); 	return (int) res; }
+	int GetAttackspeed()      	{ double res = LuaSkill::GetInstance()->GetAttackspeed(this, id) 			; res != -0 ? res : res = stub->GetAttackspeed(this); 			return (int) res; }
 	int GetMaxLevel()         	{ return stub->max_level; }
 	int GetAbility()          	{ return 0; }
 	int GetApcost()           	
@@ -677,13 +856,12 @@ public:
 		return newapcost;
 	}
 	int GetApgain()           	{ return stub->apgain; }
-	float GetRadius()         	{ return stub->GetRadius(this); }
-	float GetAttackdistance() 	{ return stub->GetAttackdistance(this); }
-	float GetAngle()          	{ return stub->GetAngle(this); }
-	float GetPraydistance()   	{ return stub->GetPraydistance(this); }
-	float GetEffectdistance() 	{ return stub->GetEffectdistance(this); }
-	float GetHitrate()        	{ return stub->GetHitrate(this); }
-	
+	float GetRadius()         	{ double res = LuaSkill::GetInstance()->GetRadius(this, id) 				; res != -0 ? res : res = stub->GetRadius(this); 			return (float) res; }
+	float GetAttackdistance() 	{ double res = LuaSkill::GetInstance()->GetAttackdistance(this, id) 		; res != -0 ? res : res = stub->GetAttackdistance(this); 	return (float) res; }
+	float GetAngle()          	{ double res = LuaSkill::GetInstance()->GetAngle(this, id) 				; res != -0 ? res : res = stub->GetAngle(this); 			return (float) res; }
+	float GetPraydistance()   	{ double res = LuaSkill::GetInstance()->GetPraydistance(this, id) 		; res != -0 ? res : res = stub->GetPraydistance(this); 		return (float) res; }
+	float GetEffectdistance() 	{ double res = LuaSkill::GetInstance()->GetEffectdistance(this, id) 		; res != -0 ? res : res = stub->GetEffectdistance(this); 	return (float) res; }
+	float GetHitrate()        	{ double res = LuaSkill::GetInstance()->GetHitrate(this, id) 				; res != -0 ? res : res = stub->GetHitrate(this); 			return (float) res; }
 	bool  DoBless() const     	{ return stub->dobless; }
 	bool  DoEnchant() const   	{ return stub->doenchant; }
 	bool  IsSenior() const    	{ return stub->is_senior; }
@@ -715,7 +893,7 @@ public:
 	int GetChargeMerc () { return stub->GetChargeMerc(this); }
 	int GetCoolDownLimit () { return stub->GetCoolDownLimit(this); }
 	int GetCostShieldEnergy () { return stub->GetCostShieldEnergy(this); }
-	//void SkillEdit(int type, double value) { SkillEdit(type, value); }
+	void SkillEdit(int type, double value) { SkillEdit(type, value); }
 	int GetGlyphFeature(){ return stub->feature; }
 
 public:
@@ -934,12 +1112,12 @@ public:
 
 	void SetRand(int) { }
 	int  GetRand() { return rand()%100; }
-	int GetT0() { return t0; }
-	int GetT1() { return t1; }
-	int GetT2() { return t2; }
-	int GetT3() { return t3; }
-	int GetT4() { return t4; }
-
+	int GetT0() { double res = LuaSkill::GetInstance()->GetT0(this, id); res !=-0 ? res : res = t0; return (int)res; }
+	int GetT1() { double res = LuaSkill::GetInstance()->GetT1(this, id); res !=-0 ? res : res = t1; return (int)res; }
+	int GetT2() { double res = LuaSkill::GetInstance()->GetT2(this, id); res !=-0 ? res : res = t2; return (int)res; }
+	int GetT3() { double res = LuaSkill::GetInstance()->GetT3(this, id); res !=-0 ? res : res = t3; return (int)res; }
+	int GetT4() { double res = LuaSkill::GetInstance()->GetT4(this, id); res !=-0 ? res : res = t4; return (int)res; }
+	
 	void  SetTalent(int index, int value)
 	{
 		switch(index)
@@ -970,10 +1148,10 @@ public:
 
 	int InstantRun()
 	{
-		//r_Calculate(0);
-		const SkillStub::State * state = stub->GetState(0);
-		if(state)
-			Run(state);
+		r_Calculate(0);
+		//const SkillStub::State * state = stub->GetState(0);
+		//if(state)
+		//	Run(state);
 		return 1;
 	}
 
@@ -981,32 +1159,32 @@ public:
 	{
 		if(InvalidState())
 			return false;
-		//return r_Interrupt(GetStateindex());
-		const SkillStub::State * state = stub->GetState(GetStateindex());
-		return state->Interrupt(this);
+		return r_Interrupt(GetStateindex());
+		//const SkillStub::State * state = stub->GetState(GetStateindex());
+		//return state->Interrupt(this);
 	}
 
 	bool Cancel()
 	{
 		if(InvalidState())
 			return false;
-		//return r_Cancel(GetStateindex());
-		const SkillStub::State * state = stub->GetState(GetStateindex());
-		return state->Cancel(this);
+		return r_Cancel(GetStateindex());
+		//const SkillStub::State * state = stub->GetState(GetStateindex());
+		//return state->Cancel(this);
 	}
 
 	void NpcFirstRun()
 	{
-		//r_Calculate(0);
-		const SkillStub::State * state = stub->GetState(0);
-		Run( state );
+		r_Calculate(0);
+		//const SkillStub::State * state = stub->GetState(0);
+		//Run( state );
 	}
 
 	void NpcRun()
 	{
-		//r_Calculate(1);
-		const SkillStub::State * state = stub->GetState(1);
-		Run( state );
+		r_Calculate(1);
+		//const SkillStub::State * state = stub->GetState(1);
+		//Run( state );
 	}
 
 	bool TakeEffect(PlayerWrapper* player, int arg);
@@ -1022,11 +1200,11 @@ public:
 		stub->ComboSkEndAction(this);
 	}
 protected:
-	bool Run(const SkillStub::State *state)
-	{
-		state->Calculate( this );
-		return true;
-	}
+	//bool Run(const SkillStub::State *state)
+	//{
+	//	state->Calculate( this );
+	//	return true;
+	//}
 
 	bool InvalidState();
 	int NextState( int index );

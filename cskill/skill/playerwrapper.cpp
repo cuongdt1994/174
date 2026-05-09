@@ -1,6 +1,6 @@
 
 #include "common/types.h"
-#include "../cgame/gs/obj_interface.h"
+#include "obj_interface.h"
 
 #include "filter.h"
 #include "playerwrapper.h"
@@ -9988,6 +9988,18 @@ namespace GNET
 		if (ThrowDice())
 		{
 			object.AddFilter(new filter_SetBattlePassEffect(object, time, object.GetWorldTag(), object.GetEquipSlotCount(), GetValueInt ()));
+		}
+		return true;
+	}
+	bool PlayerWrapper::InsertTeamVisibleState(int value, bool inc)
+	{	
+		if (inc)
+		{
+			object.InsertTeamVisibleState(value, -1);
+		}
+		else
+		{
+			object.RemoveTeamVisibleState(value);
 		}
 		return true;
 	}

@@ -1026,6 +1026,11 @@ namespace S2C
 		{
 			single_data_header header;
 		};
+		
+		struct kid_created_info_dialog
+		{
+			single_data_header header;
+		};
 
 		struct result_lib_produce
 		{
@@ -3777,6 +3782,7 @@ namespace S2C
 			single_data_header header;
 			char enabled; // 0
 			char desabled; // 1
+			char kid; //170+
 			int count_skills;
 			SKILL skill[];
 
@@ -4487,7 +4493,7 @@ namespace S2C
 			ITEM item[];
 		};
 
-		struct cgame_recv_524
+		struct lottery_reward_info
 		{
 			single_data_header header;
 		};
@@ -4548,26 +4554,10 @@ namespace S2C
 			struct LOTTERY
 			{
 				int lottery_draw_lvl;
-
-				int item_id_1;	
-				int item_id_2;
-				int item_count_1;
-				int item_count_2;
-
-				int storage_rest_cnt_0;
-				int storage_rest_cnt_1;
-				int storage_rest_cnt_2;
-				int storage_rest_cnt_3;
-				int storage_rest_cnt_4;
-				
-				char storage_reward_1;				
-				char storage_reward_2;				
-				char storage_reward_3;				
-				char storage_reward_4;				
-				char storage_reward_5;				
-				char storage_reward_6;				
-				char storage_reward_7;				
-				char storage_reward_8;				
+				int item_id[2];	
+				int item_count[2];
+				int storage_rest_cnt[5];				
+				char storage_reward[7];			
 			};
 
 			single_data_header header;
@@ -4575,10 +4565,11 @@ namespace S2C
 			LOTTERY lottery[];	
 		};
 
-		struct cgame_recv_532
+		// Botão de confirmar
+		struct celestial_memorial_lottery_count
 		{
 			single_data_header header;
-			//size = sizeof(single_data_header) + 12; 	
+			unsigned int lottery_count; //0 ~ 3 (174+)
 		};
 
 		struct cgame_recv_533
@@ -4875,80 +4866,161 @@ namespace S2C
 			//size = sizeof(single_data_header) + 24; 	
 		};
 
-		struct cgame_recv_568
+		struct kid_course_change
 		{
 			single_data_header header;
+			char slot_old; // 0 ~
+			char slot_new; // 6 ~
 		};
 
-		struct cgame_recv_569
+		struct kid_course_remove
 		{
 			single_data_header header;
+			char slot_old; // 0 ~
 		};
 
-		struct cgame_recv_570
+		struct kid_name_awakening
 		{
 			single_data_header header;
+			char gender;        // 0 = male, 1 = female
+			char name_len;      // độ dài name (<= 16)
+			char name[16];
 		};
 
-		struct cgame_recv_571
+		struct kid_course_info
 		{
 			single_data_header header;
+			int course_info[5];
+			char reserve; //0
 		};
 
-		struct cgame_recv_572
+		struct kid_course_perc
 		{
 			single_data_header header;
+			char level; // 1 ~ 10
+			int reserve; // 0	
 		};
 
-		struct cgame_recv_573
+		struct kid_course_insert
 		{
 			single_data_header header;
+			char slot_old; // 6 ~
+			char slot_new; // 0 ~
 		};
 
-		struct cgame_recv_574
+		struct kid_course_switch
 		{
 			single_data_header header;
+			char slot_new;
+			char slot_old1;
+			char slot_old2;
 		};
 
-		struct cgame_recv_575
+		struct kid_awakening_points
 		{
 			single_data_header header;
+			int points;
 		};
 
-		struct cgame_recv_576
+		struct kid_awakening_info
 		{
+			struct COURSE_INFO
+			{
+				int course_id;
+				char course_level;
+			};
+
 			single_data_header header;
+
+			int course_info[5];
+			char course_level;
+			char course_random_cost;
+			int exp_course_required;
+			COURSE_INFO course_equip[6];
+			COURSE_INFO course_storage[8];
+			char name[16];
+			char type;
+			int points_awakening;
+			int days_awakening;
+			char enabled_day;
+			int cash_awakening;
+			char block_day;
+			char reserve5;
 		};
 
-		struct cgame_recv_577
+		struct kid_awakening_cash_info
 		{
 			single_data_header header;
+			int cash_info;
+			int course_ratio;
 		};
 
-		struct cgame_recv_578
+		struct kid_celestial_awakening
 		{
 			single_data_header header;
+			int type;
+			int reserve;
 		};
 
-		struct cgame_recv_579
+		struct kid_active_info
 		{
 			single_data_header header;
+			int active_slot; //0~5
+			int reserved; //-1
 		};
 
-		struct cgame_recv_580
+		struct kid_celestial_info
 		{
+			enum KID_TYPE
+			{
+				KID_TYPE_NONE = 0,
+				KID_TYPE_RECV_EXP = 1,
+			};
+
+			struct KID_STRUCT
+			{
+				int level;
+				int rank;
+				int exp;
+				int idx;
+				int atk;
+				int atk_mag;
+				int def;
+				int def_mag[5];
+				int hp;
+				int crit;
+			};
+
 			single_data_header header;
+			int type; // 0
+			int count; // 1~6	
+			KID_STRUCT kid[]; //count	
 		};
 
-		struct cgame_recv_581
+		struct kid_celestial_transformation
 		{
 			single_data_header header;
+			int shape;
+			int roleid;
+			int reserve;
+			int reserve2;
 		};
 
-		struct cgame_recv_582
+		struct kid_award_addon
 		{
+			struct KID_ADDON
+			{
+				int pos; // 0 ~ 5
+				int addons_count; // 8 ~ 64
+				int addons_pos[8];
+			};
+			
 			single_data_header header;
-		};
+			int type; // 0
+			int count; // 1~6	
+			KID_ADDON addon[]; //count
+
+		};		
 
 		struct cgame_recv_583
 		{
@@ -5069,6 +5141,11 @@ namespace S2C
 			int rank_exp;
 			int rank_level;
 		};				
+		struct kid_system_points_notify
+		{
+			single_data_header header;
+			int points;
+		};
 	};
 	
 	

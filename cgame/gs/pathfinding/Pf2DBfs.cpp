@@ -40,12 +40,13 @@ void CPf2DBfs::Init(CMap * pMap, const POS2D& posStart, const POS2D& posGoal, fl
 	m_Open.Init(30);
 
 	
-	m_CurNode.x = m_PosStart.u;
-	m_CurNode.z = m_PosStart.v;
+	m_CurNode.x      = m_PosStart.u;
+	m_CurNode.z      = m_PosStart.v;
 	m_CurNode.prv_x  = PF2D_INVALID_NODE;
 	m_CurNode.prv_z  = PF2D_INVALID_NODE;
-	m_CurNode.cost   = CPathFinding2D::GetManhDist(m_PosStart.u, m_PosStart.v, m_PosGoal.u, m_PosGoal.v);
-	m_Open.Push(m_CurNode);	
+	m_CurNode.g      = 0.0f;
+	m_CurNode.cost   = CPathFinding2D::GetEuclDist(m_PosStart.u, m_PosStart.v, m_PosGoal.u, m_PosGoal.v);
+	m_Open.Push(m_CurNode);
 	
 	m_nSumSearchSteps = 0;
 }
@@ -75,21 +76,38 @@ void CPf2DBfs::StepSearch(int nSteps)
 			break;
 		}
 		++nCounter;
-		// check the 8-neighbors
+		// Expand 8-neighbours with true A* costs (cardinal=1, diagonal=√2)
 		for (int i = 0; i < 8; ++i)
 		{
 			node.x = m_CurNode.x + NeighborD[i*2];
 			node.z = m_CurNode.z + NeighborD[i*2+1];
-			//if ((!g_NPCMoveMap.IsPosReachable(node.x, node.z)) 
-			if ((!m_pMap->IsGroundPosReachable(node.x, node.z)) 
-				|| (m_Close.Find(node.x, node.z))
-				|| (m_Open.Find(node.x, node.z) != m_Open.GetSize()))
+
+			if (!m_pMap->IsGroundPosReachable(node.x, node.z))
+				continue;
+
+			// Prevent corner-cutting: both adjacent cardinal cells must be passable
+			if (i >= 4) // diagonal neighbours start at index 4
 			{
+				if (!m_pMap->IsGroundPosReachable(m_CurNode.x + NeighborD[i*2], m_CurNode.z) ||
+				    !m_pMap->IsGroundPosReachable(m_CurNode.x, m_CurNode.z + NeighborD[i*2+1]))
+					continue;
+			}
+
+			if (m_Close.Find(node.x, node.z))
+				continue;
+
+			// g = actual path cost; f = g + h (Euclidean, admissible for 8-dir grid)
+			float stepCost = (i < 4) ? 1.0f : 1.414f;
+			node.g      = m_CurNode.g + stepCost;
+			node.cost   = node.g + CPathFinding2D::GetEuclDist(node.x, node.z, m_PosGoal.u, m_PosGoal.v);
+			node.prv_x  = m_CurNode.x;
+			node.prv_z  = m_CurNode.z;
+
+			if (m_Open.Find(node.x, node.z) != m_Open.GetSize())
+			{
+				m_Open.UpdateIfBetter(node); // update if new path is cheaper
 				continue;
 			}
-			node.prv_x = m_CurNode.x;
-			node.prv_z = m_CurNode.z;
-			node.cost = CPathFinding2D::GetManhDist(node.x, node.z, m_PosGoal.u, m_PosGoal.v);
 			m_Open.Push(node);
 		}
 		//add to close

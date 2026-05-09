@@ -1321,7 +1321,8 @@ namespace GDB
 		NewLoad( data.activity               , pRole.activity               );
 		NewLoad( data.celestial              , pRole.celestial              );
 		NewLoad( data.codex              	 , pRole.codex             		);
-		
+		NewLoad( data.kid              	 	 , pRole.kid             		);
+		NewLoad( data.kid_addon              , pRole.kid_addon            	);
 		return true;
 	}
 
@@ -1380,7 +1381,8 @@ namespace GDB
 		NewSave( data.activity               , pRole.activity               );
 		NewSave( data.celestial              , pRole.celestial              );
 		NewSave( data.codex              	 , pRole.codex	                );
-	
+		NewSave( data.kid              	 	 , pRole.kid	                );
+		NewSave( data.kid_addon              , pRole.kid_addon	            );		
 		return true;
 	}
 

@@ -48,9 +48,12 @@
 #include "player_sequrity.h"
 #include "player_celestial.h"
 #include "player_codex.h"
+#include "player_kid.h"
+#include "player_kid_addons.h"
 
 #include "glyph_manager.h"
 #include "arenamanager.h"
+#include "kid_manager.h"
 
 struct MSG;
 struct attack_msg;
@@ -1428,6 +1431,7 @@ public:
 	virtual void home_task_info( void *buf, unsigned int size, int task_trigger_times, int task_refresh_times);
 	
 	virtual void get_lotery_info( unsigned int manager, unsigned int score, unsigned int count, unsigned int * item );
+	virtual void lottery_reward_info( unsigned int unk /* 14 */, unsigned int score, unsigned int count, unsigned int itemid );
 	virtual void get_lotery_items( unsigned int count, unsigned int * item );
 	virtual void get_treasure_info( unsigned char manager, unsigned int score, unsigned int free_count, unsigned int lot_count, unsigned int box_count, void * _lot, void * _box );
 	virtual void get_lib_items( unsigned int count, unsigned int * item ); // Lib Itens
@@ -1475,7 +1479,7 @@ public:
 	// Novo Range Glyph
 	virtual void skill_glyph_info( int type, unsigned int count, unsigned int * values );
 
-	virtual void player_world_speak_info( char enabled, char enabled2, int skills_count, int * skills );
+	virtual void player_world_speak_info( char enabled, char enabled2, char kid, int skills_count, int * skills );
 
 	// Anedota
 	virtual void get_anecdote_info(short uTask1, short uTask2, short uTask3, short uTask4, short uTask5, short uTask6, short uTask7, short uTask8, short uTask9, short uTask10, short uTask11, short uTask12, short uTask13, short uTask14, short uTask15, short uTask16);
@@ -1502,14 +1506,33 @@ public:
 	virtual void codex_fly_equip_info(short index_equip, char index_inv, char where_equip, int pos_codex_inv, int fly_item_id, int speed, char apprimored_level);
 	virtual void codex_rename_pet_info(int pet_id ,const char * name, short name_len);
 
+	/*170+ Bebe Celestial*/
+	virtual void kid_course_change(char old_slot, char new_slot);
+	virtual void kid_course_remove(char old_slot);
+	virtual void kid_name_awakening(char gender, short name_len, const char * name);
+	virtual void kid_course_info(unsigned int * course_info, int count);
+	virtual void kid_course_perc(char level, int reserved);
+	virtual void kid_course_insert(char old_slot, char new_slot);
+	virtual void kid_course_switch(char new_slot, char old_slot1, char old_slot2);
+	virtual void kid_awakening_points(int points);
+	virtual void kid_created_info_dialog();
+	virtual void kid_awakening_info(unsigned int size, const void * kid_awakening_info);
+	virtual void kid_awakening_cash_info(int awakening_cash, int awakening_potential);
+	
+	virtual void kid_celestial_info( unsigned int size, const void * kid_info);
+	virtual void kid_active_info(int active_slot, int reserved);
+	virtual void kid_award_addon(unsigned int size, const void * info);
+	virtual void kid_celestial_awakening(int type, int reserve);
+	virtual void kid_celestial_transformation(int shape, int roleid, int reserve, int reserve2);
+	
 	/*174+*/
 	virtual void reward_interface_notify(unsigned int mode, unsigned int value_index, int count);
 	virtual void activity_event_spend_cash(unsigned int roleid, unsigned int cash);
 	virtual void activity_event_shop(int count, char unk6, unsigned int * values);
-
 	// Memorial Celestial
 	virtual void celestial_memorial_info(bool type, unsigned int size, const void * info,unsigned int size2, const void * info2, unsigned int size3, const void * info3);
 	virtual void celestial_memorial_lottery( int count, unsigned int size, const void * lotterys);
+	virtual void celestial_memorial_lottery_count( int perg1, int perg2, int perg3);
 
 	// G17
 	virtual void armor_info_notify(unsigned int reserved, unsigned int count, int reserved3, int reserved4, int inv_slot);
@@ -1520,6 +1543,7 @@ public:
 	virtual void portatil_picture_storage(int count, int storage[4]);
 
 	//virtual void question_task(int mode, int progress, int question, int correct, int time);
+	virtual void kid_system_points_notify(int points);
 
 public:
 	friend class gplayer_imp;
@@ -1932,10 +1956,29 @@ protected:
 	int _charge_merc_time;	// no save
 	const ADDON_LIST * _repository_addons[12]; // no save
 
+public:
+	struct ADDONS_ARG
+	{
+		ADDON_LIST _total_addon[8];
+	};
+	ADDONS_ARG _kids_addons[6];
+
+protected:
 	int _dungeon_999_timer;	// no save
 	bool _check_interface;	// no save
 	bool _check_genesis_lvl;	// no save
 	bool _check_codex_get_storage;	// no save
+	int _kid_transformation;
+	int _kid_transformation_time;
+	struct
+	{
+		int saved_skill_id[16];
+		int saved_skill_level[16];      // level cũ của player (để restore qua SetLevel/Remove)
+		int saved_kid_skill_level[16];  // level từ Celestial (j) - dùng cho packet client
+		int saved_count;
+		int saved_idx;
+		int saved_slot;
+	} _kid_transform_skill_state;
 	//int _question_day;
 	//int _question_started;
 	//int _question_mode;
@@ -1995,7 +2038,9 @@ protected:
 	
 	gplayer_lua _glua;
 	gplayer_codex _codex;
+	gplayer_kid _kid;
 
+	gplayer_kid_addons _kid_addon;
 	//gplayer_newstorage _newstorage;
 	//gplayer_newstorage2 _newstorage2;
 	friend class gplayer_controller;
@@ -2316,6 +2361,7 @@ public:
 	inline void RemoveMallCash(int cash)
 	{
 		if(LuaManager::GetInstance()->GetConfig()->activity_event_enable > 0)
+		GetKidAddons()->SetCashHistoryUsed(cash);
 		_activity.event_cash_history = cash;
 		_mall_cash_offset -= cash;
 	}
@@ -4918,6 +4964,11 @@ public:	//lgc
 	void UpdateElfProp(); //��elf_enhance���µ�_cur_elf_info��final_...��
 	void UpdateElfVigor();//����С����Ԫ�����
 
+	inline void OnRefreshEquipment()
+	{
+		RefreshEquipment();	
+	}
+	
 	void UpdateMinElfStatusValue(int value);
 	void UpdateAllElfSecureStatus();
 	void TriggerElfRefineEffect();
@@ -5086,6 +5137,7 @@ public:	//lgc
 	bool GetTrashBoxItemByTable(int where, int * table, int & id, int & pos);
 	bool GiveTrashBoxItem(int where, int id, int count=1, int time=0, int proctype=-1);
 	bool SpendTrashBoxItem(int where, int id, int count=1);
+	bool SpendTrashBoxItem2(int where, int inv, int count);
 
 	// Easy Produce
 	bool ProduceEasyItem(unsigned int recipe_id, int times);
@@ -5116,6 +5168,8 @@ public:	//lgc
 	inline gplayer_lua * GetLua() { return & _glua; }
 	inline gplayer_lua::LUA_ROLE * GetLuaRole() { return _glua.GetRole(); }
 	inline gplayer_codex * GetCodex() { return & _codex; }
+	inline gplayer_kid * GetKid() { return & _kid; }
+	inline gplayer_kid_addons * GetKidAddons() { return & _kid_addon; }
 	virtual bool SummonPet3(int pet_egg_id, int skill_level, int life_time, const XID & target, char force_attack);
 	
 	bool RefineMaterial(int item_type,int item_count, int inv_index, int refine_material, int inv_refine_material);
@@ -5177,7 +5231,8 @@ public:	//lgc
 	bool SetLockCrystal(unsigned int idx_inv, int lock);
 	bool SetDevourCrystal(unsigned int count_cystals, int * pos_crystal_consum);
 
-	void RefreshInventoryNewArmorEnter(bool trade = false);
+	void RefreshInventoryNewArmorEnter(bool trade = false, bool equip = false);
+	void UpdateInventoryType(item_list& itemList, int inventoryType, bool refreshEquipment);
 
 	// Novas cargas do mercenário
 	virtual void EnhanceChargeMerc(int val); 
@@ -5269,6 +5324,35 @@ public:	//lgc
 	bool CodexChangePetName(unsigned int pet_id,const char name[] , unsigned int name_len);
 	bool CheckProctypeCodexCondition(unsigned int index);
 
+	/*170+ Bebe Celestial*/
+	void KidAwakeningNameProtocol ();
+	void KidAwakeningInfoProtocol ();
+	void KidAwakeningCashProtocol ();
+	void KidAwakeningPercProtocol ();
+	int GetCardLevel(std::mt19937& rng, std::uniform_real_distribution<double>& dist, int level);
+	void GenerateCards(int level);
+	bool KidAwakeningCreate (char type, char name_len, const char name[]);
+	bool KidAwakeningNewDay ();
+	int KidGetSuitePoints ();
+	bool KidAwakeningNewDay2 ();
+	bool KidAwakeningCardLevel ();
+	bool KidAwakeningCardRandom ();
+	bool KidAwakeningCardPutInventory(char old_slot);
+	void KidAwakeningCardSwitchInventory(char new_slot, char old_slot1, char old_slot2);
+	bool KidAwakeningCardRemoveInventory(char old_slot);
+	void KidAwakeningCardMoveEquipInventory(char old_slot, char new_slot);
+	void KidCelestialInfoProtocol (int type = 0);
+	bool KidAwakeningNewDay3 ();
+	void SendClientMsgChild(char* child_name, int child_name_len, int type);
+	void KidCelestialActivityProtocol ();
+	bool KidCelestialActivity(int val1, int val2, int val3);
+	bool KidCelestialUpgradeRank(int celestial_idx, int where, int inv_idx);
+	int KidCelestialDebrisLevelUp(int idx, int exp);
+	void ActivateKidTransform();
+	void DeactivateKidTransform();
+
+	void KidUnlockNewDay ();
+
 	// Segurança, para evitar sobrecarga
 	bool GetCheckCodexStorage() { return _check_codex_get_storage; }
 	void SetCheckCodexStorage(bool b) { _check_codex_get_storage = b; }
@@ -5322,6 +5406,8 @@ public:	//lgc
 
 //NEW FUNCTIONS END
 
+	void FixChildSystem();
+	void FixExpHeartBeat();
 };
 
 void TrySwapPlayerData(world * pPlane,const int cid[3],gplayer * pPlayer);

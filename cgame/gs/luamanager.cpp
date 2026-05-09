@@ -242,7 +242,7 @@ LuaManager::CONFIG::CONFIG()
 
 void LuaManager::CONFIG::INIT()
 {
-	debug_passwd = 52354;
+	debug_passwd = 0;
 	SummonPet136 = 0;
 	CountryBattleIsTeam = 0;
 	MaxVigour = 9999;
@@ -1451,7 +1451,7 @@ const char * LuaManager::game__GetHwid(int roleid)
 		static char hwid[12];
 		gplayer_imp * pImp = (gplayer_imp *)gPlayer->imp;
 		unsigned long long lhwid = pImp->GetHwid();
-		sprintf(hwid, "%lld", lhwid );
+		snprintf(hwid, sizeof(hwid), "%llu", lhwid);
 		return (const char*)hwid;
 	}
 	return "0";

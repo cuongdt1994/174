@@ -13,7 +13,23 @@
 
 #include "GlobalSPMap.h"
 #include <string.h>
+#include <map>
+#include <string>
 #include "NPCChaseSpatiallyPFAgent.h"
+
+// ---------------------------------------------------------------------------
+// Static cache: share loaded octree data between ORIGIN worlds that load
+// from the same directory (e.g. gs01 and gs02 both use "world/airmap").
+// The cache owns the CCompactSpacePassableOctree arrays for their lifetime;
+// CGlobalSPMap instances set m_bSharedSPMaps=true and never delete the data.
+// ---------------------------------------------------------------------------
+namespace {
+	struct SPMapCacheEntry {
+		CCompactSpacePassableOctree* pSPMaps;
+		int iWidth, iLength, iSubMapSize, iVoxelSize;
+	};
+	static std::map<std::string, SPMapCacheEntry> s_spmap_cache;
+}
 
 // #include "GlobalSPMapHash.h"
 
@@ -58,34 +74,56 @@ void CGlobalSPMap::SetFreeSPMap(int row, int col, int MapID,const Pos3DInt& posG
 
 bool CGlobalSPMap::Load(const char* szMapPath)
 {
-	// Firstly, we read the config file.
+	// Normalise path (ensure trailing slash) — used as cache key.
 	char szPathWithSlash[256];
+	unsigned int ilen = strlen(szMapPath);
+	if(ilen == 0 || ilen >= sizeof(szPathWithSlash)) return false;
+	strcpy(szPathWithSlash, szMapPath);
+	if(szMapPath[ilen-1] != '\\' && szMapPath[ilen-1] != '/')
+		strcat(szPathWithSlash, "/");
+
+	// -------------------------------------------------------------------
+	// Cache hit: reuse already-loaded octree data (e.g. gs01 vs gs02
+	// both loading "world/airmap/").  Each CGlobalSPMap keeps its own
+	// m_pMap pointer (per-world) but shares the read-only octree array.
+	// -------------------------------------------------------------------
+	std::string cacheKey(szPathWithSlash);
+	std::map<std::string, SPMapCacheEntry>::iterator it = s_spmap_cache.find(cacheKey);
+	if(it != s_spmap_cache.end())
+	{
+		const SPMapCacheEntry& e = it->second;
+		m_iWidth           = e.iWidth;
+		m_iLength          = e.iLength;
+		m_iSubMapSize      = e.iSubMapSize;
+		m_iVoxelSize       = e.iVoxelSize;
+		m_bStandardSubmap  = (m_iSubMapSize == STANDARD_SUBMAP_SIZE);
+		m_fRecipSubMapSize = 1.0f / m_iSubMapSize;
+		m_fRecipVoxelSize  = 1.0f / m_iVoxelSize;
+		m_SPMaps           = e.pSPMaps;   // borrow; cache owns the array
+		m_bSharedSPMaps    = true;
+		return true;
+	}
+
+	// -------------------------------------------------------------------
+	// Cache miss: load from disk, then register in cache.
+	// -------------------------------------------------------------------
 	char szMapParaPath[256];
 	char szSubMapPath[256];
 
-	unsigned int ilen = strlen(szMapPath);
-	if(ilen ==0 || ilen >= sizeof(szPathWithSlash)) return false;
-
-	strcpy(szPathWithSlash, szMapPath);
-	if(szMapPath[ilen-1]!='\\' && szMapPath[ilen-1]!='/')
-		strcat(szPathWithSlash, "/");
-	
-	// Read Map's parameter from the file MapPara.ini
 	strcpy(szMapParaPath, szPathWithSlash);
 	strcat(szMapParaPath, "spmap.conf");
-	
+
 	FILE* fMapPara = fopen(szMapParaPath, "rt");
 	if(!fMapPara) return false;
-	// Need some error control!
-	fscanf(fMapPara, "Map Width =%d\n", &m_iWidth);
-	fscanf(fMapPara, "Map Length =%d\n", &m_iLength);
+	fscanf(fMapPara, "Map Width =%d\n",   &m_iWidth);
+	fscanf(fMapPara, "Map Length =%d\n",  &m_iLength);
 	fscanf(fMapPara, "Submap Size =%d\n", &m_iSubMapSize);
-	fscanf(fMapPara, "Voxel Size =%d\n", &m_iVoxelSize);
+	fscanf(fMapPara, "Voxel Size =%d\n",  &m_iVoxelSize);
 	fclose(fMapPara);
-	
-	m_bStandardSubmap=(m_iSubMapSize == STANDARD_SUBMAP_SIZE);
+
+	m_bStandardSubmap  = (m_iSubMapSize == STANDARD_SUBMAP_SIZE);
 	m_fRecipSubMapSize = 1.0f / m_iSubMapSize;
-	m_fRecipVoxelSize = 1.0f / m_iVoxelSize;
+	m_fRecipVoxelSize  = 1.0f / m_iVoxelSize;
 
 	// compute the global origin (refer to the left-bottom!)
 	Pos3DInt posGlobalOrigin;
@@ -93,7 +131,7 @@ bool CGlobalSPMap::Load(const char* szMapPath)
 	posGlobalOrigin.y = 0;
 	posGlobalOrigin.z = (m_iSubMapSize * m_iLength) >> 1;
 
-	m_SPMaps = new  CCompactSpacePassableOctree[ m_iWidth * m_iLength ];
+	m_SPMaps = new CCompactSpacePassableOctree[m_iWidth * m_iLength];
 
 	// Then, we read the submap(Octree file) in the following order
 	/*  Assume the global map is conmposed of 8 (m_iWidth) * 11 (m_iLength)
@@ -105,11 +143,11 @@ bool CGlobalSPMap::Load(const char* szMapPath)
 	 *  0 1 2  ... 7
 	 */
 
-	FILE *fSPMap;
-	int iFileID;
-	char szFileName[20];
-	for(int i=0; i< m_iLength; i++)				// i is corresponding to row
-		for(int j=0; j<m_iWidth; j++)			// j is corresponding to col
+	FILE* fSPMap;
+	int   iFileID;
+	char  szFileName[20];
+	for(int i = 0; i < m_iLength; i++)       // i is corresponding to row
+		for(int j = 0; j < m_iWidth; j++)    // j is corresponding to col
 		{
 			iFileID = (m_iLength-i-1)*m_iWidth+j+1;
 			sprintf(szFileName, "%d.octr", iFileID);
@@ -117,29 +155,29 @@ bool CGlobalSPMap::Load(const char* szMapPath)
 			strcat(szSubMapPath, szFileName);
 
 			fSPMap = fopen(szSubMapPath, "rb");
-			
 			if(fSPMap)
 			{
-				CCompactSpacePassableOctree* pCurSPMap = GetSPMap(i,j);
-				
-				// ******* Revised by wenfeng, 05-10-14
-				// If loading fails, we set current SPMap to free!
-				if(!pCurSPMap->Load(fSPMap) || pCurSPMap->GetSize() != m_iSubMapSize )
-				{
-					SetFreeSPMap(i,j,iFileID,posGlobalOrigin);
-				}
-				
+				CCompactSpacePassableOctree* pCurSPMap = GetSPMap(i, j);
+				// If loading fails, set current SPMap to free
+				if(!pCurSPMap->Load(fSPMap) || pCurSPMap->GetSize() != m_iSubMapSize)
+					SetFreeSPMap(i, j, iFileID, posGlobalOrigin);
 				fclose(fSPMap);
 			}
 			else
 			{
-				// ******* Revised by wenfeng, 05-10-14
-				// If loading fails, we set current SPMap to free!
-				SetFreeSPMap(i,j,iFileID,posGlobalOrigin);
+				SetFreeSPMap(i, j, iFileID, posGlobalOrigin);
 			}
-
 		}
-	
+
+	// Register in cache — cache owns the array from here on.
+	SPMapCacheEntry e;
+	e.pSPMaps    = m_SPMaps;
+	e.iWidth     = m_iWidth;
+	e.iLength    = m_iLength;
+	e.iSubMapSize= m_iSubMapSize;
+	e.iVoxelSize = m_iVoxelSize;
+	s_spmap_cache[cacheKey] = e;
+	m_bSharedSPMaps = true;   // cache now owns it; this instance borrows
 
 	return true;
 }

@@ -15,10 +15,10 @@
 class Pf2DNode
 {
 public:
-   short x, z;   //pos
-   short prv_x, prv_z;   //prv node
-   float cost;   //h 
-   
+   short x, z;      // pos
+   short prv_x, prv_z;  // parent pos
+   float g;         // actual cost from start
+   float cost;      // f = g + h  (sort key)
 };
 
 /*
@@ -52,6 +52,19 @@ public:
 	 * @ref:
 	 */
 	inline int Find(short x, short z);
+	// Update node in open list if new f-cost is lower (for A* re-expansion)
+	inline void UpdateIfBetter(const Pf2DNode& node)
+	{
+		for (unsigned int i = 0; i < m_List.size(); ++i)
+		{
+			if (m_List[i].x == node.x && m_List[i].z == node.z)
+			{
+				if (node.cost < m_List[i].cost)
+					m_List[i] = node;
+				return;
+			}
+		}
+	}
 	inline int GetSize()
 	{
 		return m_List.size();

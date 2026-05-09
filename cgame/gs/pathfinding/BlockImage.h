@@ -24,7 +24,7 @@ using namespace abase;
 // Define a 16bits (10.6)  fix dot number type 
 typedef unsigned short FIX16;
 
-#define FLOATTOINT(x) ((int) floor((x)+0.5f))						// ËÄÉáÎåÈë
+#define FLOATTOINT(x) ((int) floor((x)+0.5f))						// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 #define FLOATTOFIX16(x) (FIX16)FLOATTOINT(x*64.0f)
 #define FIX16TOFLOAT(x) ( (x)/64.0f )		
@@ -118,7 +118,7 @@ protected:
 	vector<T* > m_arrBlocks;
 	int* m_BlockIDs;
 	int m_iBlockSize;				// the size of the block, only the width or length, while not the width*length
-	int m_iBlockSizeExp;		  // ÒÔ2Îªµ×µÄm_iBlockSizeµÄÖ¸Êý
+	int m_iBlockSizeExp;		  // ï¿½ï¿½2Îªï¿½×µï¿½m_iBlockSizeï¿½ï¿½Ö¸ï¿½ï¿½
 	int m_iWidth;					  // blocks in width
 	int m_iLength;					  // blocks in length
 
@@ -309,7 +309,7 @@ template<class T>
 bool CBlockImage<T>::Load( FILE *pFileToLoad )
 {
 	if(!pFileToLoad) return false;
-	
+
 	DWORD dwRead, dwReadLen;
 
 	// Read the Version
@@ -317,70 +317,57 @@ bool CBlockImage<T>::Load( FILE *pFileToLoad )
 	if(dwReadLen != sizeof(DWORD))
 		return false;
 
-	if(dwRead==BLOCKIMAGE_VER)
+	if(dwRead == BLOCKIMAGE_VER)
 	{
-		// Current Version
-		// Read the buf size
+		// Skip BufSize â€” read fields directly to avoid a large temporary
+		// buffer that would double peak RAM (each dhmap submap can be MBs).
 		dwReadLen = fread(&dwRead, 1, sizeof(DWORD), pFileToLoad);
 		if(dwReadLen != sizeof(DWORD))
 			return false;
 
-		int BufSize=dwRead;
-		UCHAR * buf = new UCHAR[BufSize];
+		Release();
 
-		// Read the data
-		dwReadLen = fread(buf, 1, BufSize, pFileToLoad);
-		if( dwReadLen != (DWORD)BufSize )
+		// Read header fields directly into members
+		if(fread(&m_iWidth,        sizeof(int),   1, pFileToLoad) != 1) return false;
+		if(fread(&m_iLength,       sizeof(int),   1, pFileToLoad) != 1) return false;
+		if(fread(&m_iBlockSizeExp, sizeof(int),   1, pFileToLoad) != 1) return false;
+		m_iBlockSize = 1 << m_iBlockSizeExp;
+		if(fread(&m_iImageWidth,   sizeof(int),   1, pFileToLoad) != 1) return false;
+		if(fread(&m_iImageLength,  sizeof(int),   1, pFileToLoad) != 1) return false;
+		if(fread(&m_fPixelSize,    sizeof(float), 1, pFileToLoad) != 1) return false;
+
+		// Read BlockID index array
+		int blkIDCount = m_iWidth * m_iLength;
+		m_BlockIDs = new int[blkIDCount];
+		if((int)fread(m_BlockIDs, sizeof(int), blkIDCount, pFileToLoad) != blkIDCount)
 		{
-			delete [] buf;
+			delete [] m_BlockIDs;
+			m_BlockIDs = NULL;
 			return false;
 		}
-		
-		Release();			// Release the old data
-		
-		int cur=0;
-		m_iWidth=* (int *) (buf+cur);
-		cur+=sizeof(int);
-		m_iLength=* (int *) (buf+cur);
-		cur+=sizeof(int);
-		m_iBlockSizeExp=* (int *) (buf+cur);
-		cur+=sizeof(int);
-		m_iBlockSize = 1<<m_iBlockSizeExp;
-		m_iImageWidth=* (int *) (buf+cur);
-		cur+=sizeof(int);
-		m_iImageLength=* (int *) (buf+cur);
-		cur+=sizeof(int);
-		m_fPixelSize=* (float *) (buf+cur);
-		cur+=sizeof(float);
-		
-		int BlkIDSize= m_iWidth*m_iLength*sizeof(int);
-		int BlkSize=m_iBlockSize*m_iBlockSize*sizeof(T);
-		
-		m_BlockIDs=(int *)(new UCHAR[BlkIDSize]);
 
-		memcpy(m_BlockIDs, buf+cur, BlkIDSize);
-		cur+=BlkIDSize;
+		// Read each non-zero block directly into its own allocation
+		int arrBlkSize = 0;
+		if(fread(&arrBlkSize, sizeof(int), 1, pFileToLoad) != 1) return false;
 
-		int arrBlkSize=* (int *) (buf+cur);
-		cur+=sizeof(int);
-
-		for(int i=0; i<arrBlkSize; i++)
+		int pixPerBlock = m_iBlockSize * m_iBlockSize;
+		for(int i = 0; i < arrBlkSize; i++)
 		{
-			T* pTBlock= (T *) (new UCHAR[BlkSize]);
-			memcpy(pTBlock, buf+cur, BlkSize);
+			T* pTBlock = new T[pixPerBlock];
+			if((int)fread(pTBlock, sizeof(T), pixPerBlock, pFileToLoad) != pixPerBlock)
+			{
+				delete [] pTBlock;
+				for(DWORD j = 0; j < m_arrBlocks.size(); j++) delete [] m_arrBlocks[j];
+				m_arrBlocks.clear();
+				delete [] m_BlockIDs; m_BlockIDs = NULL;
+				return false;
+			}
 			m_arrBlocks.push_back(pTBlock);
-			cur+=BlkSize;
 		}
-
-		// Added by wenfeng, 05-9-12
-		// How can you forget this???
-		delete [] buf;			
 
 		return true;
 	}
-	else
-		return false;
-	
+	return false;
 }
 
 }	// end of the namespace

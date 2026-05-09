@@ -407,6 +407,8 @@ struct vecdata_new
 	DBStream activity;
 	DBStream celestial;
 	DBStream codex;
+	DBStream kid;
+	DBStream kid_addon;
 };
 
 struct PutRoleResData

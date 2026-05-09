@@ -133,6 +133,9 @@ public:
 	{
 		return ITEM_TYPE_QILING;
 	}
+public:
+	virtual void ForceOnRefreshItem() { OnRefreshItem (); };
+			
 };
 
 #endif

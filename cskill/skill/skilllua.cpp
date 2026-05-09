@@ -104,7 +104,7 @@ void LuaSkill::game__AddSkill(int ID, long long FUNC, long long STATE, long long
 
 void LuaSkill::game__Editor(long long skill, int type, double value)
 {
-	//if (skill) ((Skill *)skill)->SkillEdit(type , value);
+	if (skill) ((Skill *)skill)->SkillEdit(type , value);
 }
 
 // ================================================================
