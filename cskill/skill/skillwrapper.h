@@ -638,7 +638,6 @@ public:
     void ResurrectByCashAddFilter(object_interface player, int buff_period, const float* buff_ratio, int buff_size);
 	
 	void AddFilterKidIncTransformation(object_interface player, int buff_period); // Imune, debuffs, etc
-    void AddFilterKidDecTransformation(object_interface player, int buff_period); // debuff, hp/mp,defense, etc
 	void SetKidFilter(object_interface player, int* buf);
 	//glyph
 	int GetSkillRuneAttr(ID id);

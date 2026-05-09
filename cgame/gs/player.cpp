@@ -33672,7 +33672,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	memset(_skills_shape, 0, sizeof(_skills_shape));
 	object_interface obj_if(this);
 
-	if (!mode)
+	if (!mode) //het hoa than
 	{
 		if (!_kid_transformation)
 			return;
@@ -33699,7 +33699,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		PlayerGetProperty();
 		return;
 	}
-
+	//hoa than
 	int slot = _kid.GetActivity()->active_slot;
 	if (slot < 0 || slot >= 6)
 	{

@@ -1597,37 +1597,11 @@ void SkillWrapper::ResurrectByCashAddFilter(object_interface player, int buff_pe
 	}
 }
 
-void SkillWrapper::AddFilterKidDecTransformation(object_interface player, int buff_period)
-{
-	if ( buff_period > 0)
-	{
-		PlayerWrapper		w_player(player, 0, 0, 0, 0);
-		w_player.SetTime(1000.0f * buff_period);
-		w_player.SetProbability(100.0);
-		w_player.SetRatio(0.3f);
-		w_player.SetGiant(1);
-		w_player.SetRatio(0.7f);
-		w_player.SetBlessmagic(1);
-		w_player.SetRatio(0.6f);
-		w_player.SetStoneskin(1);
-		w_player.SetRatio(0.6f);
-		w_player.SetIncresist(1);
-		w_player.SetRatio(0.3f);
-		w_player.SetInchp(1);
-		w_player.SetRatio(0.6f);
-		w_player.SetIronshield(1);		
-		w_player.SetProbability (1.0 * 100);
-		w_player.SetCleardebuff(1);			
-	}
-}
-
 void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int buff_period)
 {
 	if ( buff_period > 0)
 	{
 		PlayerWrapper		w_player(player, 0, 0, 0, 0);
-		//w_player.InsertTeamVisibleState(GNET::HSTATE_530, true);
-
 		w_player.SetProbability (1.0 * 100);
 		w_player.SetCleardebuff(1);
 	}
