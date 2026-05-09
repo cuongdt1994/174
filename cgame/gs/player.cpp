@@ -9138,16 +9138,6 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		_kid_addon.ActivateKidsAddons(_parent->ID.id);
 	}
 
-	// Kid transform: state RUNTIME-ONLY (skill list + d_* không persist DB).
-	// Save/Load chỉ giữ _kid_transformation flag + time → khi relog luôn phải
-	// reset CLEAN. Nếu KHÔNG reset thì:
-	//   • _cur_form vẫn = 3 ngầm (qua Save/Load actobject._cur_form) → mọi
-	//     non-kid skill bị từ chối form check.
-	//   • dyn_map rỗng → kid skills cast được do allow_forms=8 nhưng skill
-	//     không tồn tại trong wrapper → silent fail.
-	// Pattern dùng: ChangeShape(0) (reset _cur_form), DecImmuneMask, unlock
-	// equipment, gỡ HSTATE_530, recompute _cur_prop. KHÔNG cần DeactivateDynSkill
-	// vì dyn_map đã rỗng sau load (runtime-only).
 	if (_kid_transformation)
 	{
 		object_interface obj_if_kid(this);
@@ -9160,15 +9150,8 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		_kid_transformation = 0;
 		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-		// ChangeShape2(0, 0) thay vì ChangeShape(0) để VÀ reset _cur_form server
-		// VÀ gửi packet kid_celestial_transformation(0,...) cho client biết hết
-		// hóa thân — cần thiết khi relog đang trong form 3, client mới đăng nhập
-		// chưa biết server đã reset form.
-		obj_if_kid.ChangeShape2(0, 0);
-		//obj_if_kid.RemoveTeamVisibleState(GNET::HSTATE_530);
 
-		// Recompute _cur_prop từ base + equipment (carrier dismount pattern,
-		// player.cpp:26420). Bắt buộc CHẠY SAU khi clear _kid_transformation.
+		obj_if_kid.ChangeShape2(0, 0);
 		property_policy::UpdatePlayer(GetPlayerClass(), this);
 		RefreshEquipment();
 		if (_basic.hp > _cur_prop.max_hp) _basic.hp = _cur_prop.max_hp;
@@ -33497,7 +33480,7 @@ gplayer_imp::KidAwakeningNewDay3()
 		{
 			if(config2->broadcast > 0)
 			{
-				SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), slot);
+				SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), idx_item);
 			}
 
 			DATA_TYPE data3;
@@ -34025,7 +34008,7 @@ gplayer_imp::SendClientMsgChild(char* child_name, int child_name_len, int type)
 	if(len > MAX_USERNAME_LENGTH) len = MAX_USERNAME_LENGTH;
 	memcpy(data.player_name, _username, len);
 
-	unsigned int len2 = MAX_USERNAME_LENGTH_NOTIFY;
+	unsigned int len2 = (child_name_len > 0) ? (unsigned int)child_name_len : 0;
 	if(len2 > MAX_USERNAME_LENGTH_NOTIFY) len2 = MAX_USERNAME_LENGTH_NOTIFY;
 	memcpy(data.child_name, child_name, len2);
 
