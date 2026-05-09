@@ -527,8 +527,7 @@ public:
 	virtual void filter_soul_info(int soul) {}
 	virtual void home_task_info( const void *buf, unsigned int size, int task_trigger_times, int task_refresh_times) {}
 	
-	virtual void get_lotery_info( unsigned int manager, unsigned int score, unsigned int count, unsigned int * item ) {}		
-	virtual void lottery_reward_info( unsigned int unk /* 14 */, unsigned int score, unsigned int count, unsigned int itemid ) {}				 
+	virtual void get_lotery_info( unsigned int manager, unsigned int score, unsigned int count, unsigned int * item ) {}							 
 	virtual void get_lotery_items( unsigned int count, unsigned int * item ) {}
 	virtual void get_treasure_info( unsigned char manager, unsigned int score, unsigned int reserve, unsigned int lot_count, unsigned int box_count, void * _lot, void * _box ) {}
 	virtual void refine_bible_result(int rst) {}
@@ -581,7 +580,7 @@ public:
 	// Novo Range Glyph
 	virtual void skill_glyph_info( int type, unsigned int count, unsigned int * values ) {}
 
-	virtual void player_world_speak_info( char enabled, char enabled2, char kid, int skills_count, int * skills ) {}
+	virtual void player_world_speak_info( char enabled, char enabled2, int skills_count, int * skills ) {}
 
 	// Anedota
 	virtual void get_anecdote_info(short uTask1, short uTask2, short uTask3, short uTask4, short uTask5, short uTask6, short uTask7, short uTask8, short uTask9, short uTask10, short uTask11, short uTask12, short uTask13, short uTask14, short uTask15, short uTask16) {}
@@ -609,24 +608,6 @@ public:
 	virtual void codex_fly_equip_info(short index_equip, char index_inv, char where_equip, int pos_codex_inv, int fly_item_id, int speed, char apprimored_level) {}
 	virtual void codex_rename_pet_info(int pet_id ,const char * name, short name_len) {}
 
-	/*170+ Bebe Celestial*/
-	virtual void kid_course_change(char old_slot, char new_slot) {}
-	virtual void kid_course_remove(char old_slot) {}
-	virtual void kid_name_awakening(char gender, short name_len, const char * name) {}
-	virtual void kid_course_info(unsigned int * course_info, int count) {}
-	virtual void kid_course_perc(char level, int reserved) {}
-	virtual void kid_course_insert(char old_slot, char new_slot) {}
-	virtual void kid_course_switch(char new_slot, char old_slot1, char old_slot2) {}
-	virtual void kid_awakening_points(int points) {}
-	virtual void kid_created_info_dialog() {}
-	virtual void kid_awakening_info(unsigned int size, const void * kid_awakening_info){}
-	virtual void kid_awakening_cash_info(int awakening_cash, int awakening_potential) {}
-	
-	virtual void kid_celestial_info(unsigned int size, const void * kid_info){}
-	virtual void kid_active_info(int active_slot, int reserved) {}
-	virtual void kid_award_addon(unsigned int size, const void * info){}
-	virtual void kid_celestial_awakening(int type, int reserve){}
-	virtual void kid_celestial_transformation(int shape, int roleid, int reserve, int reserve2){}
 	/*174*/
 	virtual void reward_interface_notify(unsigned int mode, unsigned int value_index, int count) {}
 	virtual void activity_event_spend_cash(unsigned int roleid, unsigned int cash) {}
@@ -635,7 +616,7 @@ public:
 	// Memorial Celestial
 	virtual void celestial_memorial_info(bool type, unsigned int size, const void * info,unsigned int size2, const void * info2, unsigned int size3, const void * info3) {}
 	virtual void celestial_memorial_lottery( int count, unsigned int size, const void * lotterys) {}
-	virtual void celestial_memorial_lottery_count( int perg1, int perg2, int perg3) {}
+
 	// G17
 	virtual void armor_info_notify(unsigned int reserved, unsigned int count, int reserved3, int reserved4, int inv_slot) {}
 	virtual void armor_info_purification(int count, unsigned int * values) {}
@@ -643,7 +624,6 @@ public:
 	/*176+*/
 	virtual void portatil_picture_info(int roleid, int res, int res2, int idx, int res3) {}
 	virtual void portatil_picture_storage(int count, int storage[4]) {}
-	virtual void kid_system_points_notify(int points) {}
 
 public:
 	void MoveBetweenSlice(slice * pPiece,slice * pNewPiece,const A3DVECTOR &pos);

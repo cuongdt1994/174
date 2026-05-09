@@ -12,7 +12,7 @@
 class kid_dribis_item : public item_body
 {
 protected:
-	virtual bool IsItemCanUse(item::LOCATION l) { return false;}
+	virtual bool IsItemCanUse(item::LOCATION l) { return true;}
 	virtual bool IsItemSitDownCanUse(item::LOCATION l) { return true;}
 	virtual bool ArmorDecDurability(int) { return false;}
 public:

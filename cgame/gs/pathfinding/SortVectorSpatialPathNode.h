@@ -6,13 +6,15 @@
  *
  * CREATED BY:		He wenfeng, 2005/10/11
  *
- * HISTORY:
+ * HISTORY: 
  *
  * Copyright (c) 2005 Archosaur Studio, All Rights Reserved.
  */
 
 #ifndef	_SORTVECTORSPATIALPATHNODE_H_
 #define _SORTVECTORSPATIALPATHNODE_H_
+
+#define MAX_NODE_NUM 60
 
 #include "CompactSpacePassableOctree.h"
 using namespace SPOctree;
@@ -27,9 +29,9 @@ struct SpatialPathNode
 		pOctrTravNode = NULL;
 		pLastPathNode = NULL;
 	}
-
-	SpatialPathNode(const Pos3DInt& posPara, int gPara, int hPara, CSPOctreeTravNode* pOctrTravNodePara, SpatialPathNode *pLastPathNodePara)
-		: pos(posPara), g(gPara), h(hPara), f(gPara + hPara)
+	
+	SpatialPathNode(const Pos3DInt& posPara, int hPara,CSPOctreeTravNode* pOctrTravNodePara,SpatialPathNode *pLastPathNodePara)
+		:pos(posPara),h(hPara)
 	{
 		pOctrTravNode = pOctrTravNodePara;
 		pLastPathNode = pLastPathNodePara;
@@ -37,54 +39,73 @@ struct SpatialPathNode
 
 	~SpatialPathNode()
 	{
-		if(pOctrTravNode)
+		if(pOctrTravNode) 
 			delete pOctrTravNode;
 	}
 
-	Pos3DInt pos;
-	int g;   // actual cost from start
-	int h;   // heuristic cost to goal
-	int f;   // f = g + h (sort key)
-
+// data members
+	
+	Pos3DInt pos;		// position
+	int h;				// heuristic cost to the terminal
+	
+	// position's corresponding traversal node in the octree
 	CSPOctreeTravNode * pOctrTravNode;
-	SpatialPathNode * pLastPathNode;
+	
+	// last path node
+	SpatialPathNode * pLastPathNode;	
 };
 typedef SpatialPathNode* PtrSpatialPathNode;
 typedef vector<PtrSpatialPathNode> VecPtrSpatialPathNode;
 
-// Sorted vector of 3D spatial path-finding node (A* open list).
-// Sorted by f = g + h (ascending); no hard cap on size.
+// Sorted vector of 3D spatial path-finding node.
+// Class prototype of Open list in BFS alogrithm
 class CSortVectorSpatialPathNode: public VecPtrSpatialPathNode
 {
 public:
-
-	bool SortPush(const Pos3DInt& pos, int g, int h, CSPOctreeTravNode* pOctrTravNode, SpatialPathNode *pLastPathNode)
+	
+	// Push in order: the PathNode with least "h" value will 
+	// be laid in the front of the vector
+	bool SortPush(const Pos3DInt& pos, int h,CSPOctreeTravNode* pOctrTravNode,SpatialPathNode *pLastPathNode)
 	{
-		int f = g + h;
-		PtrSpatialPathNode pNewPathNode = new SpatialPathNode(pos, g, h, pOctrTravNode, pLastPathNode);
-		for(VecPtrSpatialPathNode::iterator it = begin(); it != end(); ++it)
+		PtrSpatialPathNode pNewPathNode;
+
+		for(VecPtrSpatialPathNode::iterator it = begin();it!=end();it++)
 		{
-			if(f < (*it)->f)
+			if( h < (*it)->h)
 			{
+				pNewPathNode = new SpatialPathNode(pos,h,pOctrTravNode,pLastPathNode);
 				insert(it, pNewPathNode);
+				// exceeds the max number, so we pop the last node
+				if(size() > MAX_NODE_NUM)
+				{
+					PtrSpatialPathNode pBackPathNode = back();
+					pop_back();
+					delete pBackPathNode;
+				}
+
 				return true;
 			}
 		}
+		
+		if(size() == MAX_NODE_NUM) return false;
+		
+		pNewPathNode = new SpatialPathNode(pos,h,pOctrTravNode,pLastPathNode);
 		push_back(pNewPathNode);
 		return true;
 	}
-
+	
 	PtrSpatialPathNode PopFront()
 	{
 		if(empty()) return NULL;
 		PtrSpatialPathNode pPathNode = front();
-		erase(begin());
+		VecPtrSpatialPathNode::iterator it = begin();
+		erase(it);
 		return pPathNode;
 	}
 
 	PtrSpatialPathNode FindByPos(const Pos3DInt& pos)
 	{
-		for(VecPtrSpatialPathNode::iterator it = begin(); it != end(); ++it)
+		for(VecPtrSpatialPathNode::iterator it = begin(); it!= end(); it++)
 		{
 			if((*it)->pos == pos)
 				return *it;
@@ -92,42 +113,9 @@ public:
 		return NULL;
 	}
 
-	// Update cost if new path is cheaper; returns true if node was found (whether updated or not).
-	bool UpdateIfBetter(const Pos3DInt& pos, int newG, int newH, SpatialPathNode* pParent)
-	{
-		int newF = newG + newH;
-		for(VecPtrSpatialPathNode::iterator it = begin(); it != end(); ++it)
-		{
-			if((*it)->pos == pos)
-			{
-				if(newF < (*it)->f)
-				{
-					(*it)->g = newG;
-					(*it)->h = newH;
-					(*it)->f = newF;
-					(*it)->pLastPathNode = pParent;
-					// re-sort: remove then re-insert at correct position
-					PtrSpatialPathNode pNode = *it;
-					erase(it);
-					for(VecPtrSpatialPathNode::iterator jt = begin(); jt != end(); ++jt)
-					{
-						if(newF < (*jt)->f)
-						{
-							insert(jt, pNode);
-							return true;
-						}
-					}
-					push_back(pNode);
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-
 	void Release()
 	{
-		for(VecPtrSpatialPathNode::iterator it = begin(); it != end(); ++it)
+		for(VecPtrSpatialPathNode::iterator it = begin(); it!= end(); it++)
 		{
 			delete (*it);
 		}

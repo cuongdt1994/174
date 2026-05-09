@@ -6,8 +6,6 @@ DEBUG_VERSION = false
 
 include ../mk/gcc.defs.mk
 
-INCLUDES += -I../../cgame/gs
-
 DEFINES  += -D__USE_SPEC_GAMEDATASEND__ -g -ggdb -O0
 
 #CPP += -m32

@@ -79,8 +79,6 @@ public:
 	void DeactivateTome();
 	bool CheckActivateTome();
 	void IncTomeExp(int exp);
-	inline int GetTomeExp() { return _tome_exp; }
-	inline void SetTomeExp(int val) { _tome_exp = val; }
 
 	void CalcHistoricalMaxLevel();
 	void CalcExpBonus();

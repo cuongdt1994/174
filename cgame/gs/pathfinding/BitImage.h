@@ -227,7 +227,7 @@ bool CBitImage::Save( FILE *pFileToSave )
 bool CBitImage::Load( FILE *pFileToLoad )
 {
 	if(!pFileToLoad) return false;
-
+	
 	DWORD dwRead, dwReadLen;
 
 	// Read the Version
@@ -235,34 +235,50 @@ bool CBitImage::Load( FILE *pFileToLoad )
 	if(dwReadLen != sizeof(DWORD))
 		return false;
 
-	if(dwRead == BITIMAGE_VER)
+	if(dwRead==BITIMAGE_VER)
 	{
-		// Skip BufSize field — we read fields directly to avoid a
-		// temporary buffer that would double peak RAM on large submaps.
+		// Current Version
+		
+		// Read the buf size
 		dwReadLen = fread(&dwRead, 1, sizeof(DWORD), pFileToLoad);
 		if(dwReadLen != sizeof(DWORD))
 			return false;
+		
+		int BufSize=dwRead;
+		UCHAR * buf = new UCHAR[BufSize];
 
-		Release();
-
-		// Read header fields directly into members
-		if(fread(&m_iWidth,        sizeof(int),   1, pFileToLoad) != 1) return false;
-		if(fread(&m_iLength,       sizeof(int),   1, pFileToLoad) != 1) return false;
-		if(fread(&m_iImageWidth,   sizeof(int),   1, pFileToLoad) != 1) return false;
-		if(fread(&m_iImageLength,  sizeof(int),   1, pFileToLoad) != 1) return false;
-		if(fread(&m_fPixelSize,    sizeof(float), 1, pFileToLoad) != 1) return false;
-
-		int imgSize = m_iWidth * m_iLength;
-		m_BitImage = new UCHAR[imgSize];
-		if((int)fread(m_BitImage, 1, imgSize, pFileToLoad) != imgSize)
+		// Read the data
+		dwReadLen = fread(buf, 1, BufSize, pFileToLoad);
+		if( dwReadLen != (DWORD)BufSize )
 		{
-			delete [] m_BitImage;
-			m_BitImage = NULL;
+			delete [] buf;
 			return false;
 		}
+			
+		Release();			// Release the old data
+
+		int cur=0;
+		m_iWidth=* (int *) (buf+cur);
+		cur+=sizeof(int);
+		m_iLength=* (int *) (buf+cur);
+		cur+=sizeof(int);
+		
+		m_iImageWidth=* (int *) (buf+cur);
+		cur+=sizeof(int);
+		m_iImageLength=* (int *) (buf+cur);
+		cur+=sizeof(int);
+		m_fPixelSize=* (float *) (buf+cur);
+		cur+=sizeof(float);
+		
+		m_BitImage = new UCHAR[ m_iWidth * m_iLength ];
+		memcpy(m_BitImage, buf+cur, m_iWidth * m_iLength);
+
+		delete [] buf;
 		return true;
+
 	}
-	return false;
+	else
+		return false;
 }
 
 } // end of namespace

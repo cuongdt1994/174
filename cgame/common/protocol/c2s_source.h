@@ -2059,45 +2059,24 @@ namespace C2S
 			cmd_header header;
 		};
 
-		struct kid_awakening_manager
+		struct cgame_send_265
 		{
 			cmd_header header;
-			char mode;
-			char type;
 		};
 
-		struct kid_equip_manager
+		struct cgame_send_266
 		{
 			cmd_header header;
-			char old_slot;
-			char new_slot;
 		};
 
-		struct kid_awakening_switch
+		struct cgame_send_267
 		{
 			cmd_header header;
-			char new_slot;
-			char old_slot1;
-			char old_slot2;
 		};
-			
-		struct kid_system_manager
-		{
-			enum
-			{
-				KID_SYSTEM_MANAGER_MODE_NEW_LEVEL = 0, // Evoluí o novo nível
-				KID_SYSTEM_MANAGER_MODE_CONSUM_EXP_RANK = 1, // Consome os itens para aumentar o rank
-				KID_SYSTEM_MANAGER_MODE_SWITCH_TRANSFORM = 2, // Troca o tipo de transformação
-				KID_SYSTEM_MANAGER_MODE_RESERVE = 3, // ??
-				KID_SYSTEM_MANAGER_MODE_TRANSFORM = 4, // Transforma e recebe os buffs
-				KID_SYSTEM_MANAGER_MODE_GET_ADDON = 5, // Pega os atributos
-			};
 
+		struct cgame_send_268
+		{
 			cmd_header header;
-			unsigned int mode;
-			int val1;
-			int val2;
-			int val3;
 		};
 
 		struct activity_event_reward_login

@@ -59,11 +59,7 @@ namespace
 	public:
 		virtual int GenerateParam(int datatype,addon_data & data,int arg_num)
 		{
-			// 173 ref (player_kid::Activate) chỉ log "kid addon_id err" thay vì abort
-			// nếu generate_addon trả dữ liệu lệch param count. Soft-fix theo cùng
-			// pattern đã áp dụng cho SECOND/DOUBLE_POINT/GLYPH_POINT để tránh crash
-			// khi KID_LEVEL_REWARD_CONFIG (lv 70) trỏ tới addon POINT có num_params != 1.
-			if (arg_num != 1) arg_num = 1; //ASSERT(arg_num == 1);
+			ASSERT(arg_num == 1);
 			return 1;
 		}
 
@@ -84,8 +80,7 @@ namespace
 	public:
 		virtual int GenerateParam(int datatype,addon_data & data,int arg_num)
 		{
-			// Soft-fix theo 173 ref pattern: log/swallow thay vì abort khi data file lệch.
-			if (arg_num != 2) arg_num = 2; //ASSERT(arg_num == 2);
+			ASSERT(arg_num == 2);
 			return 2;
 		}
 

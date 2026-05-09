@@ -1633,16 +1633,6 @@ namespace  S2C
 				return Make<single_data_header>::From(wrapper,LIB_PRODUCE_RESULT);
 			}			
 		};
-		template <>
-		struct Make<CMD::kid_system_points_notify>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER & From(WRAPPER & wrapper,int points)
-			{
-				Make<single_data_header>::From(wrapper,KID_SYSTEM_POINTS_NOTIFY);
-				return wrapper << points;
-			}
-		};
 				
 		template <>
 		struct Make<CMD::decompose_start>
@@ -5643,12 +5633,12 @@ namespace  S2C
 		struct Make<CMD::player_world_speak_info>
 		{
 			template<typename WRAPPER>
-			inline static WRAPPER & From( WRAPPER & wrapper, char enabled, char enabled2, char kid, int skills_count, int * skills )
+			inline static WRAPPER & From( WRAPPER & wrapper, char enabled, char enabled2, int skills_count, int * skills )
 			{				
 				Make<single_data_header>::From(wrapper,PLAYER_WORLD_SPEAK_INFO);
 				player_world_speak_info::SKILL * skill = (player_world_speak_info::SKILL *)skills;
 				
-				wrapper << enabled << enabled2 << kid << skills_count;								
+				wrapper << enabled << enabled2 << (char)0 /*174*/ << skills_count;								
 				for(int i = 0; i < skills_count; i++)
 				{
 					wrapper << skill[i].id << skill[i].level;
@@ -6754,16 +6744,6 @@ namespace  S2C
 		};
 
 		template<>
-        struct Make<CMD::lottery_reward_info>
-        {
-            template<typename WRAPPER>
-            inline static WRAPPER & From( WRAPPER & wrapper, int unk, int points, int count, int item_id )
-            {
-                Make<single_data_header>::From(wrapper,LOTERY_REWARD_INFO);
-                return wrapper << unk << points << count << item_id;
-            }
-        };
-		template<>
 		struct Make<CMD::celestial_memorial_info>
 		{
 			template <typename WRAPPER>
@@ -6788,17 +6768,6 @@ namespace  S2C
 				wrapper << count;
 				wrapper.push_back(lotterys, size);	
 				return wrapper;
-			}
-		};
-
-		template<>
-		struct Make<CMD::celestial_memorial_lottery_count>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, int perg1, int perg2, int perg3)
-			{
-				Make<single_data_header>::From(wrapper, CELESTIAL_MEMORIAL_LOTTERY_COUNT);
-				return wrapper << perg1 << perg2 << perg3;
 			}
 		};
 		
@@ -6847,196 +6816,6 @@ namespace  S2C
 				return wrapper;
 			}
 			
-		};
-
-		/* 170+ bebe celestial */
-		template <>
-		struct Make<CMD::kid_course_change>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, char old_slot, char new_slot)
-			{
-				Make<single_data_header>::From(wrapper, KID_COURSE_CHANGE);
-				return wrapper << old_slot << new_slot;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_course_remove>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, char old_slot)
-			{
-				Make<single_data_header>::From(wrapper, KID_COURSE_REMOVE);
-				return wrapper << old_slot;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_name_awakening>
-		{
-			// Format 173 (kid_val9 / opcode 570): [gender(1B)][name_len(1B)][name bytes].
-			// Client dùng gói này để trigger hoạt ảnh sinh kid + auto-mở bảng kid sau
-			// khi tạo. Thiếu 2 byte header (gender + name_len) thì client diễn giải
-			// sai → không có hoạt ảnh và phải tắt/mở bảng thủ công.
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, char gender, short name_len, const char * name)
-			{
-				Make<single_data_header>::From(wrapper, KID_NAME_AWAKENING);
-				if(name_len > 16) name_len = 16;
-				wrapper << gender << (char)name_len;
-				wrapper.push_back(name, name_len);
-
-				return wrapper;
-			}
-		};
-		
-		template <>
-		struct Make<CMD::kid_course_info>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, unsigned int * course_info, int count)
-			{
-				Make<single_data_header>::From(wrapper, KID_COURSE_INFO);
-				wrapper.push_back(course_info, count * sizeof(int));
-				wrapper << (char)0;	
-				return wrapper;
-			}		
-		};	
-
-		template <>
-		struct Make<CMD::kid_course_perc>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, char level, int reserved)
-			{
-				Make<single_data_header>::From(wrapper, KID_COURSE_PERC);
-				return wrapper << level << reserved;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_awakening_points>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, int points)
-			{
-				Make<single_data_header>::From(wrapper, KID_AWAKENING_POINTS);
-				return wrapper << points;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_course_insert>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, char old_slot, char new_slot)
-			{
-				Make<single_data_header>::From(wrapper, KID_COURSE_INSERT);
-				return wrapper << old_slot << new_slot;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_course_switch>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, char new_slot, char old_slot1, char old_slot2)
-			{
-				Make<single_data_header>::From(wrapper, KID_COURSE_SWITCH);
-				return wrapper << new_slot << old_slot1 << old_slot2;
-			}		
-		};
-
-		template<>
-		struct Make<CMD::kid_awakening_info>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, unsigned int size, const void * kid_awakening_info)
-			{				
-				Make<single_data_header>::From(wrapper, KID_AWAKENING_INFO);
-				wrapper.push_back(kid_awakening_info, size);
-				return wrapper;
-			}
-		};
-
-		template<>
-		struct Make<CMD::kid_celestial_info>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, unsigned int size, const void * kid_info)
-			{				
-				Make<single_data_header>::From(wrapper, KID_CELESTIAL_INFO);
-				wrapper.push_back(kid_info, size);
-				return wrapper;
-			}
-		};
-
-		template<>
-		struct Make<CMD::kid_celestial_transformation>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, int shape, int roleid, int reserve, int reserve2)
-			{				
-				Make<single_data_header>::From(wrapper, KID_CELESTIAL_TRANSFORMATION);
-				return wrapper << shape << roleid << reserve << reserve2;
-				return wrapper;
-			}
-		};
-
-		template <>
-		struct Make<CMD::kid_celestial_awakening>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, int type, int reserve)
-			{
-				Make<single_data_header>::From(wrapper, KID_CELESTIAL_AWAKENING);
-				return wrapper << type << reserve;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_awakening_cash_info>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, int awakening_cash, int awakening_potential)
-			{
-				Make<single_data_header>::From(wrapper, KID_AWAKENING_CASH_INFO);
-				return wrapper << awakening_cash << awakening_potential;
-			}		
-		};
-
-		template <>
-		struct Make<CMD::kid_created_info_dialog>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER & From(WRAPPER & wrapper)
-			{
-				return Make<single_data_header>::From(wrapper,CREATE_KID_SYSTEM);
-			}			
-		};
-
-		template <>
-		struct Make<CMD::kid_active_info>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, int active_slot, int reserved)
-			{
-				Make<single_data_header>::From(wrapper, KID_ACTIVE_INFO);
-				return wrapper << active_slot << reserved;
-			}		
-		};
-
-		template<>
-		struct Make<CMD::kid_award_addon>
-		{
-			template <typename WRAPPER>
-			inline static WRAPPER& From(WRAPPER& wrapper, unsigned int size, const void * info)
-			{				
-				Make<single_data_header>::From(wrapper, KID_AWARD_ADDON);
-				wrapper.push_back(info, size);
-				return wrapper;
-			}
 		};
 		
 		template <>

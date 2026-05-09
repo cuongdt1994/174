@@ -1,1 +1,0 @@
-/root/cgame/gs/dbgprt.h

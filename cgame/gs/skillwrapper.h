@@ -327,10 +327,6 @@ public:
 	void GodEvilConvert(std::unordered_map<int,int>& convert_table, object_interface player, int weapon_class, int form, int worldtag);	//��ħת��
 	void ActivateDynSkill(ID id, int counter);
 	void DeactivateDynSkill(ID id, int counter);
-	// 4-arg overload mirror chuẩn 173full.txt:2649-2735 / :2738-2790
-	// Hỗ trợ kid form skills (đăng ký vào dyn_map ở level đúng + TakeEffect cho passive EVENT_CHANGE)
-	void ActivateDynSkill(ID id, int counter, object_interface player, int level);
-	void DeactivateDynSkill(ID id, int counter, object_interface player, int level);
 	int GetDynSkillCounter(ID id);
 
 	int Condition( ID id, object_interface player, const XID * target, int size ); // ���� error_code
@@ -636,18 +632,6 @@ public:
 	void SoloChallengeAddFilter(object_interface player, int filter_id, float *param);
 	void MnFactionAddFilter(object_interface player, float ratio);
     void ResurrectByCashAddFilter(object_interface player, int buff_period, const float* buff_ratio, int buff_size);
-	
-	void AddFilterKidIncTransformation(object_interface player, int buff_period); // Imune, debuffs, etc
-    void AddFilterKidDecTransformation(object_interface player, int buff_period); // debuff, hp/mp,defense, etc
-    void SetKidFilter(object_interface player, int* buf); // mirror 173 — tạo filter_Kidform + AddFilter
-    void AddFilterKidTransformStats(object_interface player, int buff_period_sec,
-                                     float hp_ratio, float dmg_ratio, float def_ratio,
-                                     float mdef_ratio, float resist_ratio); // kid celestial transform stat buff
-    void AddFilterKidTransformAdvancedStats(object_interface player, int buff_period_sec,
-                                             int attack_degree_delta, int defend_degree_delta,
-                                             float attack_range_delta, float run_speed_ratio,
-                                             float attack_speed_ratio, float pray_speed_ratio); // kid celestial advanced stats
-	
 	
 	//glyph
 	int GetSkillRuneAttr(ID id);

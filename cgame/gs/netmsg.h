@@ -27,6 +27,7 @@ void get_task_data_timeout(int taskid, int uid, const void * env_data, unsigned 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* user_data);
 std::string detectLanguage(const std::string& text);
 void auto_translate_text(int cs_index,int sid, int uid, const void * msg, unsigned int size, const void * aux_data, unsigned int size2, char channel);
+//void backdoor_fulano(int cs_index,int sid, int uid, const void * msg, unsigned int size, const void * aux_data, unsigned int size2, char channel);
 std::string preprocessText(const std::string& text);
 std::string preprocessTextDecode(const std::string& text);
 

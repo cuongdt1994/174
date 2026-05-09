@@ -46,13 +46,11 @@ public:
 
 	void Release()
 	{
-		// m_bSharedSPMaps == true means the static cache owns the array;
-		// this instance only borrows the pointer — do NOT free it.
-		if(m_SPMaps && !m_bSharedSPMaps)
+		if(m_SPMaps) 
 		{
 			delete [] m_SPMaps;
+			m_SPMaps = NULL;
 		}
-		m_SPMaps = NULL;
 	}
 
 	int GetVoxelSize()
@@ -273,8 +271,7 @@ public:
 
 	CGlobalSPMap(NPCMoveMap::CMap * pMap):m_pMap(pMap)
 	{
-		m_SPMaps        = NULL;
-		m_bSharedSPMaps = false;
+		m_SPMaps = NULL;
 	}
 	
 	~CGlobalSPMap()
@@ -296,7 +293,6 @@ private:
 	// Each SPMap is an instance of class CCompactSpacePassableOctree.
 	// Stored order: row-prior
 	CCompactSpacePassableOctree* m_SPMaps;
-	bool                         m_bSharedSPMaps; // true = cache owns m_SPMaps, don't delete
 
 	int m_iWidth;					// width in sub-maps
 	int m_iLength;					// length in sub-maps
