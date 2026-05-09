@@ -15437,7 +15437,7 @@ protected:
 public:
 	DECLARE_SUBSTANCE(filter_Kidform);
 	filter_Kidform(object_interface object, int* buf)
-		: timeout_filter(object, 30, FILTER_MASK)
+		: timeout_filter(object, 1800, FILTER_MASK)
 	{
 		_shape             = buf[0];
 		_attack_type       = buf[1];
