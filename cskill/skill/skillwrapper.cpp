@@ -1597,16 +1597,6 @@ void SkillWrapper::ResurrectByCashAddFilter(object_interface player, int buff_pe
 	}
 }
 
-void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int buff_period)
-{
-	if ( buff_period > 0)
-	{
-		PlayerWrapper		w_player(player, 0, 0, 0, 0);
-		w_player.SetProbability (1.0 * 100);
-		w_player.SetCleardebuff(1);
-	}
-}
-
 void SkillWrapper::SetKidFilter(object_interface player, int* buf)
 {
 	player.AddFilter(new filter_Kidform(player, buf));

@@ -638,9 +638,7 @@ public:
     void ResurrectByCashAddFilter(object_interface player, int buff_period, const float* buff_ratio, int buff_size);
 
 	// Mirror cskill/skill/skillwrapper.cpp:1600-1612 — kid form helpers.
-	// AddFilterKidIncTransformation: cleardebuff filter (Imune) áp khi vào hóa thân.
 	// SetKidFilter: gắn filter_Kidform mang stat-delta + skill list (layout 24+ ints).
-	void AddFilterKidIncTransformation(object_interface player, int buff_period);
 	void SetKidFilter(object_interface player, int* buf);
 	
 	
