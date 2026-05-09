@@ -1616,7 +1616,6 @@ void SkillWrapper::AddFilterKidDecTransformation(object_interface player, int bu
 		w_player.SetInchp(1);
 		w_player.SetRatio(0.6f);
 		w_player.SetIronshield(1);		
-
 		w_player.SetProbability (1.0 * 100);
 		w_player.SetCleardebuff(1);			
 	}
@@ -1627,17 +1626,13 @@ void SkillWrapper::AddFilterKidIncTransformation(object_interface player, int bu
 	if ( buff_period > 0)
 	{
 		PlayerWrapper		w_player(player, 0, 0, 0, 0);
-		w_player.InsertTeamVisibleState(GNET::HSTATE_530, true);
+		//w_player.InsertTeamVisibleState(GNET::HSTATE_530, true);
 
 		w_player.SetProbability (1.0 * 100);
 		w_player.SetCleardebuff(1);
 	}
 }
 
-// Mirror chuẩn ski.txt — GNET::SkillWrapper::SetKidFilter
-//   v3 = (filter_Kidform *)abase::ASmallObject::operator new(0xF4u);
-//   filter_Kidform::filter_Kidform(v3, player, buf);
-//   object_interface::AddFilter(&player, v3);
 void SkillWrapper::SetKidFilter(object_interface player, int* buf)
 {
 	player.AddFilter(new filter_Kidform(player, buf));
