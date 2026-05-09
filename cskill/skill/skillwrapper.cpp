@@ -13,7 +13,7 @@
 #include "skillfilter.h"
 #include "skilllevel.h"
 #include "statedef.h"
-#include "skilllua.h"
+//#include "skilllua.h"
 
 namespace GNET
 {
@@ -63,7 +63,7 @@ int SkillWrapper::BlackWhiteBall::UpdateVstate(int& oldv)
 
 bool SkillWrapper::Initialize()
 {
-	LuaSkill::GetInstance()->Init("skill.lua");
+	//LuaSkill::GetInstance()->Init("skill.lua");
 	SkillStub::Initialize();
 	return true;
 }

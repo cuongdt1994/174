@@ -12,10 +12,10 @@ include ../mk/gcc.defs.mk
 #CC += -m32
 #LD += -m32
 
-HEADERS = callup.h  playerwrapper.h  range.h  skill.h  skillexpr.h skillfilter.h skilllevel.h skillwrapper.h targetwrapper.h skilllua.h
-CPPFILES = main.cpp  playerwrapper.cpp  skill.cpp  skillfilter.cpp  skillwrapper.cpp skilllua.cpp
+HEADERS = callup.h  playerwrapper.h  range.h  skill.h  skillexpr.h skillfilter.h skilllevel.h skillwrapper.h targetwrapper.h #skilllua.h
+CPPFILES = main.cpp  playerwrapper.cpp  skill.cpp  skillfilter.cpp  skillwrapper.cpp #skilllua.cpp
 STUBOBJS = $(patsubst %.cpp,%.o,$(wildcard ../skills/stubs*.cpp))
-OBJS = skill.o skillwrapper.o playerwrapper.o skillfilter.o skilllua.o
+OBJS = skill.o skillwrapper.o playerwrapper.o skillfilter.o #skilllua.o
 OUTEROBJS = ../common/conf.o ../common/thread.o ../common/timer.o ../common/itimer.o ../io/pollio.o
 INCLUDES += -I../expr -I../header -I../header/include -I../lua/src -I../lua/LuaBridge -I../../cgame/gs
 
