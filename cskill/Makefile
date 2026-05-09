@@ -10,7 +10,7 @@ SHAREOBJ =
 LOGSTUB = 
 LOGOBJ = 
 
-OBJS = ./skill/skill.o ./skill/skillwrapper.o ./skill/playerwrapper.o ./skill/skillfilter.o ./skill/skilllua.o
+OBJS = ./skill/skill.o ./skill/skillwrapper.o ./skill/playerwrapper.o ./skill/skillfilter.o #./skill/skilllua.o
 
 STUBOBJS =  ./skills/stubs0.o
 STUBOBJS += ./skills/stubs1.o
