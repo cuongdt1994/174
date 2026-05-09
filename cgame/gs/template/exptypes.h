@@ -9384,7 +9384,7 @@ struct KID_PROPERTY_CONFIG
 	namechar		name[32];				// Name
 
 	char	file_model[128];
-	int		unk1;
+	int		unk1; //shape
 	char	file_img_bar[128];
 	char	file_icon[128];
 	char	file_icon_bar[128];
@@ -9405,16 +9405,16 @@ struct KID_PROPERTY_CONFIG
 	unsigned int	magic_defence;
 
 	float	crit_hit_probability;
-	float	attack_interval;
-	float	attack_dist;
-	float	walk_speed;
-	float	fly_speed;
+	float	attack_interval; //attack_speed
+	float	attack_dist; //attack_range
+	float	walk_speed; //run_speed
+	float	fly_speed; //walk_speed
 	float	swim_speed;
 	
-	float attack_lvl_rank_param;
-	float defence_lvl_rank_param;
-	float anti_defence_param;
-	float anti_magic_param;
+	float attack_lvl_rank_param; //atack_degree_inherit_rate
+	float defence_lvl_rank_param; //defend_degree_inherit_rate
+	float anti_defence_param; //physical_penetration_inherit_rate
+	float anti_magic_param; //magic_penetration_inherit_rate
 
 	float	enchant_time_reduce;
 	
@@ -9422,9 +9422,9 @@ struct KID_PROPERTY_CONFIG
 	int		kid_debri_type;
 	unsigned int	kid_debri_exp; //decomp_exp
 	unsigned int	kid_debri_id; //fragment_id;
-	unsigned int	upgrade_exp; 
+	unsigned int	upgrade_exp;  //require_exp
 	unsigned int	id_kid_upgrade;
-	unsigned int	kid_upgrade_star_config;
+	unsigned int	kid_upgrade_star_config; //id_kid_upgrade_star
 
 	int		order;
 	int		broadcast;
