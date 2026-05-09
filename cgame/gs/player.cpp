@@ -33741,10 +33741,6 @@ gplayer_imp::DeactivateKidTransform()
 	PlayerGetProperty();
 }
 
-// =========================================================================
-// ActivateKidTransform — mirror player_kid::ActivateTransform
-// (173full.txt:11-172) + filter_Kidform::OnAttach (form.txt:196-255).
-// =========================================================================
 void
 gplayer_imp::ActivateKidTransform()
 {
@@ -33759,48 +33755,17 @@ gplayer_imp::ActivateKidTransform()
 	if (idx <= 0 || level <= 0) return;
 
 	object_interface obj_if(this);
-
-	// 173full.txt:28-31 — if (GetForm(owner)) { RemoveFilter(4772); } else if ...
-	// Phân biệt: đang ở KID form (toggle off) vs form khác (cấm).
-	// Dùng _kid_transformation flag thay vì GetForm() vì _cur_form có thể ≠ 0
-	// do mount/cannon/dual/state cũ → first-press sẽ rơi vào RemoveFilter
-	// và OnRelease chạy deactivate semantics dù player chưa từng transform.
-	if (_kid_transformation)
-	{
-		obj_if.RemoveFilter(FILTER_KIDFORM);   // 4772 → OnRelease deactivate
-		_kid_transformation = 0;
-		_kid_transformation_time = 0;
-		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-		return;
-	}
-	if (GetForm())
-	{
-		// Đang ở form khác (mount/cannon/dual) → không cho transform.
-		_runner->error_message(53);
-		return;
-	}
-
-	// 173full.txt:32-34 — else if (vptr+92(owner, 139)) { ... activate logic ... }
-	// vptr+92 = CheckCoolDown; filter 139 chưa tồn tại (cooldown đã hết) thì mới
-	// được phép nhập. Nếu đang cooldown → fall-through xuống nhánh error(53).
 	if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
 	{
-		// 173full.txt:168-169 — runner+29(owner, 53) = error_message(53)
 		_runner->error_message(53);
 		return;
 	}
 
-	// 173: cfg = get_data_ptr(_kid_ess[_select]._tid, ID_SPACE_CONFIG)
 	DATA_TYPE dt_cfg;
 	const KID_PROPERTY_CONFIG *cfg = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(idx, ID_SPACE_CONFIG, dt_cfg);
 	if (!cfg || dt_cfg != DT_KID_PROPERTY_CONFIG) return;
-
-	// 173full.txt:36 — ClearSpecFilter(_filters, 12288, 100000) → mask 0x3000 = DEBUFF|BUFF.
-	// 174 có thêm DEBUFF2 (0x04000000) cho control mới; clear cả bộ để khỏi
-	// bị stun/silence gián đoạn cast bar kid.
 	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF | filter::FILTER_MASK_BUFF | filter::FILTER_MASK_DEBUFF2);
 
-	// 173full.txt:37-44 — RemoveFilter 8 filter_id hồi sinh / phản đòn.
 	_filters.RemoveFilter(FILTER_SOULRETORT);       // 4267
 	_filters.RemoveFilter(FILTER_SOULSEALED);       // 4268
 	_filters.RemoveFilter(FILTER_SOULBEATBACK);     // 4269
@@ -33810,11 +33775,6 @@ gplayer_imp::ActivateKidTransform()
 	_filters.RemoveFilter(FILTER_REBIRTH2);         // 4325
 	_filters.RemoveFilter(FILTER_INCATKDEFHP);      // 4333
 
-	// =====================================================================
-	// Tính kid_* = config * level * mutiple_val (mirror kid_celestial_info).
-	// Đây là chỉ số "essence" tương đương _kid_ess[_select]._HP / _physic_damage /
-	// _magic_damage / _defence / _magic_defences / _crit trong 173.
-	// =====================================================================
 	float mutiple_val = 0.0f;
 	DATA_TYPE dt_star;
 	const KID_UPGRADE_STAR_CONFIG *cfg_star = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_STAR_CONFIG, ID_SPACE_CONFIG, dt_star);
@@ -33833,11 +33793,6 @@ gplayer_imp::ActivateKidTransform()
 	int kid_magic_defence  = (int)((float)cfg->magic_defence * level * mutiple_val);
 	int kid_crit           = (int)(cfg->crit_hit_probability * 100.0f * level * mutiple_val);
 
-	// =====================================================================
-	// Build buf[23+32] theo ĐÚNG 173full.txt:50-119. Mỗi field là DELTA sẽ
-	// được OnAttach cộng vào player; phải dùng Result(kid, cur, en_percent)
-	// rồi trừ cur_prop/degree để ra delta thực.
-	// =====================================================================
 	int kid_buf[23 + 32];
 	memset(kid_buf, 0, sizeof(kid_buf));
 
