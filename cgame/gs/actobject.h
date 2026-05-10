@@ -2026,7 +2026,7 @@ inline void ModifyTeamVisibleState(unsigned short state, int * param, unsigned i
 		int i=0;
 		while(mask)
 		{
-			if(mask & 1)
+			if ( (mask & 1) != 0 )
 			{
 				if(_immune_state_adj_counter[i] == 0)
 					_immune_state_adj |= 1<<i;
@@ -2042,7 +2042,7 @@ inline void ModifyTeamVisibleState(unsigned short state, int * param, unsigned i
 		int i=0;
 		while(mask)
 		{
-			if(mask & 1)
+			if ( (mask & 1) != 0 )
 			{
 				if(_immune_state_adj_counter[i] == 1)
 					_immune_state_adj &= ~(1<<i);
