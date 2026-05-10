@@ -28445,10 +28445,6 @@ gplayer_imp::SpeedSkillManager()
 	if(LuaManager::GetInstance()->GetConfig()->speed_skill_enable < 1)
 	return;
 
-	// Khi đang nhập thể Kid, _cur_prop đã bị override sang chỉ số kid
-	// (xem KidCelestialTransformation). property_policy::UpdatePlayer ở dưới
-	// sẽ tính lại _cur_prop từ base + equipment, xóa sạch override → chỉ số
-	// nhân vật quay về stats gốc trước khi hết 30s. Skip để giữ kid stats.
 	if (_kid_transformation)
 		return;
 
@@ -32931,18 +32927,6 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 
 	_kid.SetType(type);
 
-	// kid_force_new_day=1 → state "sẵn sàng thức tỉnh" ngay sau tạo kid.
-	//
-	// Quan sát thực nghiệm: client hiển thị "X/target" trong đó:
-	//   - State #3 (is_awakening=true): X = day_count.
-	//   - State #2 (is_awakening=false, block_day=true): X = day_count - 1.
-	// Ví dụ CUBU bug: state #2 day_count=15 → client hiện "14/15" (off-by-one) +
-	// nút "Bắt đầu ngày mới" thay vì nút thức tỉnh. Để hiện "target/target" trong
-	// state #2, cần day_count = target + 1.
-	//
-	// Đặt state TRƯỚC khi gửi protocol để tránh race với InfoProtocol đầu tiên
-	// (gửi day_count=0 trước khi state setup, có thể bị client cache lại trong
-	// dialog open initialize).
 	bool instant_awaken = EmulateSettings::GetInstance()->GetKidForceNewDay();
 	if (instant_awaken)
 	{
@@ -32958,13 +32942,8 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
 	}
 
-	// Thứ tự gói (theo 173): gói name_awakening (opcode 570) là gói KÍCH HOẠT
-	// hoạt ảnh sinh kid + auto-mở bảng kid. Phải gửi data trước, sau đó mới gửi
-	// kid_created_info_dialog (opcode 13520) để client đã có dữ liệu khi mở
-	// dialog. Đảo thứ tự cũ (dialog trước data) làm client mở dialog rỗng → không
-	// có hoạt ảnh và phải tắt/mở bảng thủ công.
 	KidAwakeningNameProtocol ();
-	KidAwakeningInfoProtocol ();   // gửi 1 lần với state đã finalized
+	KidAwakeningInfoProtocol (); 
 
 	if (instant_awaken)
 	{
@@ -32995,11 +32974,6 @@ gplayer_imp::KidAwakeningNewDay()
 {
 	if (!_kid.GetCheckDay())
 	{
-		// Cap day_count tại target+1 — state "sẵn sàng thức tỉnh".
-		// Cho phép tick từ target → target+1 (đây là cách user advance từ state
-		// stuck `15/15 không nút` sang `15/15 + nút thức tỉnh` qua nút "Bắt đầu
-		// ngày mới"). Không tick thêm khi đã đạt target+1 — tránh display tăng
-		// vô hạn (16/15, 17/15...) khi player bấm liên tục.
 		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
 		if (_kid.GetAwakeningDayCount() >= target + 1)
 			return true;
@@ -33176,11 +33150,7 @@ bool gplayer_imp::KidAwakeningNewDay2()
             }
         }
 	
-		// Theo 173 (line 1133: _exp += j) — chỉ cộng tổng điểm course + suite bonus,
-		// KHÔNG có multiplier theo ngày, KHÔNG nhân kid_points_rate. Nhờ vậy điểm
-		// tích luỹ nằm trong dải require_score_min/max của KID_QUALITY_CONFIG nên
-		// KidAwakeningNewDay3 luôn match được tier.
-		// kid_points_rate vẫn được áp dụng như tuning knob của server (mặc định = 1).
+
 		points_recv += (points_recv * mutiple_add);
 
 		points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
@@ -33409,7 +33379,6 @@ gplayer_imp::KidAwakeningNewDay3()
 		int gender = _kid.GetType();
 		int get_pos = -1;
 
-		// gender_list[2] — chỉ chấp nhận 0 (male) hoặc 1 (female).
 		if (gender != 0 && gender != 1)
 			return false;
 
@@ -33427,8 +33396,6 @@ gplayer_imp::KidAwakeningNewDay3()
 			}
 		}
 
-		// Fallback: điểm vượt mọi require_score_max (vd kid_points_rate cao + nhiều ngày)
-		// → chọn tier có require_score_min cao nhất mà vẫn <= get_points (top tier hợp lệ).
 		if (get_pos < 0)
 		{
 			unsigned int best_min = 0;
