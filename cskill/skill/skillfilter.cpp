@@ -886,6 +886,7 @@ void filter_Kidform::OnAttach()
 		_parent.IncAntiDefenseDegree(_attack_ant);
 		_parent.IncAntiResistanceDegree(_defend_ant);
 		_parent.GetSkillWrapper().DecPrayTime(_time_reduce);
+		_parent.IncImmuneMask(50339840);
 		for(int i = 0; i < _skill_count; ++i)
 		{
 			_parent.GetSkillWrapper().ActivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
@@ -929,6 +930,7 @@ void filter_Kidform::OnRelease()
 		_parent.DecAntiDefenseDegree(_attack_ant);
 		_parent.DecAntiResistanceDegree(_defend_ant);
 		_parent.GetSkillWrapper().IncPrayTime(_time_reduce);
+		_parent.DecImmuneMask(50339840);
 		for(int i = 0; i < _skill_count; ++i)
 		{
 			_parent.GetSkillWrapper().DeactivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
