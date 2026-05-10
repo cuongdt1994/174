@@ -863,15 +863,14 @@ void filter_Monkeyform::OnRelease()
 
 void filter_Kidform::OnAttach()
 {
-		 int form = _parent.GetForm();
-		_parent.GetSkillWrapper().EventChange(_parent, form, 3);
+		 _parent.GetSkillWrapper().EventChange(_parent, _parent.GetForm(), 3);
 		_parent.LockEquipment(true);
 		_parent.SetNoMount(true);
 		_parent.SetNoBind(true);
 		_parent.ChangeShape2(_shape | 0xC0, 30);
 		_parent.EnhanceMaxHP(_hp);
-		_parent.EnhanceDamage((_damage_low + _damage_high) / 2);
-		_parent.EnhanceMagicDamage((_damage_magic_low + _damage_magic_high) / 2);
+		_parent.EnhanceDamage2(_damage_low + _damage_high);
+		_parent.EnhanceMagicDamage2(_damage_magic_low + _damage_magic_high);
 		_parent.EnhanceDefense(_defence);
 		_parent.EnhanceResistance(0, _resistance[0]);
 		_parent.EnhanceResistance(1, _resistance[1]);
@@ -901,8 +900,7 @@ void filter_Kidform::OnAttach()
 
 void filter_Kidform::OnRelease()
 {
-		int form = _parent.GetForm();
-		_parent.GetSkillWrapper().EventChange(_parent, form, 0);
+		_parent.GetSkillWrapper().EventChange(_parent, _parent.GetForm(), 0);
 		_parent.LockEquipment(false);
 		_parent.SetNoMount(false);
 		_parent.SetNoBind(false);
@@ -920,8 +918,8 @@ void filter_Kidform::OnRelease()
 		_parent.ImpairResistance(2, _resistance[2]);
 		_parent.ImpairResistance(3, _resistance[3]);
 		_parent.ImpairResistance(4, _resistance[4]);
-		_parent.ImpairDamage((_damage_low + _damage_high) / 2);
-		_parent.ImpairMagicDamage((_damage_magic_low + _damage_magic_high) / 2);
+		_parent.ImpairDamage2(_damage_low + _damage_high);
+		_parent.ImpairMagicDamage2(_damage_magic_low + _damage_magic_high);
 		_parent.ImpairCrit(_point);
 		_parent.ImpairAttackSpeed(_ratio);
 		_parent.ImpairAttackRange(_range);
