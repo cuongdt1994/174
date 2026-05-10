@@ -553,6 +553,7 @@ public:
 	virtual int GetObjectClass() { return -1;}			//Occupation of the subject
 	virtual bool CheckCoolDown(int idx) { return true;}
 	virtual void SetCoolDown(int idx, int msec) {}
+	virtual void SetCoolDown(int idx, int msec, int num_max) {}
 	virtual void CoolDownReduceAtr(int idx, int msec) {}
 	virtual void NotifySkillStillCoolDown(int cd_id){}
 	virtual int GetMonsterFaction() { return 0;}

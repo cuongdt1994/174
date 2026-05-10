@@ -168,6 +168,7 @@ public:
 	virtual void InitSkill();
 	virtual bool CheckCoolDown(int idx);
 	virtual void SetCoolDown(int idx, int msec);
+	virtual void SetCoolDown(int idx, int msec, int num_max);
 	virtual void NotifySetCoolDownToMaster(int idx, int msec);
 	virtual void NotifySkillStillCoolDown(int cd_id);
 	virtual bool DrainMana(int mana);

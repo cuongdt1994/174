@@ -9817,14 +9817,25 @@ gplayer_imp::CheckCoolDown(int idx)
 	return _cooldown.TestCoolDown(idx);
 }
 
-void 
-gplayer_imp::SetCoolDown(int idx, int msec) 
-{ 
+void
+gplayer_imp::SetCoolDown(int idx, int msec)
+{
 	if(_no_cooldown_mode && player_template::GetDebugMode())
 	{
 		msec = 100;
 	}
 	_cooldown.SetCoolDown(idx,msec);
+	_runner->set_cooldown(idx, msec);
+}
+
+void
+gplayer_imp::SetCoolDown(int idx, int msec, int num_max)
+{
+	if(_no_cooldown_mode && player_template::GetDebugMode())
+	{
+		msec = 100;
+	}
+	_cooldown.SetCoolDown(idx, msec);
 	_runner->set_cooldown(idx, msec);
 }
 

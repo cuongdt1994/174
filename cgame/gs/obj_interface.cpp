@@ -2740,10 +2740,16 @@ object_interface::TestCoolDown(unsigned short id)
 	return _imp->CheckCoolDown((int)id);
 }
 
-void 
+void
 object_interface::SetCoolDown(unsigned short id, int ms)
 {
 	return _imp->SetCoolDown((int)id,ms);
+}
+
+void
+object_interface::SetCoolDown(unsigned short id, int ms, int num_max)
+{
+	return _imp->SetCoolDown((int)id, ms, num_max);
 }
 
 void 

@@ -1547,6 +1547,10 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player,
 
 	skill->SetLevel(level);
 
+	int num_max = skill->GetChargesMax();
+	if(num_max > 1)
+		player.SetCoolDown(id + COOLINGID_BEGIN, 100, num_max);
+
 	const SkillStub *stub = SkillStub::GetStub(id);
 	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
 	{

@@ -565,6 +565,7 @@ public:
 //��ȴ
 	bool TestCoolDown(unsigned short id);
 	void SetCoolDown(unsigned short id, int ms);
+	void SetCoolDown(unsigned short id, int ms, int num_max);
 	void CoolDownReduceAtr(unsigned short id, int ms);
 	void ResetCoolDown(unsigned short id, int ms = 1);
 	void ResetAllCoolDown(int ms, int except_id);

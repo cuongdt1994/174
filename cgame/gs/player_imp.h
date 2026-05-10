@@ -4159,6 +4159,7 @@ public:
 	virtual const A3DVECTOR & GetLogoutPos(int & world_tag);//ȡ�õǳ�ʱӦ��ʹ�õ����꣬���Ա�����
 	virtual bool CheckCoolDown(int idx);
 	virtual void SetCoolDown(int idx, int msec);
+	virtual void SetCoolDown(int idx, int msec, int num_max);
 	virtual void CoolDownReduceAtr(int idx, int msec);
 	virtual void GetCoolDownData(archive & ar);
 	virtual void GetCoolDownDataForClient(archive & ar);
