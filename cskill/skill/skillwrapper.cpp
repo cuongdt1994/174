@@ -1561,10 +1561,7 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player,
 		StorageMap::iterator it = dyn_map.find(id);
 		if(it == dyn_map.end())
 		{
-			PersistentData data;
-			data.ability = counter;
-			data.level = level; 
-			data.overridden = 0;
+			PersistentData data(counter, level);
 			dyn_map[id] = data;
 		}
 		else
@@ -1629,10 +1626,6 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter)
 	}
 }
 
-// Mirror chuẩn 173full.txt:2738-2790 — GNET::SkillWrapper::DeactivateDynSkill (5 args)
-// Khác overload 2-arg ở chỗ:
-//   - Với passive skill có EventFlag == EVENT_CHANGE: NO-OP (UndoEffect do EventChange xử lý)
-//   - Với active skill: dec ability trong dyn_map, xóa nếu về 0
 void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface player, int level)
 {
 	SkillKeeper skill = Skill::Create(id);
@@ -1641,11 +1634,7 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface playe
 
 	const SkillStub *stub = SkillStub::GetStub(id);
 	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
-	{
-		// Passive EVENT_CHANGE: UndoEffect do EventChange(player, FORM_CLASS, 0) đảm nhận
-		// → no-op ở đây
 		return;
-	}
 
 	StorageMap::iterator it = dyn_map.find(id);
 	if(it == dyn_map.end())
@@ -1657,9 +1646,7 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface playe
 	it->second.ability -= counter;
 	ASSERT(it->second.ability >= 0);
 	if(it->second.ability == 0)
-	{
 		dyn_map.erase(it);
-	}
 }
 
 int SkillWrapper::GetDynSkillCounter(ID id)
