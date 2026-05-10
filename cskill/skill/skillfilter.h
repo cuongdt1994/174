@@ -15428,8 +15428,8 @@ protected:
 	
 	virtual void filter_Kidform::TranslateSendAttack(const XID & target, attack_msg & msg)
 	{
-	 if ( !msg->skill_id )
-		 msg->attack_attr = _attack_type;
+		if ( !msg.skill_id )
+			msg.attack_attr = _attack_type;
 	}
 
 	filter_Kidform(){}
@@ -15467,8 +15467,8 @@ public:
 		_filter_id = FILTER_KIDFORM;
 	}
 
-	void OnAttach()
-	void OnRelease()
+	void OnAttach();
+	void OnRelease();
 
 	void Heartbeat(int tick)
 	{
