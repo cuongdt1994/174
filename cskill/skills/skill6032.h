@@ -357,7 +357,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     void ComboSkEndAction (Skill * skill) const 
     { 
-		skill->GetPlayer ()->GetComboarg ()->SetValue (0, skill->GetPlayer ()->6032);
+		skill->GetPlayer()->GetComboarg()->SetValue(0, 6032);
         return; 
     } 
 #endif 
