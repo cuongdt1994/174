@@ -26,7 +26,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 100;
             }
             bool Quit (Skill * skill) const
             {
@@ -64,7 +64,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 1200;
             }
             bool Quit (Skill * skill) const
             {
@@ -80,7 +80,10 @@ namespace GNET
             }
             void Calculate (Skill * skill) const
             {
-                skill->GetPlayer ()->SetPerform (1);
+                skill->SetPlus(0);
+				skill->SetRatio(0);
+				skill->SetDamage (1.6 *skill->GetAttack ());
+				kill->GetPlayer ()->SetPerform (1);
             }
             bool Interrupt (Skill * skill) const
             {
@@ -235,7 +238,7 @@ namespace GNET
     } 
     float GetAngle (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (1); 
     } 
     float GetPraydistance (Skill * skill) const 
     { 
@@ -249,8 +252,14 @@ namespace GNET
     } 
     bool CheckComboSkExtraCondition (Skill * skill) const 
     { 
-        return 1; 
+        return (bool) (skill->GetPlayer ()->GetComboarg ()->GetValue (0) == 6033);
+    }
+	
+	bool CheckHpCondition (int hp, int max_hp) const
+    { 
+        return 1;
     } 
+	
     int GetCoolDownLimit (Skill * skill) const 
     { 
         static int aarray[10] = { 0,0,0,0,0,0,0,0,0,0 }; 
@@ -288,13 +297,18 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     bool BlessMe (Skill * skill) const 
     { 
+		skill->GetVictim ()->SetProbability (1.0 * 100);
+		skill->GetVictim ()->SetTime (2000);
+		skill->GetVictim ()->SetRatio(0);
+		skill->GetVictim ()->SetAmount(1);
+		skill->GetVictim ()->SetInccountedsmite (1);
         return 1; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
     float GetEffectdistance (Skill * skill) const 
     { 
-        return 5; 
+        return 10; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
@@ -330,7 +344,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     int GetAttackspeed (Skill * skill) const 
     { 
-        return 0; 
+        return 10; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
@@ -342,13 +356,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetHitrate (Skill * skill) const 
     { 
-        return 1; 
-    } 
-#endif 
-#ifdef _SKILL_SERVER 
-    void ComboSkEndAction (Skill * skill) const 
-    { 
-        return; 
+        return 3; 
     } 
 #endif 
     }; 
