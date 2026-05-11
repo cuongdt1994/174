@@ -33642,6 +33642,7 @@ bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 void
 gplayer_imp::KidCelestialTransformation(int mode)
 {
+	object_interface obj_if(this);
 	// ---------- Deactivate ----------
 	if (!mode)
 	{
@@ -33704,7 +33705,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		return;
 	}
 	//Fix remove filter
-	_filters.ClearSpecFilter(12288,10000);
+	//_filters.ClearSpecFilter(12288,10000);
 	_filters.RemoveFilter(FILTER_SOULRETORT);
 	_filters.RemoveFilter(FILTER_SOULSEALED);
 	_filters.RemoveFilter(FILTER_SOULBEATBACK);
