@@ -83,7 +83,7 @@ namespace GNET
                 skill->SetPlus(0);
 				skill->SetRatio(0);
 				skill->SetDamage (1.6 *skill->GetAttack ());
-				kill->GetPlayer ()->SetPerform (1);
+				skill->GetPlayer ()->SetPerform (1);
             }
             bool Interrupt (Skill * skill) const
             {
