@@ -10850,7 +10850,7 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 	_player_kid.ClientSync(player_kid::kid_val15)
 	
 	//home_task_info
-	_runner->home_task_info(_home_task_info,64,_home_task_info.task_trigger_times,_home_task_info.task_refresh_times)
+	_runner->home_task_info(64,_home_task_info.task_trigger_times,_home_task_info.task_refresh_times)
 	
 	/*170+*/
 	if(_passwd_safe.passwd_active != 2)

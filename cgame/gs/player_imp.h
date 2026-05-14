@@ -608,6 +608,34 @@ struct purchase_limit_info
 		return map[item_id];
 	}
 };
+//home_task_info
+struct home_task_info
+{
+	private:
+	int task_id[16];
+	int task_trigger_times;
+	int task_refresh_times;
+	public:
+	home_task_info():_task_id(0),_task_trigger_times(0),_task_refresh_times(0){}
+	bool Save(archive&ar)
+	{
+		ar  << 64 << task_trigger_times << task_refresh_times;
+		return true;
+	}
+	bool Load(archive&ar)
+	{
+		ar  >> 64 >> task_trigger_times >> task_refresh_times;
+		return true;
+	}
+	bool Swap(home_task_info &rhs)
+	{
+		memcpy(rhs,64);
+		_task_trigger_times = rhs._task_trigger_times;
+		_task_refresh_times = rhs._task_refresh_times;
+		return true;
+	}
+	
+}
 struct cash_vip_info
 { 
 private:
