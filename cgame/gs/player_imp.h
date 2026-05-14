@@ -5321,15 +5321,15 @@ public:	//lgc
 	void ProtcolAnecdotePoints();
 	int OI_GetPetType();
 	//Kid system
-	inline void CreateKid(const void * buf);
+	inline void CreateKid(const void * buf)
 	{
 		return _player_kid.CreateKid(buf);
 	}
-	inline void KidModify(int cmt_type, const void * buf, unsigned int size);
+	inline void KidModify(int cmt_type, const void * buf, unsigned int size)
 	{
 		return _player_kid.KidModify(cmd_type,buf,size);
 	}
-	inline void KidRefreshEquipment();
+	inline void KidRefreshEquipment()
 	{
 		pImp->RefreshEquipment();
 	}
@@ -5337,11 +5337,11 @@ public:	//lgc
 	{
 		_player_kid.DeactivateTransform();
 	}
-	inline void SetKidData(const void * buf, unsigned int size);
+	inline void SetKidData(const void * buf, unsigned int size)
 	{
 		_player_kid.InitFromDB(buf, size);
 	}
-	inline void GetKidData(int &size);
+	inline void GetKidData(int &size)
 	{
 		return _player_kid.SaveToDB(size);
 	}
