@@ -11,7 +11,7 @@
 #include "item/item_addon.h"
 #include "vector.h"
 
-class gplayer_kid 
+class player_kid 
 {
 public:
 	enum
