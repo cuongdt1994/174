@@ -77,7 +77,7 @@ int mutex_spinwait(int *__spinlock,int __timeout)
 		} 
 		else 
 		{
-			usleep(MUTEX_SPINSLEEP_DURATION);
+			msleep(MUTEX_SPINSLEEP_DURATION);
 			cnt = 0;
 		}
 	}
