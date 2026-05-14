@@ -619,19 +619,21 @@ struct home_task_info
 	home_task_info():_task_id(0),_task_trigger_times(0),_task_refresh_times(0){}
 	bool Save(archive&ar)
 	{
-		ar  << 64 << task_trigger_times << task_refresh_times;
+		ar.push_back(this, 64);
+		ar << task_trigger_times << task_refresh_times;
 		return true;
 	}
 	bool Load(archive&ar)
 	{
-		ar  >> 64 >> task_trigger_times >> task_refresh_times;
+		ar.pop_back(this, 64);
+		ar >> task_trigger_times >> task_refresh_times;
 		return true;
 	}
 	bool Swap(home_task_info &rhs)
 	{
-		memcpy(rhs,64);
-		_task_trigger_times = rhs._task_trigger_times;
-		_task_refresh_times = rhs._task_refresh_times;
+		memcpy(this, &rhs, 64);
+		task_trigger_times = rhs.task_trigger_times;
+		task_refresh_times = rhs.task_refresh_times;
 		return true;
 	}
 	
