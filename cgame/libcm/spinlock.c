@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 
 #include "spinlock.h"
 #include "mtime.h"
