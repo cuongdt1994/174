@@ -13,3 +13,820 @@
 #include "public_quest.h"
 #include "luamanager.h"
 #include "player_kid.h"
+const int player_kid::exp_required_next_level[] = { 0, 2, 4, 8, 12, 20, 20, 20, 20, 20 };
+const int player_kid::exp_min_level[]           = { 0, 0, 2, 6, 14, 26, 46, 66, 86, 106 };
+const int player_kid::card_level_1[] = { 66225, 66227, 66228, 66229, 66230, 66231 };
+const int player_kid::card_level_2[] = { 66232, 66233, 66234, 66235, 66236, 66237, 66238, 66239 };
+const int player_kid::card_level_3[] = { 66240, 66241, 66242, 66243, 66244, 66245, 66246 };
+const int player_kid::card_level_4[] = { 66247, 66248, 66249, 66250, 66251, 66252, 66253 };
+const int player_kid::card_level_5[] = { 66254 };
+const int* player_kid::card_pools[]  = { card_level_1, card_level_2, card_level_3, card_level_4, card_level_5 };
+const int  player_kid::card_counts[] = { 6, 8, 7, 7, 1 };
+const int player_kid::suite_idx_course[] = {
+    66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261,
+    66262, 66263, 66264, 66265
+};
+const int player_kid::suite_idx_mask[] = {
+    1, 2, 4, 8, 16, 32, 64, 128,
+    65536, 131072, 262144, 524288
+};
+const unsigned int player_kid::KID_REWARD_ID[] = { 6878, 6977, 6979, 6978, 6980, 6981 };
+bool player_kid::Save(archive& ar)
+{
+    ar.push_back(&_kid_data, DB_DATA_SIZE);
+	return true;
+}
+bool player_kid::Load(archive& ar)
+{
+    ar.pop_back(&_kid_data, DB_DATA_SIZE);
+	return true;
+}
+void player_kid::Swap(player_kid& rhs)
+{
+    memcpy(&_kid_data, &rhs._kid_data, DB_DATA_SIZE);
+}
+const void* player_kid::SaveToDB(size_t& size)
+{
+	size = DB_DATA_SIZE;
+	return &_kid_data;
+}
+void player_kid::InitFromDB(const void* buf, size_t size)
+{
+    spin_autolock l(_lock_data_map);
+    if (size == DB_DATA_SIZE)
+    {
+        memcpy(&_kid_data, buf, DB_DATA_SIZE);
+        ActivateAllAddon();
+    }
+}
+void player_kid::Heartbeat(int cur_time)
+{
+    if (_update_time && cur_time >= _update_time)
+    {
+        _kid_data._new_day = 0;
+        _update_time = 0;
+        _kid_data._type = 0;
+        ClientSync(1);
+    }
+}
+bool player_kid::CreateKid(const void* buf)
+{
+    spin_autolock l(_lock_data_map);
+    if (_kid_data._status)
+        return true;
+    memset(&_kid_data, 0, sizeof(_kid_data));
+    const char* data = (const char*)buf;
+    int count = data[1];
+    if (count > MAX_NAME_LEN)
+        count = MAX_NAME_LEN;
+    memcpy(_kid_data._name, data + 2, count);
+    _kid_data._pool_lvl   = 1;
+    _kid_data._gender     = (data[0] != 0);
+    _kid_data._status     = 1;
+    _kid_data._free_times = 1;
+    RePool();
+    _kid_data._free_times = 1;
+    _owner->_runner->OnCreateKid(buf);
+    ClientSync(1);
+    return false;
+}
+bool player_kid::StartDay()
+{
+    if (!_kid_data._status || _kid_data._new_day)
+        return false;
+    if (_kid_data._growth_days > 14)
+        return false;
+    ++_kid_data._growth_days;
+    _kid_data._free_times = 1;
+    _kid_data._new_day    = 1;
+    _kid_data._energy     = 20;
+    _update_time          = NEXT_DAY_TIME();
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_SYSTEM_CONFIG* cfg = (const KID_SYSTEM_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, 6858, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_SYSTEM_CONFIG)
+        return true;
+    if (_kid_data._pool_lvl > 9)
+        return true;
+    if (++_kid_data._pool_exp >= cfg->level[_kid_data._pool_lvl].require_exp)
+        ++_kid_data._pool_lvl;
+    return true;
+}
+bool player_kid::OnCreateKid()
+{
+    if (!_kid_data._status || _kid_data._new_day)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_QUALITY_CONFIG* cfg = (const KID_QUALITY_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, IDX_KID_QUALITY_CONFIG, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_QUALITY_CONFIG)
+        return false;
+    for (size_t i = 0; i <= 3; ++i)
+    {
+        if (_kid_data._exp < cfg->list[i].require_score_min
+         || _kid_data._exp > cfg->list[i].require_score_max)
+            continue;
+        int idx = abase::RandSelect(&cfg->list[i].kid[_kid_data._gender][0].probability, 8, 8);
+        int tmp_id = cfg->list[i].kid[_kid_data._gender][idx].id;
+        const KID_PROPERTY_CONFIG* cfg2 = (const KID_PROPERTY_CONFIG*)
+            itemdataman::get_data_ptr(world_manager::GetDataMan(), tmp_id, ID_SPACE::ID_SPACE_CONFIG, dt);
+        if (!cfg2 || dt != DT_KID_PROPERTY_CONFIG)
+            return false;
+        if (cfg2->kid_debri_type >= MAX_KID_ESS)
+        {
+            GLog::log(3, "kid_debri_type ERR  id:%d   %d\n", tmp_id, cfg2->kid_debri_type);
+            return false;
+        }
+        if (_kid_data._gender != cfg2->gender)
+        {
+            GLog::log(3, "gender ERR  id:%d   %d   %d\n", tmp_id, _kid_data._gender, cfg2->gender);
+            return false;
+        }
+        kid_ess* tmp_kid = &_kid_ess[cfg2->kid_debri_type];
+        if (tmp_kid->_tid)
+        {
+            size_t count = cfg2->kid_debri_exp;
+            AddDebri(cfg2->kid_debri_type, count);
+            if (count == cfg2->kid_debri_exp)
+            {
+                item_list* inv = gplayer_imp::GetInventory(_owner);
+                if (item_list::IsFull(inv))
+                    return false;
+                item_tag_t tag = 0;
+                item_data* data = itemdataman::generate_item_from_player(
+                    world_manager::GetDataMan(), cfg2->kid_debri_id, &tag, 2);
+                if (!data)
+                    return false;
+                if (count > data->pile_limit)
+                    count = data->pile_limit;
+                data->count = count;
+                int rst = item_list::Push(inv, data);
+                gplayer_imp::FirstAcquireItem(_owner, data);
+                if (rst >= 0)
+                {
+                    item* it = item_list::operator[](inv, rst);
+                    _owner->_runner->ItemUpdateNotify(data->type, 0, count - data->count, it->count, 0, rst);
+                }
+                FreeItem(data);
+            }
+        }
+        else
+        {
+            tmp_kid->_lvl        = 1;
+            tmp_kid->_rahk_lvl   = 0;
+            tmp_kid->_debris_exp = 0;
+            tmp_kid->_tid        = tmp_id;
+        }
+        UpdateKid(cfg2->kid_debri_type);
+        _owner->_runner->OnKidBorn(0, tmp_id);
+        ClientSync(5);
+        memset(&_kid_data, 0, sizeof(_kid_data));
+    }
+    return true;
+}
+bool player_kid::UpPool()
+{
+    if (!_kid_data._status || _kid_data._type)
+        return false;
+    if (_kid_data._energy <= 3)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_SYSTEM_CONFIG* cfg = (const KID_SYSTEM_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, 6858, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_SYSTEM_CONFIG)
+        return false;
+    if (_kid_data._pool_exp >= cfg->level[9].require_exp)
+        return false;
+    _kid_data._energy   -= 4;
+    _kid_data._pool_exp += 4;
+    if (_kid_data._pool_exp >= cfg->level[_kid_data._pool_lvl].require_exp)
+        ++_kid_data._pool_lvl;
+    return true;
+}
+bool player_kid::RePool()
+{
+    if (!_kid_data._status || _kid_data._type)
+        return false;
+    if (!_kid_data._free_times && _kid_data._energy <= 1)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_SYSTEM_CONFIG* cfg = (const KID_SYSTEM_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, 6858, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_SYSTEM_CONFIG)
+        return false;
+    int tmp_p[MAX_COURSE_NEW];
+    for (int i = 0; i <= 4; ++i)
+    {
+        int tmp = abase::Rand(0, 9999);
+        tmp_p[i] = 0;
+        for (int j = 0; j < 5; ++j)
+        {
+            int prob = cfg->unk[6 * _kid_data._pool_lvl + 14 + j];
+            if (tmp <= prob)
+            {
+                tmp_p[i] = j;
+                break;
+            }
+            tmp -= prob;
+        }
+    }
+    for (int i = 0; i <= 4; ++i)
+    {
+        _kid_data._course_new[i] = card_pools[tmp_p[i]][abase::Rand(0, card_counts[tmp_p[i]] - 1)];
+    }
+    if (_kid_data._free_times)
+        _kid_data._free_times = 0;
+    else
+        _kid_data._energy -= 2;
+    return true;
+}
+char player_kid::BuyCourse(int num)
+{
+    if (!_kid_data._status || _kid_data._type)
+        return 0;
+    if ((unsigned int)num >= MAX_RANDOM_COURSE)
+        return 0;
+    int tmp_id = _kid_data._course_new[num];
+    if (!tmp_id)
+        return 0;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const COURSE_ESSENCE* cfg = (const COURSE_ESSENCE*)
+        itemdataman::get_data_ptr(DataMan, tmp_id, ID_SPACE::ID_SPACE_ESSENCE, dt);
+    if (!cfg || dt != DT_COURSE_ESSENCE)
+        return 0;
+    if (cfg->cost > _kid_data._energy)
+        return 0;
+    int tmp_num = -1;
+    for (int i = MAX_EQUIPED_COURSE; i < MAX_COURSE_INV; ++i)
+    {
+        if (!_kid_data._course_inv[i]._tid)
+        {
+            tmp_num = i;
+            break;
+        }
+    }
+    if (tmp_num == -1)
+        return 0; 
+    _kid_data._energy -= cfg->cost;
+    _kid_data._course_inv[tmp_num]._tid = tmp_id;
+    _kid_data._course_inv[tmp_num]._lvl = 1;
+    _kid_data._course_new[num] = 0;
+    return tmp_num;
+}
+bool player_kid::SellCourse(int num)
+{
+    if (!_kid_data._status || _kid_data._type)
+        return false;
+    if ((unsigned int)num >= MAX_COURSE_INV)
+        return false;
+    course_ess* tmp = &_kid_data._course_inv[num];
+    if (!tmp->_tid || !tmp->_lvl)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const COURSE_ESSENCE* cfg = (const COURSE_ESSENCE*)
+        itemdataman::get_data_ptr(DataMan, tmp->_tid, ID_SPACE::ID_SPACE_ESSENCE, dt);
+    if (!cfg || dt != DT_COURSE_ESSENCE)
+        return false;
+    _kid_data._energy += cfg->cost + tmp->_lvl - 1;
+    tmp->_tid = 0;
+    tmp->_lvl = 0;
+    return true;
+}
+bool player_kid::MoveCourse(int src_num, int dst_num)
+{
+    if (!_kid_data._status || _kid_data._type)
+        return false;
+    if ((unsigned int)src_num >= MAX_COURSE_INV)
+        return false;
+    if ((unsigned int)dst_num >= MAX_COURSE_INV)
+        return false;
+    course_ess tmp = _kid_data._course_inv[src_num];
+    _kid_data._course_inv[src_num] = _kid_data._course_inv[dst_num];
+    _kid_data._course_inv[dst_num] = tmp;
+    return true;
+}
+bool player_kid::UpCourse(int num1, int num2, int num3)
+{
+    if (!_kid_data._status || _kid_data._type)
+        return false;
+    if ((unsigned int)num1 >= MAX_COURSE_INV)
+        return false;
+    if ((unsigned int)num2 >= MAX_COURSE_INV)
+        return false;
+    if ((unsigned int)num3 >= MAX_COURSE_INV)
+        return false;
+    course_ess& main = _kid_data._course_inv[num1];
+    course_ess& mat1 = _kid_data._course_inv[num2];
+    course_ess& mat2 = _kid_data._course_inv[num3];
+    if (main._lvl > 2)
+        return false;
+    if (main._tid != mat1._tid || main._tid != mat2._tid)
+        return false;
+    if (main._lvl != mat1._lvl || main._lvl != mat2._lvl)
+        return false;
+    ++main._lvl;
+    mat1._tid = 0;  mat1._lvl = 0;
+    mat2._tid = 0;  mat2._lvl = 0;
+    return true;
+}
+int player_kid::EndTeach()
+{
+    if (!_kid_data._status || _kid_data._type)
+        return 0;
+    int sutie_num[32];
+    memset(sutie_num, 0, sizeof(sutie_num));
+    int sutie_tmp[MAX_EQUIPED_COURSE];
+    for (int i = 0; i < MAX_EQUIPED_COURSE; ++i)
+        sutie_tmp[i] = _kid_data._course_inv[i]._tid;
+    for (int i = 1; i < MAX_EQUIPED_COURSE; ++i)
+    {
+        for (int j = 0; j < i; ++j)
+        {
+            if (sutie_tmp[i] == sutie_tmp[j])
+                sutie_tmp[i] = 0;
+        }
+    }
+    int total_score = 0;
+    bool b_num_score = true;
+    for (int i = 0; i < SUITE_COUNT; ++i)
+    {
+        DATA_TYPE dt;
+        itemdataman* DataMan = world_manager::GetDataMan();
+        const COURSE_SUITE_ESSENCE* cfg = (const COURSE_SUITE_ESSENCE*)
+            itemdataman::get_data_ptr(DataMan, suite_idx_course[i], ID_SPACE::ID_SPACE_ESSENCE, dt);
+        if (!cfg || dt != DT_COURSE_SUITE_ESSENCE)
+            continue;
+        if (cfg->type_mask != suite_idx_mask[i])
+        {
+            GLog::log(3, "COURSE_SUTIE_MASK ERR  id:%d   0x%X   0x%X\n",
+                suite_idx_course[i], cfg->type_mask, suite_idx_mask[i]);
+            continue;
+        }
+        int tmp_num  = 0;    
+        int tmp_num2 = 0;    
+        size_t max_score = 0;
+        for (int s = 0; s < MAX_EQUIPED_COURSE; ++s)
+        {
+            unsigned int tmp_id = _kid_data._course_inv[s]._tid;
+            int tmp_lv = _kid_data._course_inv[s]._lvl;
+            if (!tmp_id || !tmp_lv || tmp_lv > 3)
+                continue;
+            DataMan = world_manager::GetDataMan();
+            _DWORD* k = (_DWORD*)itemdataman::get_data_ptr(DataMan, tmp_id, ID_SPACE::ID_SPACE_ESSENCE, dt);
+            if (!k || dt != DT_COURSE_ESSENCE)
+                continue;
+            if (b_num_score)
+                total_score += k[tmp_lv + 51];
+            if (k[tmp_lv + 51] > max_score)
+                max_score = k[tmp_lv + 51];
+            if ((k[51] & cfg->type_mask) != 0)
+            {
+                ++tmp_num2;
+                if (sutie_tmp[s])
+                    ++tmp_num;
+            }
+        }
+        if (total_score)
+            b_num_score = false;
+        if (!tmp_num)
+            continue;
+        for (int t = 2; t >= 0; --t)
+        {
+            if (!cfg->bonus[t].probability)
+                continue;
+            if (tmp_num < cfg->bonus[t].min_count)
+                continue;
+            if (cfg->max_count && cfg->max_count < tmp_num2)
+                continue;
+            for (int s = 0; s < MAX_EQUIPED_COURSE; ++s)
+            {
+                unsigned int tmp_id = _kid_data._course_inv[s]._tid;
+                int tmp_lv = _kid_data._course_inv[s]._lvl;
+                if (!tmp_id || !tmp_lv || tmp_lv > 3)
+                    continue;
+                DataMan = world_manager::GetDataMan();
+                const COURSE_ESSENCE* cfg2 = (const COURSE_ESSENCE*)
+                    itemdataman::get_data_ptr(DataMan, tmp_id, ID_SPACE::ID_SPACE_ESSENCE, dt);
+                if (!cfg2 || dt != DT_COURSE_ESSENCE)
+                    continue;
+                int course_score = *(&cfg2->type + tmp_lv);
+                switch (cfg->bonus[t].type)
+                {
+                case 0:
+                    if ((cfg2->type & cfg->type_mask) != 0
+                     && abase::Rand(0, 9999) < cfg->bonus[t].probability)
+                    {
+                        total_score += cfg->bonus[t].increase * course_score / 10000;
+                    }
+                    break;
+                case 1: 
+                    if (abase::Rand(0, 9999) < cfg->bonus[t].probability)
+                        total_score += cfg->bonus[t].increase * course_score / 10000;
+                    break;
+                case 2: 
+                    if (abase::Rand(0, 9999) < cfg->bonus[t].probability
+                     && (size_t)course_score == max_score)
+                    {
+                        total_score += cfg->bonus[t].increase * course_score / 10000;
+                    }
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    _kid_data._exp += total_score;
+    _kid_data._type = 1;
+    return total_score;
+}
+void player_kid::ClientSync(int type)
+{
+    if (type == 1)
+    {
+        if (_kid_data._status)
+            _owner->_runner->SyncKidData(&_kid_data, sizeof(kid_data)); 
+    }
+    else if (type == 4)
+    {
+        if (_select >= 0)
+            _owner->_runner->SyncKidSelect(_select, -1); 
+    }
+    else if (type == 5 || type == 15)
+    {
+        if (type == 5)
+        {
+            int count = 0;
+            for (int i = 0; i < MAX_CELESTIAL; ++i)
+            {
+                if (_kid_ess[i]._tid)
+                    ++count;
+            }
+            if (count)
+                _owner->_runner->SyncKidEss(_kid_ess, count, MAX_CELESTIAL);
+        }
+        abase::vector<unsigned int, abase::fast_alloc<4, 128>> addon_mask_data;
+        unsigned int zero = 0;
+        addon_mask_data.push_back(zero);
+        addon_mask_data.push_back(zero); 
+        int kid_count = 0;
+        for (int i = 0; i < MAX_CELESTIAL; ++i)
+        {
+            if (!_kid_ess[i]._tid)
+                continue;
+            addon_mask_data.push_back((unsigned int)i);
+            int count_pos = addon_mask_data.size();
+            addon_mask_data.push_back(zero); 
+            int addon_count = 0;
+            for (int j = 0; j < MAX_REWARD_BIT; ++j)
+            {
+                if ((_addon_mask[i] >> j) & 1)
+                {
+                    addon_mask_data.push_back((unsigned int)j);
+                    ++addon_count;
+                }
+            }
+            addon_mask_data[count_pos] = addon_count;
+            ++kid_count;
+        }
+        addon_mask_data[1] = kid_count;
+        if (kid_count)
+        {
+            _owner->_runner->SyncAddonMask(
+                addon_mask_data.size(),
+                addon_mask_data.begin());
+        }
+    }
+}
+bool player_kid::KidModify(int cmd_type, const void* buf, size_t size)
+{
+    spin_autolock l(_lock_data_map);
+    switch (cmd_type)
+    {
+    case CMD_KID_BASIC:
+    {
+        if (size != sizeof(KidModify::mma_1))
+            break;
+        const KidModify::mma_1* pkt = (const KidModify::mma_1*)buf;
+        __PRINTF("----- KidModify   %d   %d   %d\n", cmd_type, pkt->type_1, pkt->type_2);
+        switch (pkt->type_1)
+        {
+        case 0: 
+        {
+            char ret = BuyCourse(pkt->type_2);
+            if (ret)
+            {
+                _owner->_runner->OnBuyCourse(pkt->type_2, ret);           
+                ClientSync(1);
+            }
+            break;
+        }
+        case 1: 
+            if (SellCourse(pkt->type_2))
+            {
+                _owner->_runner->OnSellCourse(pkt->type_2);              
+                ClientSync(1);
+            }
+            break;
+        case 2: 
+            if (UpPool())
+            {
+                _owner->_runner->OnUpPool(                                
+                    _kid_data._pool_lvl, _kid_data._pool_exp);
+                ClientSync(1);
+            }
+            break;
+        case 3: 
+            if (RePool())
+            {
+                _owner->_runner->OnRePool(                                
+                    &_kid_data, MAX_RANDOM_COURSE, _kid_data._free_times);
+                ClientSync(1);
+            }
+            break;
+        case 4: 
+        {
+            int ret_0 = EndTeach();
+            if (ret_0)
+                _owner->_runner->OnEndTeach(ret_0);                       
+            break;
+        }
+        case 5: 
+            OnCreateKid();
+            ClientSync(5);
+            break;
+        case 6: 
+            if (StartDay())
+                ClientSync(1);
+            break;
+        default:
+            break;
+        }
+        goto DONE;
+    }
+    case CMD_MOVE_COURSE:
+    {
+        if (size != sizeof(KidModify::mma_1))
+            break;
+        const KidModify::mma_1* pkt = (const KidModify::mma_1*)buf;
+        __PRINTF("----- KidModify   %d   %d   %d\n", CMD_MOVE_COURSE, pkt->type_1, pkt->type_2);
+        if (MoveCourse(pkt->type_1, pkt->type_2))
+            _owner->_runner->OnMoveCourse(pkt->type_2, pkt->type_1);     
+        goto DONE;
+    }
+    case CMD_UP_COURSE:
+    {
+        if (size != sizeof(KidModify::mma_0))
+            break;
+        const KidModify::mma_0* pkt = (const KidModify::mma_0*)buf;
+        __PRINTF("----- KidModify   %d   %d   %d\n", cmd_type, pkt->type_1, pkt->type_2);
+        if (UpCourse(pkt->type_1, pkt->type_2, pkt->type_3))
+            _owner->_runner->OnUpCourse(                                  
+                pkt->type_1, pkt->type_2, pkt->type_3);
+        goto DONE;
+    }
+    case CMD_KID_EXTEND:
+    {
+        if (size != sizeof(KidModify::mma))
+            break;
+        const KidModify::mma* pkt = (const KidModify::mma*)buf;
+        __PRINTF("----- KidModify   %d   %d   %d\n", cmd_type, pkt->type, pkt->num);
+        switch (pkt->type)
+        {
+        case 0: 
+            UpKidLvl(pkt->num, pkt->arg_1);
+            ClientSync(5);
+            break;
+        case 1: 
+            UseDebri(pkt->num, pkt->arg_1, pkt->arg_2);
+            ClientSync(5);
+            break;
+        case 2: 
+            _select = pkt->num;
+            ClientSync(4);
+            break;
+        case 4: 
+            ActivateTransform();
+            break;
+        case 5: 
+            ActivateReward(pkt->num, pkt->arg_1);
+            ClientSync(15);
+            break;
+        }
+        goto DONE;
+    }
+    default:
+        break;
+    }
+DONE:
+    return false;
+}
+void player_kid::KidDeubug(int cmd_type)
+{
+    spin_autolock l(_lock_data_map);
+    if (!_kid_data._status)
+        return;
+    switch (cmd_type)
+    {
+    case 0: 
+        _kid_data._new_day = 0;
+        _update_time = 0;
+        _kid_data._type = 0;
+        ClientSync(1);
+        break;
+    case 1: 
+        _kid_data._energy += 2000;
+        ClientSync(1);
+        break;
+    }
+}
+void player_kid::UpdateKid(int num)
+{
+    if ((unsigned int)num >= MAX_CELESTIAL)
+        return;
+    kid_ess* tmp_kid = &_kid_ess[num];
+    if (!tmp_kid->_tid)
+        return;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_PROPERTY_CONFIG* cfg = (const KID_PROPERTY_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, tmp_kid->_tid, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_PROPERTY_CONFIG)
+        return;
+    tmp_kid->_physic_damage = tmp_kid->_lvl * cfg->damage;
+    tmp_kid->_magic_damage  = tmp_kid->_lvl * cfg->magic_damage;
+    tmp_kid->_defence       = tmp_kid->_lvl * cfg->defence;
+    for (int i = 0; i < MAX_MAGIC_DEF; ++i)
+        tmp_kid->_magic_defences[i] = tmp_kid->_lvl * cfg->magic_defence;
+    tmp_kid->_HP   = tmp_kid->_lvl * cfg->hp;
+    tmp_kid->_crit = (int)((double)tmp_kid->_lvl * cfg->crit_hit_probability * 100.0);
+    if (!cfg->id_kid_upgrade_star)
+        return;
+    const KID_UPGRADE_STAR_CONFIG* cfg2 = (const KID_UPGRADE_STAR_CONFIG*)
+        itemdataman::get_data_ptr(world_manager::GetDataMan(),
+            cfg->id_kid_upgrade_star, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg2 || dt != DT_KID_UPGRADE_STAR_CONFIG)
+        return;
+    if (tmp_kid->_rahk_lvl <= 0 || tmp_kid->_rahk_lvl > MAX_KID_STAR)
+        return;
+    int star_idx = tmp_kid->_rahk_lvl - 1;
+    double ratio = cfg2->list[star_idx].refine_ratio;
+    if (ratio > 0.0)
+    {
+        tmp_kid->_physic_damage = (int)(tmp_kid->_physic_damage * ratio);
+        tmp_kid->_magic_damage  = (int)(tmp_kid->_magic_damage  * ratio);
+        tmp_kid->_defence       = (int)(tmp_kid->_defence       * ratio);
+        for (int i = 0; i < MAX_MAGIC_DEF; ++i)
+            tmp_kid->_magic_defences[i] = (int)(tmp_kid->_magic_defences[i] * ratio);
+        tmp_kid->_HP   = (int)(tmp_kid->_HP * ratio);
+        tmp_kid->_crit = (int)((double)tmp_kid->_lvl * cfg->crit_hit_probability * ratio * 100.0);
+    }
+}
+bool player_kid::UpKidLvl(size_t num, int count)
+{
+    if (num >= MAX_CELESTIAL)
+        return false;
+    if (!_kid_ess[num]._tid || _kid_ess[num]._lvl <= 0)
+        return false;
+    if (count < 0)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_PROPERTY_CONFIG* cfg2 = (const KID_PROPERTY_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, _kid_ess[num]._tid, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg2 || dt != DT_KID_PROPERTY_CONFIG)
+        return false;
+    unsigned int tmp_lv = cfg2->rahk + _kid_ess[num]._rahk_lvl;
+    const KID_LEVEL_MAX_CONFIG* cfg = (const KID_LEVEL_MAX_CONFIG*)
+        itemdataman::get_data_ptr(world_manager::GetDataMan(), 6877, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_LEVEL_MAX_CONFIG)
+        return false;
+    if (tmp_lv >= 10)
+        tmp_lv = 9;
+    int tmp_max_lv = cfg->level_max[tmp_lv];
+    if (_kid_ess[num]._lvl + count < tmp_max_lv)
+        tmp_max_lv = _kid_ess[num]._lvl + count;
+    const KID_EXP_CONFIG* cfg3 = (const KID_EXP_CONFIG*)
+        itemdataman::get_data_ptr(world_manager::GetDataMan(), 6875, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg3 || dt != DT_KID_EXP_CONFIG)
+        return false;
+    if ((unsigned int)tmp_max_lv > MAX_KID_LEVEL)
+        tmp_max_lv = MAX_KID_LEVEL;
+    if (tmp_max_lv <= _kid_ess[num]._lvl)
+        return false;
+    int fee_cost = 0;
+    for (int i = _kid_ess[num]._lvl - 1; i < tmp_max_lv - 1; ++i)
+        fee_cost += cfg3->exp[i];
+    if (fee_cost <= 0)
+        return false;
+    if (gplayer_imp::GetAllMoney(_owner) < fee_cost)
+        return false;
+    _kid_ess[num]._lvl = tmp_max_lv;
+    UpdateKid(num);
+    gplayer_imp::SpendMoney(_owner, fee_cost, 1, 1);
+    return true;
+}
+bool player_kid::UseDebri(size_t num, int where, size_t inv_index)
+{
+    if (num >= MAX_CELESTIAL)
+        return false;
+    if (!_kid_ess[num]._tid || _kid_ess[num]._lvl <= 0)
+        return false;
+    if (where != 11)
+        return false;
+    item_list* inv = gplayer_imp::GetTrashInventory(_owner, 11);
+    if (inv_index >= item_list::Size(inv))
+        return false;
+    int _id    = item_list::operator[](inv, inv_index)->type;
+    int _count = item_list::operator[](inv, inv_index)->count;
+    if (_id <= 0 || _count <= 0)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_DEBRIS_ESSENCE* cfg = (const KID_DEBRIS_ESSENCE*)
+        itemdataman::get_data_ptr(DataMan, _id, ID_SPACE::ID_SPACE_ESSENCE, dt);
+    if (!cfg || dt != DT_KID_DEBRIS_ESSENCE)
+        return false;
+    const KID_PROPERTY_CONFIG* cfg2 = (const KID_PROPERTY_CONFIG*)
+        itemdataman::get_data_ptr(world_manager::GetDataMan(),
+            _kid_ess[num]._tid, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg2 || dt != DT_KID_PROPERTY_CONFIG)
+        return false;
+    if (cfg2->kid_debri_type != num)
+        return false;
+    if (!(1 << num) && (cfg->type & 1) != 0)
+        return false;
+    size_t count = cfg->swallow_exp;
+    AddDebri(num, count);
+    if (count == cfg->swallow_exp)
+        return false;  
+    item_list::DecAmount(inv, inv_index, 1);
+    _owner->_runner->OnTrashInvUpdate(11, inv_index, _id, 1, 1);
+    UpdateKid(num);
+    return true;
+}
+void player_kid::AddDebri(size_t num, size_t& count)
+{
+    if (!count)
+        return;
+    if (num >= MAX_CELESTIAL)
+        return;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_PROPERTY_CONFIG* cfg2 = (const KID_PROPERTY_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, _kid_ess[num]._tid, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg2 || dt != DT_KID_PROPERTY_CONFIG)
+        return;
+    if (cfg2->id_kid_upgrade)
+    {
+        const KID_PROPERTY_CONFIG* cfg3 = (const KID_PROPERTY_CONFIG*)
+            itemdataman::get_data_ptr(world_manager::GetDataMan(),
+                cfg2->id_kid_upgrade, ID_SPACE::ID_SPACE_CONFIG, dt);
+        if (!cfg3 || dt != DT_KID_PROPERTY_CONFIG)
+            return;
+        if (cfg3->kid_debri_type != num)
+            return;
+        if (count + _kid_ess[num]._debris_exp < cfg2->require_exp)
+        {
+            _kid_ess[num]._debris_exp += count;
+            count = 0;
+        }
+        else
+        {
+            count = count + _kid_ess[num]._debris_exp - cfg2->require_exp;
+            _kid_ess[num]._debris_exp = 0;
+            _kid_ess[num]._tid = cfg2->id_kid_upgrade;
+        }
+        if (count)
+            AddDebri(num, count);
+    }
+    else if (cfg2->id_kid_upgrade_star)
+    {
+        const KID_UPGRADE_STAR_CONFIG* cfg3 = (const KID_UPGRADE_STAR_CONFIG*)
+            itemdataman::get_data_ptr(world_manager::GetDataMan(),
+                cfg2->id_kid_upgrade_star, ID_SPACE::ID_SPACE_CONFIG, dt);
+        if (!cfg3 || dt != DT_KID_UPGRADE_STAR_CONFIG)
+            return;
+        if (_kid_ess[num]._rahk_lvl > MAX_KID_STAR - 1)
+            return;
+        size_t req = cfg3->list[_kid_ess[num]._rahk_lvl].require_exp;
+        if (count + _kid_ess[num]._debris_exp < req)
+        {
+            _kid_ess[num]._debris_exp += count;
+            count = 0;
+        }
+        else
+        {
+            count = count + _kid_ess[num]._debris_exp - req;
+            _kid_ess[num]._debris_exp = 0;
+            ++_kid_ess[num]._rahk_lvl;
+        }
+        if (count)
+            AddDebri(num, count);
+    }
+}
