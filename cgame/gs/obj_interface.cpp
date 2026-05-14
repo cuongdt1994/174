@@ -4586,3 +4586,9 @@ object_interface::QueryObjectSoulPower(const XID & who)
 	
 	return info.soulpower;
 }
+
+void
+obj_interface::KidTransformEnd()
+{
+	return ((gplayer_imp *)_imp)->KidTransformEnd();
+}

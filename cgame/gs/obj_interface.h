@@ -864,7 +864,8 @@ public:
 	int GetEquipSlotCount();
 	int QueryObjectRealmLevel(const XID & who);
 	int QueryObjectSoulPower(const XID & who);
-
+	//kid
+	void KidTransformEnd();
 };
 #endif
 
