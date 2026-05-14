@@ -2,7 +2,7 @@
 #include "spinlock.h"
 #include "mtime.h"
 #include <stdio.h>
-
+#include <unistd.h>
 #define MUTEX_SPIN_COUNT                600
 #define MUTEX_SPINSLEEP_DURATION        1001				//���2.6���ϵ��ںˣ�1ms�ľ��ȿ���������ӳ���ӿ�
 
@@ -77,7 +77,7 @@ int mutex_spinwait(int *__spinlock,int __timeout)
 		} 
 		else 
 		{
-			msleep(MUTEX_SPINSLEEP_DURATION);
+			usleep(MUTEX_SPINSLEEP_DURATION);
 			cnt = 0;
 		}
 	}
