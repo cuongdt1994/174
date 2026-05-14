@@ -5335,11 +5335,11 @@ public:	//lgc
 	}
 	inline void KidTransformEnd();
 	{
-		return _player_kid.DeactivateTransform();
+		_player_kid.DeactivateTransform();
 	}
 	inline void SetKidData(const void * buf, unsigned int size);
 	{
-		return _player_kid.InitFromDB(buf, size);
+		_player_kid.InitFromDB(buf, size);
 	}
 	inline void GetKidData(int &size);
 	{
