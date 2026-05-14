@@ -5321,10 +5321,30 @@ public:	//lgc
 	void ProtcolAnecdotePoints();
 	int OI_GetPetType();
 	//Kid system
-	void CreateKid(const void * buf);
-	void KidModify(int cmt_type, const void * buf, unsigned int size);
-	void KidRefreshEquipment();
-	void KidTransformEnd();
+	inline void CreateKid(const void * buf);
+	{
+		return CreateKid(buf);
+	}
+	inline void KidModify(int cmt_type, const void * buf, unsigned int size);
+	{
+		return KidModify(cmd_type,buf,size);
+	}
+	inline void KidRefreshEquipment();
+	{
+		pImp->RefreshEquipment();
+	}
+	inline void KidTransformEnd();
+	{
+		return DeactivateTransform();
+	}
+	inline void SetKidData(const void * buf, unsigned int size);
+	{
+		return InitFromDB(buf, size);
+	}
+	inline void GetKidData(int &size);
+	{
+		return SaveToDB(size);
+	}
 //NEW FUNCTIONS END
 
 };

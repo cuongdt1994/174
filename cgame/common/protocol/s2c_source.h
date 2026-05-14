@@ -3684,8 +3684,7 @@ namespace S2C
         struct home_task_info
         {
             single_data_header header;
-            int size;
-            //char buf[];
+            int task_id[16];
 			int task_trigger_times;
 			int task_refresh_times;
         };

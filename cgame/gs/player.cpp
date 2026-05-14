@@ -107,7 +107,7 @@ gplayer_imp::gplayer_imp()
 	_equipment(item::BODY,item::EQUIP_INVENTORY_COUNT),
 	_task_inventory(item::TASK_INVENTORY,TASKITEM_LIST_SIZE),
 	_player_state(PLAYER_STATE_NORMAL),_combat_timer(0),
-	_player_title(this),_player_dailysign(this),_player_fatering(this),_trashbox(TRASHBOX_BASE_SIZE,TRASHBOX_BASE_SIZE4,TRASHBOX_BASE_SIZE5,TRASHBOX_BASE_SIZE6),
+	_player_title(this),_player_dailysign(this),_player_kid(this),_player_fatering(this),_trashbox(TRASHBOX_BASE_SIZE,TRASHBOX_BASE_SIZE4,TRASHBOX_BASE_SIZE5,TRASHBOX_BASE_SIZE6),
     _user_trashbox(0u,0u,0u,0u),_player_force(this),_player_reincarnation(this)
 {
 	memset(&_instance_switch_key,0,sizeof(_instance_switch_key));
@@ -304,17 +304,17 @@ gplayer_imp::gplayer_imp()
 	_double_factor_sp = 0;
 	_double_factor_realm = 0;
 	
-	memset(&_autoswap         , 0x00 , sizeof( _autoswap         ));
-	memset(&_skillsender      , 0x00 , sizeof( _skillsender      ));
-	memset(&_glyph            , 0x00 , sizeof( _glyph            ));
-	memset(&_carrier          , 0x00 , sizeof( _carrier          ));
-	memset(&_repository       , 0x00 , sizeof( _repository       ));
-	memset(&_pet_skill_temp   , 0x00 , sizeof( _pet_skill_temp   ));
-	memset(&_pet_skin         , 0x00 , sizeof( _pet_skin         ));
+	memset(&_autoswap         , 0x00 , sizeof( _autoswap));
+	memset(&_skillsender      , 0x00 , sizeof( _skillsender));
+	memset(&_glyph            , 0x00 , sizeof( _glyph ));
+	memset(&_carrier          , 0x00 , sizeof( _carrier));
+	memset(&_repository       , 0x00 , sizeof( _repository));
+	memset(&_pet_skill_temp   , 0x00 , sizeof( _pet_skill_temp));
+	memset(&_pet_skin         , 0x00 , sizeof( _pet_skin));
 	memset(&_day_world_points , 0x00 , sizeof( _day_world_points ));
-	memset(&_activity 		  , 0x00 , sizeof( _activity		 ));
+	memset(&_activity 		  , 0x00 , sizeof( _activity));
 	//memset(&_question_data	  , 0x00 , sizeof( _question_data	 ));
-	
+	memset(&_home_task_info, 0x00, sizeof(_home_task_info));
 	_repository.lock_time = 2;
 	// storage data 2
 
@@ -326,7 +326,7 @@ gplayer_imp::gplayer_imp()
 	_celestial.Init();
 	
 	_glua.Init();
-	memset(&_codex 		  , 0x00 , sizeof( _codex		 ));
+	memset(&_codex, 0x00 , sizeof( _codex));
 
 }
 
@@ -6978,6 +6978,10 @@ gplayer_imp::Save(archive & ar)
 	_player_title.Save(ar);
 	//����ǩ��
 	_player_dailysign.Save(ar);
+	//kid
+	_player_kid.Save(ar);
+	//home
+	_home_task_info.Save(ar);
     // ������Ұ�ȫ��״̬
     _player_sanctuary_check.Save(ar);
 
@@ -7255,6 +7259,10 @@ gplayer_imp::Load(archive & ar)
 	_player_title.Load(ar);
 	//ǩ����ȡ
 	_player_dailysign.Load(ar);
+	//kid
+	_player_kid.Load(ar);
+	//
+	_home_task_info.Load(ar);
     // ��ȡ��Ұ�ȫ��״̬
     _player_sanctuary_check.Load(ar);
 
@@ -8346,6 +8354,8 @@ gplayer_imp::Swap(gplayer_imp * rhs)
 	_player_giftcard.Swap(rhs->_player_giftcard);	
 	_player_title.Swap(rhs->_player_title);
 	_player_dailysign.Swap(rhs->_player_dailysign);
+	_player_kid.Swap(rhs->_player_kid);
+	_home_task_info.Swap(rhs->_home_task_info);
 	_player_fatering.Swap(rhs->_player_fatering);
     _player_sanctuary_check.Swap(rhs->_player_sanctuary_check);
 
@@ -10833,7 +10843,14 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 	GetLoteryItems();
 	TreasureInfo();
 	GetLibItems();
-
+	//Kid
+	_player_kid.ClientSync(player_kid::1)
+	_player_kid.ClientSync(player_kid::4)
+	_player_kid.ClientSync(player_kid::5)
+	_player_kid.ClientSync(player_kid::15)
+	
+	//home_task_info
+	_runner->home_task_info(_home_task_info,64,_home_task_info.task_trigger_times,_home_task_info.task_refresh_times)
 	
 	/*170+*/
 	if(_passwd_safe.passwd_active != 2)
@@ -10890,7 +10907,7 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
-
+	
 }
 
 unsigned int 
