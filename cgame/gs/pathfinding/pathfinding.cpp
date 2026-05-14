@@ -6,10 +6,7 @@
 
 namespace path_finding
 {
-// [detail_level][0] = total budget (frames × steps), [1] = normal steps/frame,
-// [2] = steps/frame when blocked (higher budget to find route around obstacle)
-// Doubled from original values to handle larger obstacles without stalling.
-int follow_target::_detail_param[3][4] = {{600,60,150,0},{1200,100,250,0},{2000,150,400,0}};
+int follow_target::_detail_param[3][4] = {{300,20,50,0},{600,40,90,0},{900,60,120,0}};
 
 NPCMoveMap::CMap* InitMoveMap(const char * move_map_path , const char * water_map_path, const char * air_map, world * plane)
 {

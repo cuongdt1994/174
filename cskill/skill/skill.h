@@ -458,7 +458,6 @@ public:
 	virtual int GetChargeMerc (Skill * skill) const { return 0; }
 	virtual int GetCoolDownLimit (Skill * skill) const { return 0; }
 	virtual int GetCostShieldEnergy (Skill * skill) const { return 0; }
-	virtual int GetChargesMax (Skill * skill) const { return 0; }
 #else
 	virtual int GetExecutetime(Skill *skill) const = 0;
 	virtual int GetCoolingtime(Skill *skill) const = 0;
@@ -494,7 +493,6 @@ public:
 	virtual int GetChargeMerc (Skill * skill) const { return 0; }
 	virtual int GetCoolDownLimit (Skill * skill) const { return 0; }
 	virtual int GetCostShieldEnergy (Skill * skill) const { return 0; }
-	virtual int GetChargesMax (Skill * skill) const { return 0; }
 #endif
 
 };
@@ -650,7 +648,6 @@ public:
 	int GetRequiredItem()     	{ return stub->GetRequiredItem(this); }
 	int GetRequiredMoney()    	{ return stub->GetRequiredMoney(this); }
 	int GetMaxability()       	{ return stub->GetMaxAbility(this); }
-	int GetChargesMax()       	{ return stub->GetChargesMax(this); }
 	int GetRequiredRealmLevel()	{ return stub->GetRequiredRealmLevel(this); }
 	int GetAttackspeed()      	{ return stub->GetAttackspeed(this); }
 	int GetMaxLevel()         	{ return stub->max_level; }

@@ -80,12 +80,12 @@ public:
 	int _battle_result;
 	int _battle_end_timer;
 	bool _need_send_ds;
-	//ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	//¶áÆìÄ£Ê½
 	enum
 	{
-		STAGE_PREPARE = 0,		//×¼ï¿½ï¿½ï¿½×¶ï¿½
-		STAGE_CONTEST,			//ï¿½ï¿½ï¿½ï¿½×¶ï¿½
-		STAGE_CONVOY,			//ï¿½ï¿½ï¿½Í½×¶ï¿½
+		STAGE_PREPARE = 0,		//×¼±¸½×¶Î
+		STAGE_CONTEST,			//Õù¶á½×¶Î
+		STAGE_CONVOY,			//»¤ËÍ½×¶Î
 	};
 	enum
 	{
@@ -110,12 +110,12 @@ public:
 		char state;
 	}_flag_carrier;
 
-	//ï¿½Ý»Ù·ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	//´Ý»Ù·ÀÓùËþÄ£Ê½
 	abase::vector<char> _attacker_available_tower;
 	abase::vector<char> _defender_available_tower;
 	bool _tower_generated;
 
-	//ï¿½Ýµï¿½Ä£Ê½
+	//¾ÝµãÄ£Ê½
 	enum
 	{
 		SH_FULL_OCCUPY_TIME = 30,	
@@ -403,7 +403,7 @@ public:
 			{
 				const personal_score & ps = it->second;
 				char buf[512];
-				snprintf(buf, sizeof(buf), "roleid(%d)soulpower(%d)combat_t(%d)attend_t(%d)kill(%d)death(%d)score(%d)dmg_o(%d)dmg_o_w(%d)dmg_i(%d)dmg_o_npc(%d)kill_w(%d)",
+				sprintf(buf, "roleid(%d)soulpower(%d)combat_t(%d)attend_t(%d)kill(%d)death(%d)score(%d)dmg_o(%d)dmg_o_w(%d)dmg_i(%d)dmg_o_npc(%d)kill_w(%d)",
 						roleid, ps.soulpower, ps.combat_time, ps.attend_time, ps.kill_count, ps.death_count, ps.score, ps.dmg_output, ps.dmg_output_weighted, ps.dmg_endure, ps.dmg_output_npc, ps.kill_count_weighted);
 				cb->dump(buf);
 				return;
@@ -418,7 +418,7 @@ public:
 			{
 				const personal_score & ps = it->second;
 				char buf[512];
-				snprintf(buf, sizeof(buf), "roleid(%d)soulpower(%d)combat_t(%d)attend_t(%d)kill(%d)death(%d)score(%d)dmg_o(%d)dmg_o_w(%d)dmg_i(%d)dmg_o_npc(%d)kill_w(%d)",
+				sprintf(buf, "roleid(%d)soulpower(%d)combat_t(%d)attend_t(%d)kill(%d)death(%d)score(%d)dmg_o(%d)dmg_o_w(%d)dmg_i(%d)dmg_o_npc(%d)kill_w(%d)",
 						roleid, ps.soulpower, ps.combat_time, ps.attend_time, ps.kill_count, ps.death_count, ps.score, ps.dmg_output, ps.dmg_output_weighted, ps.dmg_endure, ps.dmg_output_npc, ps.kill_count_weighted);
 				cb->dump(buf);
 				return;

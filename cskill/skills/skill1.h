@@ -261,7 +261,7 @@ namespace GNET
         }
     float GetMpcost (Skill * skill) const 
     { 
-        static float aarray[10] = { 2,9,16,23,30,37,44,51,58,65 }; 
+        static float aarray[10] = { 0,0,0,0,0,0,0,0,0,0 }; 
         return aarray[skill->GetLevel () - 1]; 
     } 
     bool CheckComboSkExtraCondition (Skill * skill) const 

@@ -424,24 +424,10 @@ object_interface::EnhanceDamage(int dmg)
 }
 
 void 
-object_interface::EnhanceDamage2(int dmg, int dmg2)
-{
-	_imp->_en_point.damage_low += dmg;
-	_imp->_en_point.damage_high += dmg2;
-}
-
-void 
 object_interface::ImpairDamage(int dmg)
 {
 	_imp->_en_point.damage_low -= dmg;
 	_imp->_en_point.damage_high -= dmg;
-}
-
-void 
-object_interface::ImpairDamage2(int dmg, int dmg2)
-{
-	_imp->_en_point.damage_low -= dmg;
-	_imp->_en_point.damage_high -= dmg2;
 }
 
 void 
@@ -481,24 +467,10 @@ object_interface::EnhanceMagicDamage(int dmg)
 }
 
 void 
-object_interface::EnhanceMagicDamage2(int dmg, int dmg2)
-{
-	_imp->_en_point.magic_dmg_low += dmg;
-	_imp->_en_point.magic_dmg_high += dmg2;
-}
-
-void 
 object_interface::ImpairMagicDamage(int dmg)
 {
 	_imp->_en_point.magic_dmg_low -= dmg;
 	_imp->_en_point.magic_dmg_high -= dmg;
-}
-
-void 
-object_interface::ImpairMagicDamage2(int dmg, int dmg2)
-{
-	_imp->_en_point.magic_dmg_low -= dmg;
-	_imp->_en_point.magic_dmg_high -= dmg2;
 }
 
 void 
@@ -1956,14 +1928,6 @@ void object_interface::ChangeShape(int shape)
 	_imp->_runner->change_shape(shape);
 }
 
-void object_interface::ChangeShape2(int shape, int timeout)
-{
-	_imp->ChangeShape(shape);
-	int roleid = _imp->_parent ? _imp->_parent->ID.id : 0;
-	int end_time = (timeout > 0) ? ((int)time(NULL) + timeout) : 0;
-	_imp->_runner->kid_celestial_transformation(shape, roleid, timeout, end_time);
-}
-
 int object_interface::GetForm()
 {
 	return _imp->GetForm();
@@ -2740,16 +2704,10 @@ object_interface::TestCoolDown(unsigned short id)
 	return _imp->CheckCoolDown((int)id);
 }
 
-void
+void 
 object_interface::SetCoolDown(unsigned short id, int ms)
 {
 	return _imp->SetCoolDown((int)id,ms);
-}
-
-void
-object_interface::SetCoolDown(unsigned short id, int ms, int num_max)
-{
-	return _imp->SetCoolDown((int)id, ms, num_max);
 }
 
 void 
@@ -4565,7 +4523,7 @@ object_interface::SendClientCooldownCarrier(int skill_id, int cooldown)
 void 
 object_interface::SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, int skills_count, int * skills )
 {
-	_imp->_runner->player_world_speak_info(enabled,enabled2,0,skills_count,skills);
+	_imp->_runner->player_world_speak_info(enabled,enabled2,skills_count,skills);
 }
 
 // money 172 end

@@ -54,9 +54,9 @@ void CSpatialPathFinding::Init(const Pos3DInt& posStart,const Pos3DInt& posGoal,
 		return;
 	}
 	
-	// Init A* with start node (g=0)
+	// Init the BFS algorithm
 	CSPOctreeTravNode *pOctrTravNode = new CSPOctreeTravNode(StartOctrTravNode);
-	m_Open.SortPush(posStart, 0, GetOctileDist3D(posStart, m_posGoal), pOctrTravNode, NULL);
+	m_Open.SortPush(posStart, GetManhDist(posStart, m_posGoal),pOctrTravNode, NULL);
 
 	m_iVoxelsSearched = 0;
 }
@@ -64,112 +64,112 @@ void CSpatialPathFinding::Init(const Pos3DInt& posStart,const Pos3DInt& posGoal,
 void CSpatialPathFinding::StepBestFirstSearch(int iSearchVoxels)
 {
 	if(m_bSearchOver) return;
-
+	
 	int iCounter = 0;
 	PtrSpatialPathNode pPathNode;
 	Pos3DInt posNeighbor;
-	CSPOctreeTravNode NeighborOctrTravNode;
-	int CurH, MinH = 0;
-	Pos3DInt posMinH;
-	bool bFoundNearGoal;
 
-	while (!m_Open.empty() && iCounter < iSearchVoxels && m_iVoxelsSearched < MAX_SEARCH_VOXEL_NUM)
+	CSPOctreeTravNode NeighborOctrTravNode;
+	int CurH, MinH;
+	Pos3DInt posMinH;
+	bool bPosPassable;
+
+	while (! m_Open.empty() && iCounter < iSearchVoxels && m_iVoxelsSearched < MAX_SEARCH_VOXEL_NUM)
 	{
 		pPathNode = m_Open.PopFront();
-
 		if(pPathNode->pos == m_posGoal)
 		{
 			m_bFoundPath = true;
-			BuildPath(pPathNode);
-			delete pPathNode;
-			m_bSearchOver = true;
-			return;
+			break;
 		}
-
-		++iCounter;
-		++m_iVoxelsSearched;
-
-		bFoundNearGoal = false;
-
-		for(int i = 0; i < 27; ++i)
+		
+		iCounter++;
+		m_iVoxelsSearched ++;
+		
+		// search each neighbor of the current pos
+		int dx, dy, dz;
+		for( int i=0; i<27; ++i)
 		{
-			if(i == 13) continue; // skip self
+			// when i==13, we get dx=0,dy=0 and dz=0,so the neighbor pos is same to the current pos
+			if(i==13) continue;
 
-			int dx = i / 9 - 1;
-			int dy = (i % 9) / 3 - 1;
-			int dz = i % 3 - 1;
-
+			dx = i / 9 -1;
+			dy = (i %9) /3 -1;
+			dz = i % 3 -1;
+			
 			posNeighbor.x = pPathNode->pos.x + dx * m_iVoxelSize;
 			posNeighbor.y = pPathNode->pos.y + dy * m_iVoxelSize;
 			posNeighbor.z = pPathNode->pos.z + dz * m_iVoxelSize;
 
 			if(!ExtraPassableTest(posNeighbor)) continue;
+			
+			//////////////////////////////////////////////////////////////////////////
+			// Noted by wenfeng, 05-12-2
+			//  convert to Octree based spmap again!
+			// Noted by wenfeng, 05-12-1
+			// when converting the global passmap to hash table, we have two choice here.
+			// 1. make the condition always false,so don't call straight line test here
+			// 2. call the straight line test here, but it's seems time-consuming
+			//////////////////////////////////////////////////////////////////////////
 
-			// g cost: cardinal=10, face-diagonal=14, space-diagonal=17
-			int nonzero = (dx != 0) + (dy != 0) + (dz != 0);
-			int stepCost = (nonzero == 1) ? 10 : (nonzero == 2) ? 14 : 17;
-			int newG = pPathNode->g + stepCost;
-
-			// Octree shortcut: neighbor is inside the goal's voxel — can reach goal directly
-			if(m_GoalOctrTravNode.IsPosInside(posNeighbor))
+			// test if the posNeighbor can go straight to m_posGoal!
+			if(m_GoalOctrTravNode.IsPosInside(posNeighbor) || 
+			   //(bPosPassable= CGlobalSPMap::GetInstance()->IsPosPassable(posNeighbor,NeighborOctrTravNode,pPathNode->pOctrTravNode)) &&
+			   (bPosPassable= m_pMap->IsPosPassable(posNeighbor,NeighborOctrTravNode,pPathNode->pOctrTravNode)) &&
+			   m_GoalOctrTravNode.IsNodeNeighborSibling(NeighborOctrTravNode) )
 			{
-				CurH = GetOctileDist3D(posNeighbor, m_posGoal);
-				if(!bFoundNearGoal || CurH < MinH)
+				// try to find the least-h in all neighbors
+				CurH = GetManhDist(posNeighbor, m_posGoal);
+				if(!m_bFoundPath)
 				{
 					MinH = CurH;
 					posMinH = posNeighbor;
 				}
-				bFoundNearGoal = true;
-				continue;
-			}
-
-			bool bPosPassable = m_pMap->IsPosPassable(posNeighbor, NeighborOctrTravNode, pPathNode->pOctrTravNode);
-			if(!bPosPassable) continue;
-
-			// Octree shortcut: neighbor is a sibling of the goal's voxel node
-			if(m_GoalOctrTravNode.IsNodeNeighborSibling(NeighborOctrTravNode))
-			{
-				CurH = GetOctileDist3D(posNeighbor, m_posGoal);
-				if(!bFoundNearGoal || CurH < MinH)
+				else
 				{
-					MinH = CurH;
-					posMinH = posNeighbor;
+					if(CurH < MinH)
+					{
+						MinH = CurH;
+						posMinH = posNeighbor;
+					}
 				}
-				bFoundNearGoal = true;
-				continue;
+
+				m_bFoundPath = true;
+				continue;	// go directly to next for-loop				
 			}
-
-			if(m_Close.FindByPos(posNeighbor)) continue;
-
-			int h = GetOctileDist3D(posNeighbor, m_posGoal);
-
-			// Update if already in open with worse cost; otherwise push new node
-			if(!m_Open.UpdateIfBetter(posNeighbor, newG, h, pPathNode))
+			
+			if(bPosPassable && ! m_Close.FindByPos(posNeighbor))
 			{
-				CSPOctreeTravNode* pNeighborOctrTravNode = new CSPOctreeTravNode(NeighborOctrTravNode);
-				m_Open.SortPush(posNeighbor, newG, h, pNeighborOctrTravNode, pPathNode);
+				CSPOctreeTravNode * pNeighborOctrTravNode = new CSPOctreeTravNode(NeighborOctrTravNode);
+				bool bPushSucceed = m_Open.SortPush(posNeighbor,GetManhDist(posNeighbor, m_posGoal), pNeighborOctrTravNode,pPathNode);
+				if(!bPushSucceed) delete pNeighborOctrTravNode;
 			}
-		}
 
-		if(bFoundNearGoal)
+		}	// end of for-loop	
+		
+		if(m_bFoundPath)
+			break;
+		else
+			m_Close.push_back(pPathNode);
+
+	}	// end of while-loop
+
+	if(m_bFoundPath)
+	{
+		BuildPath(pPathNode);
+		
+		if(!(m_PathFound.back() == m_posGoal))
 		{
-			m_bFoundPath = true;
-			BuildPath(pPathNode);
-			if(m_PathFound.empty() || !(m_PathFound.back() == m_posGoal))
-			{
-				m_PathFound.push_back(posMinH);
-				m_PathFound.push_back(m_posGoal);
-			}
-			delete pPathNode;
-			m_bSearchOver = true;
-			return;
+			m_PathFound.push_back(posMinH);
+			m_PathFound.push_back(m_posGoal);
 		}
 
-		m_Close.push_back(pPathNode);
-	}
+		// Not to forget delete the pPathNode! 
+		// Because pPathNode has been poped up from the m_Open and not to be pushed in m_Close
+		delete pPathNode;
 
-	if(m_Open.empty() && !m_bFoundPath)
 		m_bSearchOver = true;
+	}
 }
 
 void CSpatialPathFinding::BuildPath(PtrSpatialPathNode pPathNode)

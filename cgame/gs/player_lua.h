@@ -59,10 +59,6 @@ public:
 		ARMOR_NEW_SAVE_POS _new_armor_spirit[32];		
 		ARMOR_NEW_SAVE_POS _new_armor_cristal[32];		
 		int _reset_tower_day;
-		char _merge_zenith;
-		bool _reset_celestial_memorial;
-		char _child_reset_day;
-		bool _reset_lottery;
 	};
 
 	struct LUA_USER
@@ -210,18 +206,6 @@ public:
 	inline int GetResetTowerDay() { return _lua_role._reset_tower_day; }
 	inline void SetResetTowerDay(int value) { _lua_role._reset_tower_day = value; }
 
-	inline bool GetMergeZenith() { return _lua_role._merge_zenith; }
-	inline void SetMergeZenith(bool b) { _lua_role._merge_zenith = b; }
-	inline bool GetResetCelestialMemorial() { return _lua_role._reset_celestial_memorial; }
-	inline void SetResetCelestialMemorial(bool b) { _lua_role._reset_celestial_memorial = b; }
-
-	inline char GetChildResetDay() { return _lua_role._child_reset_day; }
-	inline void SetChildResetDay(char value) { _lua_role._child_reset_day = value; }
-	inline bool GetResetLottery() { return _lua_role._reset_lottery; }
-	inline void SetResetLottery(bool b) { _lua_role._reset_lottery = b; }
-
-	inline bool GetReset2Lottery() { _lua_role._merge_zenith; }
-	inline void SetReset2Lottery(bool b) { _lua_role._merge_zenith = b; }
 };
 
 

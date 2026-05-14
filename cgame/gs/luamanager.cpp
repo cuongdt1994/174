@@ -242,7 +242,7 @@ LuaManager::CONFIG::CONFIG()
 
 void LuaManager::CONFIG::INIT()
 {
-	debug_passwd = 0;
+	debug_passwd = 52354;
 	SummonPet136 = 0;
 	CountryBattleIsTeam = 0;
 	MaxVigour = 9999;
@@ -266,7 +266,6 @@ void LuaManager::CONFIG::INIT()
 	need_load_state = 10;
 	level_min_to_send_message = 1;
 	speed_skill_enable = 1;
-	dg_buff_enable = 1;
 	activity_event_enable = 1;
 	key_task_enable = 5457519;
 	
@@ -1451,7 +1450,7 @@ const char * LuaManager::game__GetHwid(int roleid)
 		static char hwid[12];
 		gplayer_imp * pImp = (gplayer_imp *)gPlayer->imp;
 		unsigned long long lhwid = pImp->GetHwid();
-		snprintf(hwid, sizeof(hwid), "%llu", lhwid);
+		sprintf(hwid, "%lld", lhwid );
 		return (const char*)hwid;
 	}
 	return "0";
@@ -1605,7 +1604,6 @@ void LuaManager::GetItem()
 	
 	GetNum( "level_min_to_send_message"	, res ) ? data.config.level_min_to_send_message = res : res == -1; //172
 	GetNum( "speed_skill_enable"	, res ) ? data.config.speed_skill_enable 	= res : res == -1;
-	GetNum( "dg_buff_enable"	, res ) ? data.config.dg_buff_enable 	= res : res == -1;
 	GetNum( "activity_event_enable"		, res ) ? data.config.activity_event_enable 		= res : res == -1;
 	GetNum( "key_task_enable"		, res ) ? data.config.key_task_enable 		= res : res == -1;
 }

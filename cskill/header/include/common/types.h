@@ -193,25 +193,25 @@ struct rect
 };
 
 /**
- *	Types of XIDs
+ *	XID的类型
  */
 enum
 {
 	GM_TYPE_INVALID = -1,
-	GM_TYPE_SERVER,				//id is the server
-	GM_TYPE_BROADCAST,			//id is useless, this is a broadcast message, and the receiver is the received server object
-	GM_TYPE_PLAYER,				//id is the user id
-	GM_TYPE_TEAM,				//id is the team target
-	GM_TYPE_NPC,				//id is an npc
-	GM_TYPE_ACTIVE,				//id Useless, representing active objects, namely NPC and player
-	GM_TYPE_MATTER,				//id is an item
-	GM_TYPE_PET,				//id It is a pet or an attached NPC, and its ID is calculated from the player's account ID
-	GM_TYPE_OBJECT,				//id is a special object, such as a transaction object
-	GM_TYPE_SELF,				//id It is yourself, you can ignore the following ID
-	GM_TYPE_MINE_SPAWNER,			//id is the spawner in the MATTER generator
-	GM_TYPE_MAFIA,				//id is the gang target
+	GM_TYPE_SERVER,				//id 是服务器
+	GM_TYPE_BROADCAST,			//id 是无用的，这是一个广播信息,接受者就是收到的服务器对象
+	GM_TYPE_PLAYER,				//id 是用户id
+	GM_TYPE_TEAM,				//id 是组队目标
+	GM_TYPE_NPC,				//id 是npc
+	GM_TYPE_ACTIVE,				//id 无用，代表活动对象，即NPC和player
+	GM_TYPE_MATTER,				//id 是物品
+	GM_TYPE_PET,				//id 是宠物或者附属NPC,其ID是玩家的帐号ID上计算而来
+	GM_TYPE_OBJECT,				//id 是特殊对象 ,比如交易对象
+	GM_TYPE_SELF,				//id 是自己，可以忽略后面的ID
+	GM_TYPE_MINE_SPAWNER,			//id 是MATTER 生成器里的spawner
+	GM_TYPE_MAFIA,				//id 是帮派目标
 };
-#define 	PET_MASK 	0x20000000	//bit 29 indicates whether it is a pet
+#define 	PET_MASK 	0x20000000	//bit 29表示是否为宠物
 
 struct XID
 {
@@ -288,7 +288,7 @@ WRAPPER & operator>>(WRAPPER & wrapper,XID & id)
 }
 
 /*
- *	NPC and item ID conversion function
+ *	NPC和物品的ID转换函数
  */
 inline int ID2WIDX(int id) { return (int) ( ( ((unsigned int)id) & (0x0FF00000)) >> 20); }
 inline int ID2IDX(int id) { return id & 0x000FFFFF; }
@@ -331,7 +331,7 @@ inline int MERGE_PET_ID(int id){return (MERGE_ID<gnpc>(id)) | PET_MASK;}
 
 
 /*
- *	Represents the structure of a session on the link server
+ *	表示link服务器上的一个session的结构
  */
 struct link_sid
 {
@@ -355,7 +355,7 @@ WRAPPER & operator >>(WRAPPER & wrapper, link_sid & rhs)
 }
 
 /*
-   Some common data structures required by the protocol
+   协议需要的一些常用数据结构
  */
 #pragma pack(1)
 namespace C2S

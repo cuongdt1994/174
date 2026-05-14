@@ -264,9 +264,8 @@ public:
 	void ModifyTeamVisibleState(unsigned short state, int param, int param2, int t);
 	void RemoveTeamVisibleState(unsigned short state);
 
-	//���ñ�����־
+	//���ñ�����־	
 	void ChangeShape(int shape);
-	void ChangeShape2(int shape, int timeout);
 	int GetForm();
 	void SetFormCls(int form);
 
@@ -381,18 +380,14 @@ public:
     void DecAntiResistanceDegree(int val);
 
 	void EnhanceDamage(int dmg);
-	void EnhanceDamage2(int dmg, int dmg2);
 	void ImpairDamage(int dmg);
-	void ImpairDamage2(int dmg, int dmg2);
 
 	void EnhancePercDamage(float dmg_low, float dmg_high);
 	void ImpairPercDamage(float dmg_low, float dmg_high);
 
 	void EnhanceMagicDamage(int dmg);
-	void EnhanceMagicDamage2(int dmg, int dmg2);
 	void ImpairMagicDamage(int dmg);
-	void ImpairMagicDamage2(int dmg, int dmg2);
-	
+
 	void EnhanceScaleDamage(int dmg);
 	void ImpairScaleDamage(int dmg);
 
@@ -565,7 +560,6 @@ public:
 //��ȴ
 	bool TestCoolDown(unsigned short id);
 	void SetCoolDown(unsigned short id, int ms);
-	void SetCoolDown(unsigned short id, int ms, int num_max);
 	void CoolDownReduceAtr(unsigned short id, int ms);
 	void ResetCoolDown(unsigned short id, int ms = 1);
 	void ResetAllCoolDown(int ms, int except_id);

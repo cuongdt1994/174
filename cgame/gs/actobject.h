@@ -553,7 +553,6 @@ public:
 	virtual int GetObjectClass() { return -1;}			//Occupation of the subject
 	virtual bool CheckCoolDown(int idx) { return true;}
 	virtual void SetCoolDown(int idx, int msec) {}
-	virtual void SetCoolDown(int idx, int msec, int num_max) {}
 	virtual void CoolDownReduceAtr(int idx, int msec) {}
 	virtual void NotifySkillStillCoolDown(int cd_id){}
 	virtual int GetMonsterFaction() { return 0;}
@@ -2027,7 +2026,7 @@ inline void ModifyTeamVisibleState(unsigned short state, int * param, unsigned i
 		int i=0;
 		while(mask)
 		{
-			if ( (mask & 1) != 0 )
+			if(mask & 1)
 			{
 				if(_immune_state_adj_counter[i] == 0)
 					_immune_state_adj |= 1<<i;
@@ -2043,7 +2042,7 @@ inline void ModifyTeamVisibleState(unsigned short state, int * param, unsigned i
 		int i=0;
 		while(mask)
 		{
-			if ( (mask & 1) != 0 )
+			if(mask & 1)
 			{
 				if(_immune_state_adj_counter[i] == 1)
 					_immune_state_adj &= ~(1<<i);

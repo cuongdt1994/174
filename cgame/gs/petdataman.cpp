@@ -42,7 +42,7 @@ pet_dataman::LoadTemplate(itemdataman & dataman)
 					pt.pet_class = pet_data::PET_CLASS_EVOLUTION;
 					break;
 				default:
-					__PRINTINFO("Wrong pet id_type, pet id:%d\n",id);
+					__PRINTINFO("����ĳ���id_type������id:%d\n",id);
 					continue;
 			}
 			
@@ -163,7 +163,7 @@ pet_dataman::LoadTemplate(itemdataman & dataman)
 						|| pt.attack_speed <= 2 || pt.sight_range < 0.1f
 						|| pt.hp_a <= 0.f)
 				{
-					__PRINTINFO("Wrong pet data, pet: %d\n",id);
+					__PRINTINFO("����ĳ������ݣ�����id:%d\n",id);
 					continue;
 				}
 			}

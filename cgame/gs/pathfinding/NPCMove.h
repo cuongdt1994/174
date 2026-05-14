@@ -116,9 +116,19 @@ public:
 	// test whether the pos is above terrain and water
 	inline static bool IsPosOnAir(const A3DVECTOR3& vPos, CMap * pMap)
 	{
+		return true;
+		/*
+		// Verify the pos must be above the terrain and water
+		//float fTerrainHeight = NPCMove::GetTerrainHeight(vPos.x, vPos.z);
 		float fTerrainHeight = pMap->GetTerrainHeight(vPos.x, vPos.z);
-		float fWaterHeight = pMap->GetWaterHeight(vPos.x, vPos.z);
-		return vPos.y > fTerrainHeight + RELAX_ABOVE_DIST && vPos.y > fWaterHeight + RELAX_ABOVE_DIST;
+		//float fWaterHeight = WaterAreaMap::GetWaterHeight(vPos.x,vPos.z);
+		float fWaterHeight = pMap->GetWaterHeight(vPos.x,vPos.z);
+
+		if(vPos.y > fTerrainHeight + RELAX_ABOVE_DIST && vPos.y > fWaterHeight + RELAX_ABOVE_DIST)
+			return true;
+		else
+			return false;
+		*/
 	}
 	
 	// test whether the pos is above terrain and below water

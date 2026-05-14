@@ -142,7 +142,6 @@
 #define PLAYER_HP_GEN_FACTOR	5		//��һ�Ѫ������
 #define PLAYER_MP_GEN_FACTOR	10		//��һ�ħ������
 #define MAX_USERNAME_LENGTH	40		//������ֵ���󳤶�
-#define MAX_USERNAME_LENGTH_NOTIFY	20
 #define PVP_COMBAT_HIGH_TH	300		//PVP��ʱ�������
 #define PVP_COMBAT_LOW_TH	150		//PVP��ʱ��С��һ��ֵ�Ż���з���ˢ��
 #define MAX_DOUBLE_EXP_TIME	(4*3600)	//������˫��ʱ��
@@ -155,8 +154,6 @@
 #define TITLE_RARE_CHAT_MSG_ID	102		//ϡ�гƺŻ�ú���ϵͳ��ʽ���㲥 
 #define FAC_RENAME_CHAT_MSG_ID  103	    //gamed ���ɸ���ռ��
 #define AT_VIP_LVL_CHAT_MSG_ID  104     //���˵ȼ�vip��ʽ���㲥 
-#define CHILD_AWAKENING_CHAT_MSG_ID 	118 
-#define MIN_POINTS_CHILD_AWAKENING_MSG 	150000
 
 #define SOLO_CHALLENGE_RANK_CHAT_MSG_ID  105    // ���˸������а��ϰ񺰻�ռ��
 #define FIREWORK2_PUBLIC_CHAT_MSG_ID   106     //���̻�ȫ������ռ��

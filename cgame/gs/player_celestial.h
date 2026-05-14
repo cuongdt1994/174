@@ -57,9 +57,6 @@ public:
 
 	short _count_lottery[CelestialMemorialConfig::LOTTERY_COUNT];
 
-	short _new_max_level;
-	short _use_perg_prob[CelestialMemorialConfig::LOTTERY_COUNT];
-
 public:
 
 	gplayer_celestial() { memset(this, 0x00, sizeof(*this)); }
@@ -81,8 +78,6 @@ public:
 
 		memset(&_storage,0,sizeof(_storage));	
 		memset(&_count_lottery,0,sizeof(_count_lottery));	
-
-		_new_max_level = 0;
 	}
 
 	inline bool GetHasCelestialMemorialUnlock() { return _has_celestial_memorial_unlock; }
@@ -144,10 +139,6 @@ public:
 	inline void SetCountLottery(int pos)
 	{
 		_count_lottery[pos]++;
-	}
-	inline void WipeCountLottery(int pos) 
-	{
-		_count_lottery[pos] = 0;
 	}
 
 	CELESTIAL_M_LOTTERY & GetCelestialMLottery(int pos) { return _celestial_m_lottery[pos]; }
@@ -226,73 +217,10 @@ public:
 	}
 
 	inline REWARD & GetCelestialMemorialRewardPos(int pos) { return _celestial_reward_pos[pos];}	
-	inline REWARD & GetCelestialMemorialRewardPos_2(int pos) { return _celestial_reward_pos_2[pos];}
-
-	inline void ClearPos500MemorialRewardPos_1()
-	{
-		for(unsigned int i = 0; i < CelestialMemorialConfig::MAX_LEVEL_RED_BOX; i++)
-		{
-			if(_celestial_reward_pos[i].item_pos == 500)
-			{
-				_celestial_reward_pos[i].item_id = 0;
-				_celestial_reward_pos[i].item_pos = 0;
-
-				_celestial_reward_count--;
-			}
-
-			if(_celestial_reward_pos_2[i].item_pos == 500)
-			{
-				_celestial_reward_pos_2[i].item_id = 0;
-				_celestial_reward_pos_2[i].item_pos = 0;
-
-				_celestial_reward_count_2--;
-			}
-
-		}
-	}	
-
-	inline void SetCelestialNewMaxLevel(int level)
-	{
-		_new_max_level = level;
-	}
-
-	inline int GetCelestialNewMaxLevel()
-	{
-		return _new_max_level;
-	}
-
-	inline void SetCelestialUsePergProb(int pos, int value)
-	{
-		_use_perg_prob[pos] = value;
-	}
-
-	inline int GetCelestialUsePergProb(int pos)
-	{
-		return _use_perg_prob[pos];
-	}
-
-	inline void ClearAllCelestialMemorial ()
-	{
-		_has_celestial_memorial_unlock = 0;
-		memset(&_celestial_memorial_struct, 0, sizeof(_celestial_memorial_struct));
-		memset(&_celestial_m_lottery, 0, sizeof(_celestial_m_lottery));
-		memset(&_celestial_perg_value, 0, sizeof(_celestial_perg_value));
-		memset(&_celestial_ticket_value, 0, sizeof(_celestial_ticket_value));
-
-		_celestial_reward_count = 0;
-		_celestial_reward_count_2 = 0;
-
-		memset(&_celestial_reward_pos, 0, sizeof(_celestial_reward_pos));
-		memset(&_celestial_reward_pos_2, 0, sizeof(_celestial_reward_pos_2));
-
-		memset(&_storage, 0, sizeof(_storage));
-		memset(&_count_lottery, 0, sizeof(_count_lottery));
-
-		_new_max_level = 0;
-	}
-
+	inline REWARD & GetCelestialMemorialRewardPos_2(int pos) { return _celestial_reward_pos_2[pos];}	
 
 public:
+
 };
 
 

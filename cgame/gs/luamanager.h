@@ -287,7 +287,6 @@ public:
 		int need_load_state;
 		int level_min_to_send_message; // 172
 		int speed_skill_enable;
-		int dg_buff_enable;
 		int activity_event_enable;
 		int key_task_enable;
 		

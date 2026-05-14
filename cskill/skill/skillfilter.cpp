@@ -267,7 +267,6 @@ DEFINE_SUBSTANCE(filter_Immunesoil2,filter,CLASS_IMMUNESOIL2);
 DEFINE_SUBSTANCE(filter_Retort2,filter,CLASS_RETORT2);
 DEFINE_SUBSTANCE(filter_Addattackdefenddegree,filter,CLASS_ADDATTACKDEFENDDEGREE);
 DEFINE_SUBSTANCE(filter_Chariotform,filter,CLASS_CHARIOTFORM);
-DEFINE_SUBSTANCE(filter_Kidform,filter,CLASS_KIDFORM);
 DEFINE_SUBSTANCE(filter_Palsy, filter, CLASS_PALSY);
 DEFINE_SUBSTANCE(filter_Apgencont2 ,filter,CLASS_APGENCONT2);
 DEFINE_SUBSTANCE(filter_Inchurtfromskill,filter,CLASS_INCHURTFROMSKILL);
@@ -861,98 +860,5 @@ void filter_Monkeyform::OnRelease()
 	_parent.RemoveTeamVisibleState(HSTATE_MONKEYFORM);
 }
 
-void filter_Kidform::OnAttach()
-{
-		 _parent.GetSkillWrapper().EventChange(_parent, _parent.GetForm(), 3);
-		_parent.LockEquipment(true);
-		_parent.SetNoMount(true);
-		_parent.SetNoBind(true);
-		_parent.ChangeShape2(_shape | 0xC0, 30);
-		_parent.EnhanceMaxHP(_hp);
-		_parent.EnhanceDamage2(_damage_low , _damage_high);
-		_parent.EnhanceMagicDamage2(_damage_magic_low , _damage_magic_high);
-		_parent.EnhanceDefense(_defence);
-		_parent.EnhanceResistance(0, _resistance[0]);
-		_parent.EnhanceResistance(1, _resistance[1]);
-		_parent.EnhanceResistance(2, _resistance[2]);
-		_parent.EnhanceResistance(3, _resistance[3]);
-		_parent.EnhanceResistance(4, _resistance[4]);
-		_parent.EnhanceCrit(_point);
-		_parent.EnhanceAttackSpeed(_ratio);
-		_parent.EnhanceAttackRange(_range);
-		_parent.EnhanceSpeed0(_speed);
-		_parent.EnhanceAttackDegree(_attack_adj);
-		_parent.EnhanceDefendDegree(_defend_adj);
-		_parent.IncAntiDefenseDegree(_attack_ant);
-		_parent.IncAntiResistanceDegree(_defend_ant);
-		_parent.GetSkillWrapper().DecPrayTime(_time_reduce);
-		_parent.IncImmuneMask(50339840);
-		for(int i = 0; i < _skill_count; ++i)
-		{
-			_parent.GetSkillWrapper().ActivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
-		}
-		_parent.SendClientAttackData();
-		_parent.UpdateDefenseData();
-		_parent.UpdateMagicData();
-		_parent.UpdateAttackData();
-		_parent.UpdateSpeedData();
-		_parent.SendClientCurSpeed();
-}
 
-void filter_Kidform::OnRelease()
-{
-		_parent.GetSkillWrapper().EventChange(_parent, _parent.GetForm(), 0);
-		_parent.LockEquipment(false);
-		_parent.SetNoMount(false);
-		_parent.SetNoBind(false);
-		_parent.ChangeShape2(0, 0);
 
-		float hp_pct = 0.0f;
-		int max_hp_old = _parent.GetExtendProp().max_hp;
-		if(max_hp_old > 0)
-			hp_pct = (float)_parent.GetBasicProp().hp / (float)max_hp_old;
-
-		_parent.ImpairMaxHP(_hp);
-		_parent.ImpairDefense(_defence);
-		_parent.ImpairResistance(0, _resistance[0]);
-		_parent.ImpairResistance(1, _resistance[1]);
-		_parent.ImpairResistance(2, _resistance[2]);
-		_parent.ImpairResistance(3, _resistance[3]);
-		_parent.ImpairResistance(4, _resistance[4]);
-		_parent.ImpairDamage2(_damage_low , _damage_high);
-		_parent.ImpairMagicDamage2(_damage_magic_low , _damage_magic_high);
-		_parent.ImpairCrit(_point);
-		_parent.ImpairAttackSpeed(_ratio);
-		_parent.ImpairAttackRange(_range);
-		_parent.ImpairSpeed0(_speed);
-		_parent.ImpairAttackDegree(_attack_adj);
-		_parent.ImpairDefendDegree(_defend_adj);
-		_parent.DecAntiDefenseDegree(_attack_ant);
-		_parent.DecAntiResistanceDegree(_defend_ant);
-		_parent.GetSkillWrapper().IncPrayTime(_time_reduce);
-		_parent.DecImmuneMask(50339840);
-		for(int i = 0; i < _skill_count; ++i)
-		{
-			_parent.GetSkillWrapper().DeactivateDynSkill(_skill[2*i], 1, _parent, _skill[2*i+1]);
-		}
-		_parent.SendClientAttackData();
-		_parent.UpdateDefenseData();
-		_parent.UpdateMagicData();
-		_parent.UpdateAttackData();
-		_parent.UpdateSpeedData();
-		_parent.SendClientCurSpeed();
-
-		_parent.AddFilter(new filter_Giant     (_parent, 30, 3600));
-		_parent.AddFilter(new filter_Blessmagic(_parent, 70, 3600));
-		_parent.AddFilter(new filter_Stoneskin (_parent, 60, 3600));
-		_parent.AddFilter(new filter_Incresist (_parent, 60, 3600));
-		_parent.AddFilter(new filter_Inchp     (_parent, 30, 3600));
-		_parent.AddFilter(new filter_Ironshield(_parent, 60, 3600));
-
-		int max_hp_new = _parent.GetExtendProp().max_hp;
-		int diff = _parent.GetBasicProp().hp - (int)((float)max_hp_new * hp_pct);
-		if(diff > 0)
-			_parent.DecHP(diff);
-		else if(diff < 0)
-			_parent.Heal(-diff);
-}

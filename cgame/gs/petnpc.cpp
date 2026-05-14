@@ -279,18 +279,11 @@ gpet_imp::CheckCoolDown(int idx)
 	return _cooldown.TestCoolDown(idx);
 }
 
-void
-gpet_imp::SetCoolDown(int idx, int msec)
-{
+void 
+gpet_imp::SetCoolDown(int idx, int msec) 
+{ 
 	_cooldown.SetCoolDown(idx,msec);
 	NotifySetCoolDownToMaster(idx,msec);
-}
-
-void
-gpet_imp::SetCoolDown(int idx, int msec, int num_max)
-{
-	_cooldown.SetCoolDown(idx, msec);
-	NotifySetCoolDownToMaster(idx, msec);
 }
 
 void 

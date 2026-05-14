@@ -9991,17 +9991,5 @@ namespace GNET
 		}
 		return true;
 	}
-	bool PlayerWrapper::InsertTeamVisibleState(int value, bool inc)
-	{	
-		if (inc)
-		{
-			object.InsertTeamVisibleState(value, -1);
-		}
-		else
-		{
-			object.RemoveTeamVisibleState(value);
-		}
-		return true;
-	}
 };
 
