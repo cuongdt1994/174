@@ -616,7 +616,7 @@ struct home_task_info
 	int task_trigger_times;
 	int task_refresh_times;
 	public:
-	home_task_info():_task_id(0),_task_trigger_times(0),_task_refresh_times(0){}
+	home_task_info():task_id(0),task_trigger_times(0),task_refresh_times(0){}
 	bool Save(archive&ar)
 	{
 		ar.push_back(this, 64);
@@ -637,7 +637,7 @@ struct home_task_info
 		return true;
 	}
 	
-}
+};
 struct cash_vip_info
 { 
 private:
@@ -5363,7 +5363,7 @@ public:	//lgc
 	{
 		pImp->RefreshEquipment();
 	}
-	inline void KidTransformEnd();
+	inline void KidTransformEnd()
 	{
 		_player_kid.DeactivateTransform();
 	}
