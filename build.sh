@@ -54,6 +54,12 @@ setup_skill_env() {
     ln -sf ~/share/io/ .
     ln -sf ~/share/common/ .
     popd > /dev/null
+
+    pushd "$SKILL/skill" > /dev/null
+    rm -f obj_interface.h attack.h
+    ln -sf ../../$GS/gs/obj_interface.h .
+    ln -sf ../../$GS/gs/attack.h .
+    popd > /dev/null
 }
 
 setup_env() {
