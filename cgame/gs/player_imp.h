@@ -5323,11 +5323,11 @@ public:	//lgc
 	//Kid system
 	inline void CreateKid(const void * buf);
 	{
-		return CreateKid(buf);
+		return _player_kid.CreateKid(buf);
 	}
 	inline void KidModify(int cmt_type, const void * buf, unsigned int size);
 	{
-		return KidModify(cmd_type,buf,size);
+		return _player_kid.KidModify(cmd_type,buf,size);
 	}
 	inline void KidRefreshEquipment();
 	{
@@ -5335,15 +5335,15 @@ public:	//lgc
 	}
 	inline void KidTransformEnd();
 	{
-		return DeactivateTransform();
+		return _player_kid.DeactivateTransform();
 	}
 	inline void SetKidData(const void * buf, unsigned int size);
 	{
-		return InitFromDB(buf, size);
+		return _player_kid.InitFromDB(buf, size);
 	}
 	inline void GetKidData(int &size);
 	{
-		return SaveToDB(size);
+		return _player_kid.SaveToDB(size);
 	}
 //NEW FUNCTIONS END
 
