@@ -39,7 +39,7 @@
 #include "activity_event_manager.h"
 #include "celestial_memorial_manager.h"
 //#include "question_manager.h"
-
+#include "player_kid.h"
 #include "luamanager.h"
 #include "player_lua.h"
 #include "player_lottery.h"
