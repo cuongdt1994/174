@@ -292,7 +292,6 @@ namespace service_ns
 		SERVICE_ID_DOUBLE_EXP	= 27,
 		SERVICE_ID_HATCH_PET	= 28,
 		SERVICE_ID_RECOVER_PET	= 29,
-
 	    SERVICE_ID_ADDON_CHANGE = 81,		// 魂石转化 
 		SERVICE_ID_ADDON_REPLACE = 82,		// 魂石替换 	
 	};

@@ -8,7 +8,7 @@
 #include "sfilterdef.h"
 #include "skillwrapper.h"
 #include "statedef.h"
-
+#include <ctime>
 using namespace GNET;
 //lgc
 enum	//seal/idle mode Index counted in _idle_seal_mode_counter
@@ -9208,7 +9208,7 @@ protected:
 		//This filter is saved after going offline and timed
 		//backup_timeout
 		int tmp = _timeout;
-		_timeout += time(NULL);
+		_timeout += time(nullptr);
 		
 		filter_Soulbase::Save(ar);
 		ar << _retort_damage;
@@ -9224,7 +9224,7 @@ protected:
 		ar >> _retort_damage;
 
 		//restore_timeout
-		_timeout -= time(NULL);
+		_timeout -= time(nullptr);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -9311,7 +9311,7 @@ protected:
 		//restore_timeout
 		int tmp = _timeout;
 		//Save the absolute time when the filter expires
-		_timeout += time(NULL);
+		_timeout += time(nullptr);
 
 		filter_Soulbase::Save(ar);
 		ar << _level;
@@ -9327,7 +9327,7 @@ protected:
 		ar >> _level;
 		
 		//restore_timeout
-		_timeout -= time(NULL);
+		_timeout -= time(nullptr);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -13059,7 +13059,7 @@ protected:
 		//���filter�����ߺ󱣴棬����ʱ
 		//����_timeout
 		int tmp = _timeout;
-		_timeout += time(NULL);
+		_timeout += time(nullptr);
 		
 		filter_Soulbase::Save(ar);
 		ar << _ratio;
@@ -13075,7 +13075,7 @@ protected:
 		ar >> _ratio;
 
 		//�ָ�_timeout
-		_timeout -= time(NULL);
+		_timeout -= time(nullptr);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -16119,7 +16119,7 @@ protected:
 		//���filter�����ߺ󱣴棬����ʱ
 		//����_timeout
 		int tmp = _timeout;
-		_timeout += time(NULL);
+		_timeout += time(nullptr);
 		
 		timeout_filter::Save(ar);
 		ar << _vigour;
@@ -16137,7 +16137,7 @@ protected:
 		ar >> _crit_damage_reduce;
 
 		//�ָ�_timeout
-		_timeout -= time(NULL);
+		_timeout -= time(nullptr);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -18345,7 +18345,7 @@ protected:
     virtual bool Save(archive& ar)
     {
         int tmp = _timeout;
-        _timeout += time(NULL);
+        _timeout += time(nullptr);
 
         timeout_filter::Save(ar);
         ar << _exp_sp_factor << _realm_exp_factor;
@@ -18359,7 +18359,7 @@ protected:
         timeout_filter::Load(ar);
         ar >> _exp_sp_factor >> _realm_exp_factor;
 
-        _timeout -= time(NULL);
+        _timeout -= time(nullptr);
         if (_timeout <= 0) _timeout = 1;
 
         return true;

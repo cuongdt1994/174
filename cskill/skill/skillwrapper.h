@@ -8,7 +8,7 @@
 #include "common/types.h"
 #include "common/base_wrapper.h"
 #include "obj_interface.h"
-
+#include <unordered_map>
 namespace SKILL
 {
 #pragma pack(1)
