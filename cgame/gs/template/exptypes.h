@@ -9306,26 +9306,7 @@ struct KID_SYSTEM_CONFIG
 
 	unsigned int	id;							// ID
 	namechar		name[32];				// Name
-
-	int		unk1;
-	int		unk2;
-	int		unk3;
-	int		unk4;
-	int		unk5;
-	int		unk6;
-	int		unk7;
-	int		unk8;
-	int		unk9;
-	int		unk10;
-	int		unk11;
-	int		unk12;
-	int		unk13;
-	int		unk14;
-	int		unk15;
-	int		unk16;
-	int		unk17;
-	int		unk18;
-	int		unk19;
+	int unk[19];
 
 	struct
 	{
@@ -9356,7 +9337,7 @@ struct COURSE_ESSENCE
 	unsigned int		cost;
 	int		unk9;
 	int		unk10;
-	int		pile_num_max;
+	int		unk11;
 		
 };
 
@@ -9372,15 +9353,15 @@ struct COURSE_SUITE_ESSENCE
 	namechar		name[32];				// Name
 	
 	unsigned int		type_mask;
-	int		unk2;
+	int		max_count;
 
 
 	struct
 	{
 
-		int		max_count;
+		int		min_count;
 		unsigned int		type;
-		int		unk6;
+		int		probability;
 		int		increase;
 
 	}bonus[3];
@@ -9399,7 +9380,7 @@ struct KID_PROPERTY_CONFIG
 	namechar		name[32];				// Name
 
 	char	file_model[128];
-	int		unk1;
+	int		shape_type;
 	char	file_img_bar[128];
 	char	file_icon[128];
 	char	file_icon_bar[128];
@@ -9421,10 +9402,10 @@ struct KID_PROPERTY_CONFIG
 
 	float	crit_hit_probability;
 	float	attack_speed;
-	float	unk34;
-	float	speed;
-	float	unk22;
-	float	unk23;
+	float	attack_range;
+	float	run_speed;
+	float	walk_speed;
+	float	swim_speed;
 	
 	float	atack_degree_inherit_rate;
 	float	defend_degree_inherit_rate;
@@ -9458,30 +9439,21 @@ struct KID_PROPERTY_CONFIG
 
 struct KID_QUALITY_CONFIG
 {
-
-	unsigned int	id;							// ID
-	namechar		name[32];				// Name
-
-	struct
-	{
-		int		level;
-		unsigned int		require_score_min;
-		unsigned int		require_score_max;
-
-		struct
-		{
-			struct {
-				unsigned int		id;
-				float		probability;
-			}kid[8];
-			
-		}gender_list[2];
-		
-		
-	}list[4];
-	
-		
+    unsigned int   id;
+    namechar       name[32];
+    struct
+    {
+        int            level;
+        unsigned int   require_score_min;
+        unsigned int   require_score_max; 
+        struct
+        {
+            unsigned int   id;
+            float          probability; 
+        } kid[16];
+    } list[4];
 };
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -9513,9 +9485,9 @@ struct KID_UPGRADE_STAR_CONFIG
 
 	struct
 	{
-		unsigned int		unk3;
-		float		unk4;
-	}unk2[6];
+		unsigned int		require_exp;
+		float		refine_ratio;
+	}list[6];
 		
 };
 
@@ -9579,9 +9551,8 @@ struct KID_DEBRIS_ESSENCE
 	unsigned int		swallow_exp;
 
 	unsigned int		pile_num_max;
-
-	unsigned int		has_guid;
 	unsigned int		proc_type;
+	unsigned int		has_guid;
 	
 };
 
@@ -9616,9 +9587,8 @@ struct KID_DEBRIS_GENERATOR_ESSENCE
 
 	unsigned int	id;							// ID
 	namechar		name[32];				// Name
-
-	char	file_icon[128];
 	char	file_matter[128];
+	char	file_icon[128];
 
 	struct
 	{
@@ -9688,10 +9658,7 @@ struct BIS_SOI_USE_LIMIT_CONFIG
 	namechar		name[32];				// Name
 
 	unsigned int		area_id;
-	int		unk2;
-	int		unk3;
-	int		unk4;
-	int		unk5;
+	int		unk[4];
 
 
 	struct
