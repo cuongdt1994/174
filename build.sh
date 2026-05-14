@@ -56,10 +56,11 @@ setup_skill_env() {
     popd > /dev/null
 
     pushd "$SKILL/skill" > /dev/null
-    rm -f obj_interface.h attack.h property.h
+    rm -f obj_interface.h attack.h property.h filter.h
     ln -sf ../../$GS/gs/obj_interface.h .
     ln -sf ../../$GS/gs/attack.h .
 	ln -sf ../../$GS/gs/property.h .
+	ln -sf ../../$GS/gs/filter.h .
     popd > /dev/null
 }
 
