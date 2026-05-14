@@ -1741,8 +1741,8 @@ protected:
 	item_list	_equipment;		//װ����
 	item_list	_task_inventory;	//������Ʒ��
 	gplayer_money _money;
-	//unsigned int 		_player_money[2];		//money //silver 172
-	//unsigned int		_money_capacity;	//Ǯ������		
+	unsigned int 		_player_money[2];		//money //silver 172
+	unsigned int		_money_capacity;	//Ǯ������		
 	int		_player_state;		//��ҵĻ���״̬
 	int		_combat_timer;		//�������һ�θ񶷵�ʱ��
 	int		_reputation;		//����
@@ -1879,6 +1879,7 @@ protected:
 	touch_trade _touch_order;       //Touch���� 
 	player_title _player_title;    // ��ɫ�ƺ�
 	player_dailysign _player_dailysign; // �ճ�ǩ��
+	player_kid	_player_kid;
 	player_giftcard	_player_giftcard;  // ��Ʒ��
 	player_fatering _player_fatering;	//����
     player_sanctuary_check _player_sanctuary_check; // �����Ұ�ȫ��״̬
@@ -1905,7 +1906,7 @@ protected:
 	fix_position_transmit_info _fix_position_transmit_infos[FIX_POSITION_TRANSMIT_MAX_POSITION_COUNT];
 	int _fix_position_transmit_energy;
     int _cash_resurrect_times_in_cooldown;      // ����ȴ�ڼ�ʹ��Ԫ������Ĵ���
-
+	home_task_info _home_task_info;
 	//NEW PARMS
 	int _bind_state;
 
@@ -5319,7 +5320,11 @@ public:	//lgc
 	void SetAnecdotePoints();
 	void ProtcolAnecdotePoints();
 	int OI_GetPetType();
-
+	//Kid system
+	void CreateKid(const void * buf);
+	void KidModify(int cmt_type, const void * buf, unsigned int size);
+	void KidRefreshEquipment();
+	void KidTransformEnd();
 //NEW FUNCTIONS END
 
 };
