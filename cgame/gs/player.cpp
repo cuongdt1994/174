@@ -10844,10 +10844,10 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 	TreasureInfo();
 	GetLibItems();
 	//Kid
-	_player_kid.ClientSync(player_kid::1)
-	_player_kid.ClientSync(player_kid::4)
-	_player_kid.ClientSync(player_kid::5)
-	_player_kid.ClientSync(player_kid::15)
+	_player_kid.ClientSync(player_kid::kid_val1)
+	_player_kid.ClientSync(player_kid::kid_val4)
+	_player_kid.ClientSync(player_kid::kid_val5)
+	_player_kid.ClientSync(player_kid::kid_val15)
 	
 	//home_task_info
 	_runner->home_task_info(_home_task_info,64,_home_task_info.task_trigger_times,_home_task_info.task_refresh_times)
