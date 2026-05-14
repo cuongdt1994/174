@@ -830,3 +830,229 @@ void player_kid::AddDebri(size_t num, size_t& count)
             AddDebri(num, count);
     }
 }
+bool player_kid::ActivateReward(size_t num2, size_t num)
+{
+    if (num >= MAX_CELESTIAL)
+        return false;
+    if (!_kid_ess[num]._tid || _kid_ess[num]._lvl <= 0)
+        return false;
+    if (num2 >= MAX_REWARD_BIT)
+        return false;
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_LEVEL_REWARD_CONFIG* cfg = (const KID_LEVEL_REWARD_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, KID_REWARD_ID[num], ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_LEVEL_REWARD_CONFIG)
+        return false;
+    if (cfg->reward[num2].require_level > _kid_ess[num]._lvl)
+        return false;
+    if (cfg->reward[num2].item_id && cfg->reward[num2].item_count)
+    {
+        item_list* inv = gplayer_imp::GetInventory(_owner);
+        if (item_list::IsFull(inv))
+            return false;
+        item_tag_t tag = 0;
+        item_data* data = itemdataman::generate_item_from_player(
+            world_manager::GetDataMan(), cfg->reward[num2].item_id, &tag, 2);
+        if (!data)
+            return false;
+        unsigned int count = cfg->reward[num2].item_count;
+        if (count > data->pile_limit)
+            count = data->pile_limit;
+        data->count = count;
+        int rst = item_list::Push(inv, data);
+        gplayer_imp::FirstAcquireItem(_owner, data);
+        if (rst >= 0)
+        {
+            item* it = item_list::operator[](inv, rst);
+            _owner->_runner->ItemUpdateNotify(data->type, 0, count - data->count, it->count, 0, rst);
+        }
+        FreeItem(data);
+    }
+    if (cfg->reward[num2].addon_id)
+    {
+        Activate(cfg->reward[num2].addon_id);
+        gplayer_imp::KidRefreshEquipment(_owner);
+    }
+    _addon_mask[num] |= 1LL << num2;
+    return true;
+}
+void player_kid::ActivateAllAddon()
+{
+    for (int i = 0; i < MAX_CELESTIAL; ++i)
+    {
+        DATA_TYPE dt;
+        itemdataman* DataMan = world_manager::GetDataMan();
+        const KID_LEVEL_REWARD_CONFIG* cfg = (const KID_LEVEL_REWARD_CONFIG*)
+            itemdataman::get_data_ptr(DataMan, KID_REWARD_ID[i], ID_SPACE::ID_SPACE_CONFIG, dt);
+        if (!cfg || dt != DT_KID_LEVEL_REWARD_CONFIG)
+            continue;
+        for (int j = 0; j < MAX_REWARD_BIT; ++j)
+        {
+            if ((_addon_mask[i] >> j) & 1)
+                Activate(cfg->reward[j].addon_id);
+        }
+    }
+}
+void player_kid::Activate(int addon_id)
+{
+    if (!addon_id)
+        return;
+    addon_data data;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    if (!itemdataman::generate_addon(DataMan, addon_id, &data))
+    {
+        __PRINTINFO("kid addon_id  err1   %d \n", addon_id);
+        return;
+    }
+    if (addon_manager::TestUpdate(&data) == 2)
+        addon_manager::Activate(&data, 0, _owner, 1.0);
+    else
+        __PRINTINFO("kid addon_id  err2   %d \n", addon_id);
+}
+void player_kid::Deactivate(int addon_id)
+{
+    if (!addon_id)
+        return;
+    addon_data data;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    if (!itemdataman::generate_addon(DataMan, addon_id, &data))
+    {
+        __PRINTINFO("kid addon_id  err1   %d \n", addon_id);
+        return;
+    }
+    if (addon_manager::TestUpdate(&data) == 2)
+        addon_manager::Deactivate(&data, 0, _owner, 1.0);
+    else
+        __PRINTINFO("kid addon_id  err2   %d \n", addon_id);
+}
+void player_kid::ActivateTransform()
+{
+    if ((unsigned int)_select >= MAX_CELESTIAL || !_kid_ess[_select]._tid)
+        return;
+    if (gactive_imp::GetForm(_owner))
+    {
+        filter_man::RemoveFilter(&_owner->_filters, 4550);
+        return;
+    }
+    if (!_owner->TrySetForm(139))
+    {
+        _owner->_runner->SendError(53);
+        return;
+    }
+    filter_man::ClearSpecFilter(&_owner->_filters, 12288, 100000);
+    filter_man::RemoveFilter(&_owner->_filters, 4267);
+    filter_man::RemoveFilter(&_owner->_filters, 4268);
+    filter_man::RemoveFilter(&_owner->_filters, 4269);
+    filter_man::RemoveFilter(&_owner->_filters, 4270);
+    filter_man::RemoveFilter(&_owner->_filters, 4320);
+    filter_man::RemoveFilter(&_owner->_filters, 4262);
+    filter_man::RemoveFilter(&_owner->_filters, 4325);
+    filter_man::RemoveFilter(&_owner->_filters, 4333);
+    DATA_TYPE dt;
+    itemdataman* DataMan = world_manager::GetDataMan();
+    const KID_PROPERTY_CONFIG* cfg = (const KID_PROPERTY_CONFIG*)
+        itemdataman::get_data_ptr(DataMan, _kid_ess[_select]._tid, ID_SPACE::ID_SPACE_CONFIG, dt);
+    if (!cfg || dt != DT_KID_PROPERTY_CONFIG)
+        return;
+    kid_ess& sel = _kid_ess[_select];
+    tmp_data.shape       = cfg->shape_type;
+    tmp_data.attack_type = cfg->attack_type;
+    tmp_data.hp = Result(sel._HP,
+        _owner->_cur_prop.max_hp,
+        _owner->_en_percent.max_hp);
+    tmp_data.damage_low = Result(sel._physic_damage,
+        _owner->_cur_prop.damage_low,
+        _owner->_en_percent.damage + _owner->_en_percent.base_damage);
+    tmp_data.damage_high = Result(sel._physic_damage,
+        _owner->_cur_prop.damage_high,
+        _owner->_en_percent.damage + _owner->_en_percent.base_damage);
+    tmp_data.damage_magic_low = Result(sel._magic_damage,
+        _owner->_cur_prop.damage_magic_low,
+        _owner->_en_percent.base_magic + _owner->_en_percent.magic_dmg);
+    tmp_data.damage_magic_high = Result(sel._magic_damage,
+        _owner->_cur_prop.damage_magic_high,
+        _owner->_en_percent.base_magic + _owner->_en_percent.magic_dmg);
+    int enh = (int)((double)(3 * _owner->_cur_prop.strength + 2 * _owner->_cur_prop.vitality)
+              * 0.04 + 0.5);
+    tmp_data.defence = Result(sel._defence,
+        _owner->_cur_prop.defense,
+        _owner->_en_percent.defense + enh);
+    enh = (int)((double)(3 * _owner->_cur_prop.energy + 2 * _owner->_cur_prop.vitality)
+          * 0.04 + 0.5);
+    for (int i = 0; i < MAX_RESISTANCE; ++i)
+    {
+        tmp_data.resistance[i] = Result(sel._magic_defences[i],
+            _owner->_cur_prop.resistance[i],
+            _owner->_en_percent.resistance[i] + enh);
+    }
+    tmp_data.crit_hit = sel._crit
+                      - _owner->_crit_rate
+                      - _owner->_base_crit_rate;
+    tmp_data.attack_speed = _owner->_cur_prop.attack_speed
+                          - (int)(cfg->attack_speed * 20.0 + 0.00001);
+    tmp_data.attack_range = cfg->attack_range - _owner->_cur_prop.attack_range;
+    tmp_data.speed        = cfg->run_speed    - _owner->_cur_prop.run_speed;
+    enh = _owner->_attack_degree + _owner->_defend_degree;
+    tmp_data.attack_degree = (int)((double)enh * cfg->atack_degree_inherit_rate)
+                           - _owner->_attack_degree;
+    tmp_data.defend_degree = (int)((double)enh * cfg->defend_degree_inherit_rate)
+                           - _owner->_defend_degree;
+    enh = _owner->_anti_defense_degree + _owner->_anti_resistance_degree;
+    tmp_data.phy_inherit = (int)((double)enh * cfg->physical_penetration_inherit_rate)
+                         - _owner->_anti_defense_degree;
+    tmp_data.mag_inherit = (int)((double)enh * cfg->magic_penetration_inherit_rate)
+                         - _owner->_anti_resistance_degree;
+    tmp_data.time_reduce = (int)(cfg->enchant_time_reduce * 100.0)
+                         - GNET::SkillWrapper::GetPraySpeed(&_owner->_skill);
+    tmp_data.skill_count = 0;
+    if (cfg->id_kid_skill)
+    {
+        const KID_SKILL_CONFIG* cfg2 = (const KID_SKILL_CONFIG*)
+            itemdataman::get_data_ptr(world_manager::GetDataMan(),
+                cfg->id_kid_skill, ID_SPACE::ID_SPACE_CONFIG, dt);
+        if (cfg2 && dt == DT_KID_SKILL_CONFIG)
+        {
+            for (int i = 0; i <= 15; ++i)
+            {
+                if (cfg2->skill[i].id <= 0)
+                    continue;
+                for (int j = 9; j >= 0; --j)
+                {
+                    if (cfg2->skill[i].level[j] && sel._lvl >= cfg2->skill[i].level[j])
+                    {
+                        tmp_data.skill[2 * tmp_data.skill_count]     = cfg2->skill[i].id;
+                        tmp_data.skill[2 * tmp_data.skill_count + 1] = j + 1;
+                        ++tmp_data.skill_count;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    _owner->SetForm(139, 1800000, 0);
+    object_interface player(_owner);
+    GNET::SkillWrapper::SetKidFilter(&_owner->_skill, player, &tmp_data.shape);
+    _owner->_basic.hp = _owner->_cur_prop.max_hp;
+    _owner->_runner->SyncTransform(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
+    gplayer_imp::PlayerGetProperty(_owner);
+}
+void player_kid::DeactivateTransform()
+{
+    if (!tmp_data.skill_count)
+        return;
+    for (int i = 0; i < tmp_data.skill_count; ++i)
+        tmp_data.skill[2 * i + 1] = -tmp_data.skill[2 * i + 1];
+    _owner->_runner->SyncTransform(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
+    gplayer_imp::PlayerGetProperty(_owner);
+}
+int player_kid::NEXT_DAY_TIME()
+{
+    time_t now = time(0);
+    tm dt;
+    localtime_r(&now, &dt);
+    dt.tm_sec  = 0;
+    dt.tm_min  = 0;
+    dt.tm_hour = 0;
+    return mktime(&dt) + 86400;
+}

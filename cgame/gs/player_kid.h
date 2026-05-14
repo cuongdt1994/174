@@ -11,7 +11,6 @@
 #include "vector.h"
 
 class gplayer_imp;
-class archive;
 class item_list;
 
 class player_kid
