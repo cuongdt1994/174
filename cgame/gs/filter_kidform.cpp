@@ -46,8 +46,8 @@ filter_Kidform::filter_Kidform(object_interface object, int *buf)
 void filter_Kidform::OnAttach()
 {
 	int form = _parent.GetForm();
-	gactive_imp *imp = _parent._imp;
-	GNET::SkillWrapper *sw = _parent.GetSkillWrapper();
+	gactive_imp *imp = _parent.GetImpl();
+	GNET::SkillWrapper *sw = &_parent.GetSkillWrapper();
 	sw->EventChange(object_interface(imp), form, 3);
 
 	_parent.LockEquipment(true);
@@ -75,14 +75,14 @@ void filter_Kidform::OnAttach()
 	_parent.IncAntiDefenseDegree(_attack_ant);
 	_parent.IncAntiResistanceDegree(_defend_ant);
 
-	sw = _parent.GetSkillWrapper();
+	sw = &_parent.GetSkillWrapper();
 	sw->DecPrayTime(_time_reduce);
 
 	_parent.IncImmuneMask(50339840);
 
 	for (int i = 0; i < _skill_count; ++i)
 	{
-		sw = _parent.GetSkillWrapper();
+		sw = &_parent.GetSkillWrapper();
 		sw->ActivateDynSkill(_skill[2 * i], _skill[2 * i + 1]);
 	}
 
@@ -97,8 +97,8 @@ void filter_Kidform::OnAttach()
 void filter_Kidform::OnRelease()
 {
 	int form = _parent.GetForm();
-	gactive_imp *imp = _parent._imp;
-	GNET::SkillWrapper *sw = _parent.GetSkillWrapper();
+	gactive_imp *imp = _parent.GetImpl();
+	GNET::SkillWrapper *sw = &_parent.GetSkillWrapper();
 	sw->EventChange(object_interface(imp), form, 0);
 
 	_parent.LockEquipment(false);
@@ -107,8 +107,8 @@ void filter_Kidform::OnRelease()
 	_parent.ChangeShape2(0, 0);
 
 	// save HP ratio before restoring max HP
-	float hp_ratio = (float)_parent.GetBasicProp()->hp
-	               / (float)_parent.GetExtendProp()->max_hp;
+	float hp_ratio = (float)_parent.GetBasicProp().hp
+	               / (float)_parent.GetExtendProp().max_hp;
 
 	_parent.ImpairMaxHP(_hp);
 	_parent.ImpairDefense(_defence);
@@ -128,14 +128,14 @@ void filter_Kidform::OnRelease()
 	_parent.DecAntiDefenseDegree(_attack_ant);
 	_parent.DecAntiResistanceDegree(_defend_ant);
 
-	sw = _parent.GetSkillWrapper();
+	sw = &_parent.GetSkillWrapper();
 	sw->IncPrayTime(_time_reduce);
 
 	_parent.DecImmuneMask(50339840);
 
 	for (int i = 0; i < _skill_count; ++i)
 	{
-		sw = _parent.GetSkillWrapper();
+		sw = &_parent.GetSkillWrapper();
 		sw->DeactivateDynSkill(_skill[2 * i], _skill[2 * i + 1]);
 	}
 
@@ -148,12 +148,12 @@ void filter_Kidform::OnRelease()
 
 	// apply post-transform buff filters via existing cash-resurrect mechanism
 	static const float kid_buff_ratios[GNET::BUFF_COUNT] = { 30.f, 70.f, 60.f, 60.f, 30.f, 60.f };
-	sw = _parent.GetSkillWrapper();
+	sw = &_parent.GetSkillWrapper();
 	sw->ResurrectByCashAddFilter(_parent, 3600, kid_buff_ratios, GNET::BUFF_COUNT);
 
 	// restore HP proportionally to the new max_hp
-	float target_hp = (float)_parent.GetExtendProp()->max_hp * hp_ratio;
-	int diff = _parent.GetBasicProp()->hp - (int)target_hp;
+	float target_hp = (float)_parent.GetExtendProp().max_hp * hp_ratio;
+	int diff = _parent.GetBasicProp().hp - (int)target_hp;
 	if (diff > 0)
 		_parent.DecHP(diff);
 	else if (diff < 0)
