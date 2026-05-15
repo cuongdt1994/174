@@ -647,7 +647,8 @@ public:
 	int GetCoolDownLimit(ID id );
 	int SetPositionrollback2(object_interface player, int second);
 
-	
+	void SetKidFilter(object_interface player, int *buf);
+
 	virtual ~SkillWrapper(){}
 };
 
