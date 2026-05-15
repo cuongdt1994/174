@@ -316,6 +316,6 @@ static_assert(sizeof(player_kid::kid_data)         == 0x80,  "kid_data size mism
 static_assert(sizeof(player_kid::KidModify::mma)   == 0x12,  "KidModify::mma size mismatch");
 static_assert(sizeof(player_kid::KidModify::mma_0) == 0x05,  "KidModify::mma_0 size mismatch");
 static_assert(sizeof(player_kid::KidModify::mma_1) == 0x04,  "KidModify::mma_1 size mismatch");
-static_assert(sizeof(player_kid)                   == 0x2F0, "player_kid size mismatch");
+static_assert(sizeof(player_kid)                   == 0x2F8, "player_kid size mismatch");
 
 #endif // __ONLINEGAME_GS_PLAYER_KID_H__

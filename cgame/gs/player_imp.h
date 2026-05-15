@@ -5377,11 +5377,11 @@ public:	//lgc
 	void KidCelestialInfoProtocol(int type);
 	inline void CreateKid(const void * buf)
 	{
-		return _player_kid.CreateKid(buf);
+		_player_kid.CreateKid(buf);
 	}
-	inline void KidModify(int cmt_type, const void * buf, unsigned int size)
+	inline void KidModify(int cmd_type, const void * buf, unsigned int size)
 	{
-		return _player_kid.KidModify(cmt_type,buf,size);
+		_player_kid.KidModify(cmd_type,buf,size);
 	}
 	inline void KidRefreshEquipment()
 	{
@@ -5389,13 +5389,13 @@ public:	//lgc
 	}
 	inline void KidTransformEnd()
 	{
-		_player_kid.DeactivateTransform();
+		player_kid.DeactivateTransform();
 	}
 	inline void SetKidData(const void * buf, unsigned int size)
 	{
-		_player_kid.InitFromDB(buf, size);
+		player_kid.InitFromDB(buf, size);
 	}
-	inline void GetKidData(int &size)
+	inline const void* GetKidData(size_t &size)
 	{
 		return _player_kid.SaveToDB(size);
 	}
