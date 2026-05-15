@@ -272,25 +272,16 @@ int main(int argn , char ** argv)
 	
 	setlinebuf(stdout);
 
-	VM_BEGIN
-	if (LIC_INIT_SERVICE)
-	{
-		LuaManager::GetInstance()->InitWorld();
-		LotteryConfig::GetInstance()->Init();
-		TreasureConfig::GetInstance()->Init();
-		ArenaConfig::GetInstance()->Init();
-		GlyphConfig::GetInstance()->Init();
-		WorldPointsConfig::GetInstance()->Init();
-		ActivityEventConfig::GetInstance()->Init();
-		CelestialMemorialConfig::GetInstance()->Init();
-		EmulateSettings::GetInstance()->Init();
-		CodexConfig::GetInstance()->Init();
-	}
-	else
-	{
-		kill(0, SIGUSR1);
-	}
-	VM_END
+	LuaManager::GetInstance()->InitWorld();
+	LotteryConfig::GetInstance()->Init();
+	TreasureConfig::GetInstance()->Init();
+	ArenaConfig::GetInstance()->Init();
+	GlyphConfig::GetInstance()->Init();
+	WorldPointsConfig::GetInstance()->Init();
+	ActivityEventConfig::GetInstance()->Init();
+	CelestialMemorialConfig::GetInstance()->Init();
+	EmulateSettings::GetInstance()->Init();
+	CodexConfig::GetInstance()->Init();
 
 	while(1) 
 	{
