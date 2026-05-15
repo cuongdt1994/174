@@ -4428,11 +4428,11 @@ void gplayer_dispatcher::get_finish_notify(int rst1, int rst2)
     send_ls_msg(pPlayer, _tbuf);
 }
 
-void gplayer_dispatcher::player_world_speak_info( char enabled, char enabled2, int skills_count, int * skills )
+void gplayer_dispatcher::player_world_speak_info( char enabled, char enabled2, char enabled3, int skills_count, int * skills )
 {
     _tbuf.clear();
 
-    CMD::Make<CMD::player_world_speak_info>::From(_tbuf, enabled, enabled2, skills_count, skills );
+    CMD::Make<CMD::player_world_speak_info>::From(_tbuf, enabled, enabled2, enabled3, skills_count, skills );
 	gplayer* pPlayer = (gplayer*)_imp->_parent;
 	send_ls_msg(pPlayer, _tbuf);
 }

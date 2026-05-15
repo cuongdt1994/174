@@ -3781,7 +3781,7 @@ namespace S2C
 			single_data_header header;
 			char enabled; // 0
 			char desabled; // 1
-			char kid; //170+
+			char enabled3; //170+
 			int count_skills;
 			SKILL skill[];
 

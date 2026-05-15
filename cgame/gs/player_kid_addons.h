@@ -129,4 +129,9 @@ public:
 
 };
 
+struct player_kid_addon_runtime
+{
+	ADDON_LIST _total_addon[8];
+};
+
 #endif

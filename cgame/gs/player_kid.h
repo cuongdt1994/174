@@ -49,7 +49,7 @@ public:
 	};
 
 	// ----------------------------------------------------------------
-	//  course_ess — packed, size 0x05
+	//  course_ess ï¿½ packed, size 0x05
 	// ----------------------------------------------------------------
 #pragma pack(push, 1)
 	struct course_ess
@@ -60,7 +60,7 @@ public:
 #pragma pack(pop)
 
 	// ----------------------------------------------------------------
-	//  kid_ess — size 0x38 (56)
+	//  kid_ess ï¿½ size 0x38 (56)
 	// ----------------------------------------------------------------
 	struct kid_ess
 	{
@@ -77,7 +77,18 @@ public:
 	};                                              // 0x38
 
 	// ----------------------------------------------------------------
-	//  kid_data — packed, size 0x80 (128)
+	//  celestial_info - view of first 4 fields of kid_ess (same layout)
+	// ----------------------------------------------------------------
+	struct celestial_info
+	{
+		int level;   // overlays kid_ess._lvl
+		int rank;    // overlays kid_ess._rahk_lvl
+		int exp;     // overlays kid_ess._debris_exp
+		int idx;     // overlays kid_ess._tid
+	};
+
+	// ----------------------------------------------------------------
+	//  kid_dataï¿½ packed, size 0x80 (128)
 	// ----------------------------------------------------------------
 #pragma pack(push, 1)
 	struct kid_data
@@ -134,7 +145,7 @@ public:
 
 private:
 	// ================================================================
-	//  Member data — total 0x2F0 (752) bytes
+	//  Member data ï¿½ total 0x2F0 (752) bytes
 	// ================================================================
 	gplayer_imp* const _owner;                      // 0x000
 
@@ -149,7 +160,7 @@ private:
 	int        _max_data;                           // 0x20C
 	int        _lock_data_map;                      // 0x210
 
-	struct                                          // 0x214 — 220 bytes
+	struct                                          // 0x214 ï¿½ 220 bytes
 	{
 		int   shape;
 		int   attack_type;
@@ -221,6 +232,24 @@ public:
 	void        Swap(player_kid& rhs);
 	const void* SaveToDB(size_t& size);
 	void        InitFromDB(const void* buf, size_t size);
+
+	// ================================================================
+	//  Celestial accessors (used by player_kid_addons)
+	// ================================================================
+	inline celestial_info* GetCelestial(int pos)
+	{
+		if ((unsigned int)pos >= MAX_CELESTIAL) return nullptr;
+		return reinterpret_cast<celestial_info*>(&_kid_ess[pos]);
+	}
+	inline void SetCelestial(int pos, int level, int rank, int exp, int idx)
+	{
+		if ((unsigned int)pos >= MAX_CELESTIAL) return;
+		_kid_ess[pos]._lvl         = level;
+		_kid_ess[pos]._rahk_lvl    = rank;
+		_kid_ess[pos]._debris_exp  = exp;
+		_kid_ess[pos]._tid         = idx;
+		UpdateKid(pos);
+	}
 
 	// ================================================================
 	//  Core gameplay

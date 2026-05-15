@@ -580,7 +580,7 @@ public:
 	// Novo Range Glyph
 	virtual void skill_glyph_info( int type, unsigned int count, unsigned int * values ) {}
 
-	virtual void player_world_speak_info( char enabled, char enabled2, int skills_count, int * skills ) {}
+	virtual void player_world_speak_info( char enabled, char enabled2, char enabled3, int skills_count, int * skills ) {}
 
 	// Anedota
 	virtual void get_anecdote_info(short uTask1, short uTask2, short uTask3, short uTask4, short uTask5, short uTask6, short uTask7, short uTask8, short uTask9, short uTask10, short uTask11, short uTask12, short uTask13, short uTask14, short uTask15, short uTask16) {}

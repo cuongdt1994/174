@@ -4521,9 +4521,9 @@ object_interface::SendClientCooldownCarrier(int skill_id, int cooldown)
 }
 
 void 
-object_interface::SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, int skills_count, int * skills )
+object_interface::SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, char enabled3, int skills_count, int * skills )
 {
-	_imp->_runner->player_world_speak_info(enabled,enabled2,skills_count,skills);
+	_imp->_runner->player_world_speak_info(enabled,enabled2,enabled3,skills_count,skills);
 }
 
 // money 172 end

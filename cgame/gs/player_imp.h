@@ -40,6 +40,7 @@
 #include "celestial_memorial_manager.h"
 //#include "question_manager.h"
 #include "player_kid.h"
+#include "player_kid_addons.h"
 #include "luamanager.h"
 #include "player_lua.h"
 #include "player_lottery.h"
@@ -1505,7 +1506,7 @@ public:
 	// Novo Range Glyph
 	virtual void skill_glyph_info( int type, unsigned int count, unsigned int * values );
 
-	virtual void player_world_speak_info( char enabled, char enabled2, int skills_count, int * skills );
+	virtual void player_world_speak_info( char enabled, char enabled2, char enable3, int skills_count, int * skills );
 
 	// Anedota
 	virtual void get_anecdote_info(short uTask1, short uTask2, short uTask3, short uTask4, short uTask5, short uTask6, short uTask7, short uTask8, short uTask9, short uTask10, short uTask11, short uTask12, short uTask13, short uTask14, short uTask15, short uTask16);
@@ -1566,6 +1567,8 @@ public:
 	virtual void kid_award_addon(unsigned int size, const void * info);
 	virtual void kid_celestial_awakening(int type, int reserve);
 	virtual void kid_celestial_transformation(int shape, int roleid, int reserve, int reserve2);
+	// player_kid protocol notifications (no existing equivalent)
+	virtual void OnTrashInvUpdate(int where, int slot, int id, int unk1, int unk2) {}
 	//virtual void question_task(int mode, int progress, int question, int correct, int time);
 
 public:
@@ -1927,6 +1930,8 @@ protected:
 	player_title _player_title;    // ��ɫ�ƺ�
 	player_dailysign _player_dailysign; // �ճ�ǩ��
 	player_kid	_player_kid;
+	gplayer_kid_addons _kid_addon;
+	player_kid_addon_runtime _kids_addons[6];
 	player_giftcard	_player_giftcard;  // ��Ʒ��
 	player_fatering _player_fatering;	//����
     player_sanctuary_check _player_sanctuary_check; // �����Ұ�ȫ��״̬
@@ -5368,17 +5373,19 @@ public:	//lgc
 	void ProtcolAnecdotePoints();
 	int OI_GetPetType();
 	//Kid system
+	inline player_kid* GetKid() { return &_player_kid; }
+	void KidCelestialInfoProtocol(int type);
 	inline void CreateKid(const void * buf)
 	{
 		return _player_kid.CreateKid(buf);
 	}
 	inline void KidModify(int cmt_type, const void * buf, unsigned int size)
 	{
-		return _player_kid.KidModify(cmd_type,buf,size);
+		return _player_kid.KidModify(cmt_type,buf,size);
 	}
 	inline void KidRefreshEquipment()
 	{
-		pImp->RefreshEquipment();
+		RefreshEquipment();
 	}
 	inline void KidTransformEnd()
 	{

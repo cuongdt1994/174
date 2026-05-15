@@ -77,8 +77,8 @@ bool player_kid::CreateKid(const void* buf)
     memset(&_kid_data, 0, sizeof(_kid_data));
     const char* data = (const char*)buf;
     int count = data[1];
-    if (count > MAX_NAME_LEN)
-        count = MAX_NAME_LEN;
+    if (count > MAX_NAME_LENGTH)
+        count = MAX_NAME_LENGTH;
     memcpy(_kid_data._name, data + 2, count);
     _kid_data._pool_lvl   = 1;
     _kid_data._gender     = (data[0] != 0);
@@ -86,7 +86,7 @@ bool player_kid::CreateKid(const void* buf)
     _kid_data._free_times = 1;
     RePool();
     _kid_data._free_times = 1;
-    _owner->_runner->OnCreateKid(buf);
+    _owner->_runner->kid_created_info_dialog();
     ClientSync(1);
     return false;
 }
@@ -134,7 +134,7 @@ bool player_kid::OnCreateKid()
             itemdataman::get_data_ptr(world_manager::GetDataMan(), tmp_id, ID_SPACE::ID_SPACE_CONFIG, dt);
         if (!cfg2 || dt != DT_KID_PROPERTY_CONFIG)
             return false;
-        if (cfg2->kid_debri_type >= MAX_KID_ESS)
+        if (cfg2->kid_debri_type >= MAX_CELESTIAL)
         {
             GLog::log(3, "kid_debri_type ERR  id:%d   %d\n", tmp_id, cfg2->kid_debri_type);
             return false;
@@ -151,8 +151,8 @@ bool player_kid::OnCreateKid()
             AddDebri(cfg2->kid_debri_type, count);
             if (count == cfg2->kid_debri_exp)
             {
-                item_list* inv = gplayer_imp::GetInventory(_owner);
-                if (item_list::IsFull(inv))
+                item_list& inv = _owner->GetInventory();
+                if (inv.IsFull())
                     return false;
                 item_tag_t tag = 0;
                 item_data* data = itemdataman::generate_item_from_player(
@@ -162,12 +162,12 @@ bool player_kid::OnCreateKid()
                 if (count > data->pile_limit)
                     count = data->pile_limit;
                 data->count = count;
-                int rst = item_list::Push(inv, data);
-                gplayer_imp::FirstAcquireItem(_owner, data);
+                int rst = inv.Push(*data);
+                _owner->FirstAcquireItem(data);
                 if (rst >= 0)
                 {
-                    item* it = item_list::operator[](inv, rst);
-                    _owner->_runner->ItemUpdateNotify(data->type, 0, count - data->count, it->count, 0, rst);
+                    item* it = &inv[rst];
+                    _owner->_runner->pickup_item(data->type, 0, count - data->count, it->count, 0, rst);
                 }
                 FreeItem(data);
             }
@@ -180,7 +180,7 @@ bool player_kid::OnCreateKid()
             tmp_kid->_tid        = tmp_id;
         }
         UpdateKid(cfg2->kid_debri_type);
-        _owner->_runner->OnKidBorn(0, tmp_id);
+        _owner->_runner->kid_celestial_awakening(0, tmp_id);
         ClientSync(5);
         memset(&_kid_data, 0, sizeof(_kid_data));
     }
@@ -218,7 +218,7 @@ bool player_kid::RePool()
         itemdataman::get_data_ptr(DataMan, 6858, ID_SPACE::ID_SPACE_CONFIG, dt);
     if (!cfg || dt != DT_KID_SYSTEM_CONFIG)
         return false;
-    int tmp_p[MAX_COURSE_NEW];
+    int tmp_p[MAX_RANDOM_COURSE];
     for (int i = 0; i <= 4; ++i)
     {
         int tmp = abase::Rand(0, 9999);
@@ -354,7 +354,7 @@ int player_kid::EndTeach()
     }
     int total_score = 0;
     bool b_num_score = true;
-    for (int i = 0; i < SUITE_COUNT; ++i)
+    for (int i = 0; i < 12; ++i)
     {
         DATA_TYPE dt;
         itemdataman* DataMan = world_manager::GetDataMan();
@@ -450,25 +450,18 @@ void player_kid::ClientSync(int type)
     if (type == 1)
     {
         if (_kid_data._status)
-            _owner->_runner->SyncKidData(&_kid_data, sizeof(kid_data)); 
+            _owner->_runner->kid_awakening_info(sizeof(kid_data), &_kid_data);
     }
     else if (type == 4)
     {
         if (_select >= 0)
-            _owner->_runner->SyncKidSelect(_select, -1); 
+            _owner->_runner->kid_active_info(_select, -1);
     }
     else if (type == 5 || type == 15)
     {
         if (type == 5)
         {
-            int count = 0;
-            for (int i = 0; i < MAX_CELESTIAL; ++i)
-            {
-                if (_kid_ess[i]._tid)
-                    ++count;
-            }
-            if (count)
-                _owner->_runner->SyncKidEss(_kid_ess, count, MAX_CELESTIAL);
+            _owner->KidCelestialInfoProtocol(0);
         }
         abase::vector<unsigned int, abase::fast_alloc<4, 128>> addon_mask_data;
         unsigned int zero = 0;
@@ -497,7 +490,7 @@ void player_kid::ClientSync(int type)
         addon_mask_data[1] = kid_count;
         if (kid_count)
         {
-            _owner->_runner->SyncAddonMask(
+            _owner->_runner->kid_award_addon(
                 addon_mask_data.size(),
                 addon_mask_data.begin());
         }
@@ -521,7 +514,7 @@ bool player_kid::KidModify(int cmd_type, const void* buf, size_t size)
             char ret = BuyCourse(pkt->type_2);
             if (ret)
             {
-                _owner->_runner->OnBuyCourse(pkt->type_2, ret);           
+                _owner->_runner->kid_course_insert(pkt->type_2, ret);
                 ClientSync(1);
             }
             break;
@@ -529,23 +522,21 @@ bool player_kid::KidModify(int cmd_type, const void* buf, size_t size)
         case 1: 
             if (SellCourse(pkt->type_2))
             {
-                _owner->_runner->OnSellCourse(pkt->type_2);              
+                _owner->_runner->kid_course_remove(pkt->type_2);
                 ClientSync(1);
             }
             break;
         case 2: 
             if (UpPool())
             {
-                _owner->_runner->OnUpPool(                                
-                    _kid_data._pool_lvl, _kid_data._pool_exp);
+                _owner->_runner->kid_course_perc(_kid_data._pool_lvl, 0);
                 ClientSync(1);
             }
             break;
         case 3: 
             if (RePool())
             {
-                _owner->_runner->OnRePool(                                
-                    &_kid_data, MAX_RANDOM_COURSE, _kid_data._free_times);
+                _owner->_runner->kid_course_info((unsigned int*)_kid_data._course_new, MAX_RANDOM_COURSE);
                 ClientSync(1);
             }
             break;
@@ -553,7 +544,7 @@ bool player_kid::KidModify(int cmd_type, const void* buf, size_t size)
         {
             int ret_0 = EndTeach();
             if (ret_0)
-                _owner->_runner->OnEndTeach(ret_0);                       
+                _owner->_runner->kid_awakening_points(ret_0);
             break;
         }
         case 5: 
@@ -576,7 +567,7 @@ bool player_kid::KidModify(int cmd_type, const void* buf, size_t size)
         const KidModify::mma_1* pkt = (const KidModify::mma_1*)buf;
         __PRINTF("----- KidModify   %d   %d   %d\n", CMD_MOVE_COURSE, pkt->type_1, pkt->type_2);
         if (MoveCourse(pkt->type_1, pkt->type_2))
-            _owner->_runner->OnMoveCourse(pkt->type_2, pkt->type_1);     
+            _owner->_runner->kid_course_change(pkt->type_1, pkt->type_2);
         goto DONE;
     }
     case CMD_UP_COURSE:
@@ -586,8 +577,7 @@ bool player_kid::KidModify(int cmd_type, const void* buf, size_t size)
         const KidModify::mma_0* pkt = (const KidModify::mma_0*)buf;
         __PRINTF("----- KidModify   %d   %d   %d\n", cmd_type, pkt->type_1, pkt->type_2);
         if (UpCourse(pkt->type_1, pkt->type_2, pkt->type_3))
-            _owner->_runner->OnUpCourse(                                  
-                pkt->type_1, pkt->type_2, pkt->type_3);
+            _owner->_runner->kid_course_switch(pkt->type_1, pkt->type_2, pkt->type_3);
         goto DONE;
     }
     case CMD_KID_EXTEND:
@@ -724,11 +714,11 @@ bool player_kid::UpKidLvl(size_t num, int count)
         fee_cost += cfg3->exp[i];
     if (fee_cost <= 0)
         return false;
-    if (gplayer_imp::GetAllMoney(_owner) < fee_cost)
+    if (_owner->GetAllMoney() < fee_cost)
         return false;
     _kid_ess[num]._lvl = tmp_max_lv;
     UpdateKid(num);
-    gplayer_imp::SpendMoney(_owner, fee_cost, 1, 1);
+    _owner->SpendAllMoney(fee_cost, true);
     return true;
 }
 bool player_kid::UseDebri(size_t num, int where, size_t inv_index)
@@ -739,11 +729,11 @@ bool player_kid::UseDebri(size_t num, int where, size_t inv_index)
         return false;
     if (where != 11)
         return false;
-    item_list* inv = gplayer_imp::GetTrashInventory(_owner, 11);
-    if (inv_index >= item_list::Size(inv))
+    item_list& inv = _owner->GetTrashInventory(11);
+    if (inv_index >= inv.Size())
         return false;
-    int _id    = item_list::operator[](inv, inv_index)->type;
-    int _count = item_list::operator[](inv, inv_index)->count;
+    int _id    = inv[inv_index].type;
+    int _count = inv[inv_index].count;
     if (_id <= 0 || _count <= 0)
         return false;
     DATA_TYPE dt;
@@ -765,7 +755,7 @@ bool player_kid::UseDebri(size_t num, int where, size_t inv_index)
     AddDebri(num, count);
     if (count == cfg->swallow_exp)
         return false;  
-    item_list::DecAmount(inv, inv_index, 1);
+    inv.DecAmount(inv_index, 1);
     _owner->_runner->OnTrashInvUpdate(11, inv_index, _id, 1, 1);
     UpdateKid(num);
     return true;
@@ -848,8 +838,8 @@ bool player_kid::ActivateReward(size_t num2, size_t num)
         return false;
     if (cfg->reward[num2].item_id && cfg->reward[num2].item_count)
     {
-        item_list* inv = gplayer_imp::GetInventory(_owner);
-        if (item_list::IsFull(inv))
+        item_list& inv = _owner->GetInventory();
+        if (inv.IsFull())
             return false;
         item_tag_t tag = 0;
         item_data* data = itemdataman::generate_item_from_player(
@@ -860,19 +850,19 @@ bool player_kid::ActivateReward(size_t num2, size_t num)
         if (count > data->pile_limit)
             count = data->pile_limit;
         data->count = count;
-        int rst = item_list::Push(inv, data);
-        gplayer_imp::FirstAcquireItem(_owner, data);
+        int rst = inv.Push(*data);
+        _owner->FirstAcquireItem(data);
         if (rst >= 0)
         {
-            item* it = item_list::operator[](inv, rst);
-            _owner->_runner->ItemUpdateNotify(data->type, 0, count - data->count, it->count, 0, rst);
+            item* it = &inv[rst];
+            _owner->_runner->pickup_item(data->type, 0, count - data->count, it->count, 0, rst);
         }
         FreeItem(data);
     }
     if (cfg->reward[num2].addon_id)
     {
         Activate(cfg->reward[num2].addon_id);
-        gplayer_imp::KidRefreshEquipment(_owner);
+        _owner->KidRefreshEquipment();
     }
     _addon_mask[num] |= 1LL << num2;
     return true;
@@ -930,14 +920,14 @@ void player_kid::ActivateTransform()
 {
     if ((unsigned int)_select >= MAX_CELESTIAL || !_kid_ess[_select]._tid)
         return;
-    if (gactive_imp::GetForm(_owner))
+    if (_owner->GetForm())
     {
         filter_man::RemoveFilter(&_owner->_filters, 4550);
         return;
     }
     if (!_owner->TrySetForm(139))
     {
-        _owner->_runner->SendError(53);
+        _owner->_runner->error_message(53);
         return;
     }
     filter_man::ClearSpecFilter(&_owner->_filters, 12288, 100000);
@@ -1034,8 +1024,8 @@ void player_kid::ActivateTransform()
     object_interface player(_owner);
     GNET::SkillWrapper::SetKidFilter(&_owner->_skill, player, &tmp_data.shape);
     _owner->_basic.hp = _owner->_cur_prop.max_hp;
-    _owner->_runner->SyncTransform(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
-    gplayer_imp::PlayerGetProperty(_owner);
+    _owner->_runner->player_world_speak_info(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
+    _owner->PlayerGetProperty();
 }
 void player_kid::DeactivateTransform()
 {
@@ -1043,8 +1033,8 @@ void player_kid::DeactivateTransform()
         return;
     for (int i = 0; i < tmp_data.skill_count; ++i)
         tmp_data.skill[2 * i + 1] = -tmp_data.skill[2 * i + 1];
-    _owner->_runner->SyncTransform(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
-    gplayer_imp::PlayerGetProperty(_owner);
+    _owner->_runner->player_world_speak_info(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
+    _owner->PlayerGetProperty();
 }
 int player_kid::NEXT_DAY_TIME()
 {
