@@ -637,7 +637,9 @@ struct home_task_info
 		task_refresh_times = rhs.task_refresh_times;
 		return true;
 	}
-	
+	const int* GetTaskId() const { return task_id; }
+	int GetTriggerTimes() const { return task_trigger_times; }
+	int GetRefreshTimes() const { return task_refresh_times; }
 };
 struct cash_vip_info
 { 

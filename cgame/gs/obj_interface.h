@@ -266,6 +266,7 @@ public:
 
 	//���ñ�����־	
 	void ChangeShape(int shape);
+	void ChangeShape2(int shape, int timeout);
 	int GetForm();
 	void SetFormCls(int form);
 

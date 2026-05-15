@@ -1956,6 +1956,12 @@ void object_interface::ChangeShape(int shape)
 	_imp->_runner->change_shape(shape);
 }
 
+void object_interface::ChangeShape2(int shape, int timeout)
+{
+	_imp->ChangeShape(shape);
+	_imp->_runner->change_shape(shape);
+}
+
 int object_interface::GetForm()
 {
 	return _imp->GetForm();
