@@ -5389,11 +5389,11 @@ public:	//lgc
 	}
 	inline void KidTransformEnd()
 	{
-		player_kid.DeactivateTransform();
+		_player_kid.DeactivateTransform();
 	}
 	inline void SetKidData(const void * buf, unsigned int size)
 	{
-		player_kid.InitFromDB(buf, size);
+		_player_kid.InitFromDB(buf, size);
 	}
 	inline const void* GetKidData(size_t &size)
 	{
