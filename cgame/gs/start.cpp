@@ -26,7 +26,6 @@
 #include "activity_event_manager.h"
 #include "celestial_memorial_manager.h"
 #include "emulate_settings.h"
-#include <liblicense.h>
 #include "codex_manager.h"
 
 using namespace GNET;
@@ -149,26 +148,6 @@ extern unsigned long long s2c_cmd_number_counter2[1024];
 }
 int main(int argn , char ** argv)
 {
-	static const char * m_service = "gs";
-	
-	VM_BEGIN
-	int m_result = 0;
-	Conf *license_conf = Conf::GetInstance("/home/license.conf");
-
-	if ( !LicenseInterfaces::Init(
-		license_conf->find("GLicenseClient", "address").c_str(), 
-		atoi(license_conf->find("GLicenseClient", "port").c_str()), 
-		license_conf->find("GLicenseClient", "login").c_str(), 
-		license_conf->find("GLicenseClient", "passwd").c_str(), 
-		m_service, 
-		m_result) 
-		)
-	{
-		printf("LICENSE::START: ERR=%d \n", m_result);
-		kill(0, SIGUSR1);
-	}
-	VM_END
-
 	SetupSignalHandler();
 
 	printf("Emulate by Newester Entertainment \n");
@@ -197,12 +176,7 @@ int main(int argn , char ** argv)
 	if(argn >3) gmconf_file = argv[3];
 	if(argn >4) alias_conf = argv[4];
 
-	VM_BEGIN
-	if (LIC_INIT_SERVICE)
-	{
-		LuaManager::GetInstance()->Init();
-	}
-	VM_END	
+	LuaManager::GetInstance()->Init();
 
 	//�ֻ��û��������̶�ǰ׺Ϊ"ms"
 	const char * mobile_prefix = "ms";

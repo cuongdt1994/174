@@ -1,7 +1,7 @@
 IOPATH=/root/iolib
 BASEPATH=/root/cgame
 
-INC=-I$(BASEPATH)/include -I$(BASEPATH) -I$(IOPATH)/inc -I$(BASEPATH)/libcm -I$(BASEPATH)/lua/src -I$(BASEPATH)/lua/LuaBridge -I$(BASEPATH)/lua/LuaBridge/detail -I$(BASEPATH)/license/vm -I/usr/include/lua5.1 -I/usr/include/i386-linux-gnu
+INC=-I$(BASEPATH)/include -I$(BASEPATH) -I$(IOPATH)/inc -I$(BASEPATH)/libcm -I$(BASEPATH)/lua/src -I$(BASEPATH)/lua/LuaBridge -I$(BASEPATH)/lua/LuaBridge/detail -I/usr/include/lua5.1 -I/usr/include/i386-linux-gnu
 IOLIB_OBJ=$(BASEPATH)/libgs/gs/*.o $(BASEPATH)/libgs/io/*.o $(BASEPATH)/libgs/db/*.o $(BASEPATH)/libgs/sk/*.o $(BASEPATH)/libgs/log/*.o 
 CMLIB=$(BASEPATH)/libcm.a $(BASEPATH)/libonline.a $(IOLIB_OBJ) $(BASEPATH)/collision/libTrace.a $(BASEPATH)/liblua.a
 DEF = -DLINUX -D_DEBUG  -D__THREAD_SPIN_LOCK__ -DUSE_LOGCLIENT -mfpmath=387

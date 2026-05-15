@@ -35,7 +35,6 @@
 #include <common/utf.h>
 #include <jsoncpp/json/json.h>
 #include "emulate_settings.h"
-#include <liblicense.h>
 
 inline static bool check_player(gplayer *pPlayer,int cs_index,int sid,int uid)
 {

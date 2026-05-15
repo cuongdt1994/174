@@ -5,7 +5,6 @@ INOBJ = instance/*.o
 
 SUBDIR = io item template task  pathfinding  instance ai wallow mobile
 SUBLIB = usercmd/libusercmd.a
-LIC_DIR = /root/cnet/licenseclient/vm
 IOOBJ = io/msgio.o
 ITEMOBJ = item/*.o
 WALLOWOBJ = wallow/*.o
@@ -17,11 +16,10 @@ TASKOBJ2 = task/taskman.o task/TaskProcess.o  task/TaskTempl.o  task/TaskTemplMa
 MOBILEOBJ = mobile/*.o
 SUBOBJ= $(IOOBJ) $(ITEMOBJ) $(TEMPLATEOBJ) $(TASKOBJ) $(PFOBJ) $(AIOBJ) $(WALLOWOBJ) $(MOBILEOBJ)
 
-LICENSE_OBJ = $(LIC_DIR)/LicenseCli.a
 all: 	gs
 
 gs:	$(BASEOBJ) $(GSOBJ) $(SUBDIR) 
-	$(LD) -fPIC $(BASEOBJ) $(INOBJ) $(GSOBJ) $(SUBOBJ) $(CMLIB) $(LICENSE_OBJ) libtask.so $(ALLLIB) -o gs
+	$(LD) -fPIC $(BASEOBJ) $(INOBJ) $(GSOBJ) $(SUBOBJ) $(CMLIB) libtask.so $(ALLLIB) -o gs
 	
 	rm -rf /home/gamed/gs
 	cp gs /home/gamed/gs
