@@ -1959,7 +1959,7 @@ void object_interface::ChangeShape(int shape)
 void object_interface::ChangeShape2(int shape, int timeout)
 {
 	_imp->ChangeShape(shape);
-	_imp->_runner->change_shape(shape);
+	_imp->_runner->kid_celestial_transformation(shape, timeout);
 }
 
 int object_interface::GetForm()
