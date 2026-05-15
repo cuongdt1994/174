@@ -29907,7 +29907,7 @@ public:
 		skills_shape[1].id = _skill2;
 		skills_shape[1].level = 5;
 
-		_parent.SendClientPlayerWorldSpeakInfo((char)1, (char)1, 2, (int*)skills_shape);
+		_parent.SendClientPlayerWorldSpeakInfo((char)1, (char)1, (char)1, 2, (int*)skills_shape);
 		_parent.DenyUseItemCmd();
 		_parent.DenyNormalAttackCmd();
 		_parent.DenyPetCmd();
@@ -29925,7 +29925,7 @@ public:
 		skills_shape[1].id = _skill2;
 		skills_shape[1].level = 5;
 
-		_parent.SendClientPlayerWorldSpeakInfo((char)0, (char)1, 2, (int*)skills_shape);
+		_parent.SendClientPlayerWorldSpeakInfo((char)0, (char)1, (char)1, 2, (int*)skills_shape);
 		_parent.AllowUseItemCmd();
 		_parent.AllowNormalAttackCmd();
 		_parent.AllowPetCmd();
