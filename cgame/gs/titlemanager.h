@@ -2,6 +2,7 @@
 #define __ONLINEGAME_GS_TITLE_MANAGER_H__
 #include <hashtab.h>
 #include <unordered_map>
+#include <vector>
 #include <amemory.h>
 
 typedef unsigned short TITLE_ID;
