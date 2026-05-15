@@ -60,7 +60,7 @@ public:
 	bool IsInSanctuary(const A3DVECTOR & pos);
 	bool IsCarrierMode();
 	void SendClientCooldownCarrier(int skill_id, int cooldown);
-	void SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, int skills_count, int * skills );
+	void SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, char enabled3, int skills_count, int * skills );
 
 	void Say(const char * msg);
 

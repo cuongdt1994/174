@@ -481,7 +481,7 @@ object_interface::EnhanceMagicDamage(int dmg)
 }
 
 void 
-object_interface::EnhanceMagicDamage(int dmg, int dmg2)
+object_interface::EnhanceMagicDamage2(int dmg, int dmg2)
 {
 	_imp->_en_point.magic_dmg_low += dmg;
 	_imp->_en_point.magic_dmg_high += dmg2;
@@ -1959,7 +1959,7 @@ void object_interface::ChangeShape(int shape)
 void object_interface::ChangeShape2(int shape, int timeout)
 {
 	_imp->ChangeShape(shape);
-	_imp->_runner->kid_celestial_transformation(shape, timeout);
+	_imp->_runner->kid_celestial_transformation(shape, 0, 0, 0);
 }
 
 int object_interface::GetForm()
@@ -4622,7 +4622,7 @@ object_interface::QueryObjectSoulPower(const XID & who)
 }
 
 void
-obj_interface::KidTransformEnd()
+object_interface::KidTransformEnd()
 {
 	return ((gplayer_imp *)_imp)->KidTransformEnd();
 }
