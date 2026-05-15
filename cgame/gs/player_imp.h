@@ -1548,7 +1548,24 @@ public:
 	/*176+*/
 	virtual void portatil_picture_info(int roleid, int res, int res2, int idx, int res3);
 	virtual void portatil_picture_storage(int count, int storage[4]);
-
+	//Kid
+	virtual void kid_course_change(char old_slot, char new_slot);
+	virtual void kid_course_remove(char old_slot);
+	virtual void kid_name_awakening(short name_len, const char * name);
+	virtual void kid_course_info(unsigned int * course_info, int count);
+	virtual void kid_course_perc(char level, int reserved);
+	virtual void kid_course_insert(char old_slot, char new_slot);
+	virtual void kid_course_switch(char new_slot, char old_slot1, char old_slot2);
+	virtual void kid_awakening_points(int points);
+	virtual void kid_created_info_dialog();
+	virtual void kid_awakening_info(unsigned int size, const void * kid_awakening_info);
+	virtual void kid_awakening_cash_info(int awakening_cash, int awakening_potential);
+	
+	virtual void kid_celestial_info( unsigned int size, const void * kid_info);
+	virtual void kid_active_info(int active_slot, int reserved);
+	virtual void kid_award_addon(unsigned int size, const void * info);
+	virtual void kid_celestial_awakening(int type, int reserve);
+	virtual void kid_celestial_transformation(int shape, int roleid, int reserve, int reserve2);
 	//virtual void question_task(int mode, int progress, int question, int correct, int time);
 
 public:

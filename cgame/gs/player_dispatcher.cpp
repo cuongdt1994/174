@@ -4888,11 +4888,163 @@ void gplayer_dispatcher::portatil_picture_info(int roleid, int res, int res2, in
 	AutoBroadcastCSMsg(_imp->_plane,pPlayer->pPiece,_tbuf,-1);
 }
 
-void gplayer_dispatcher::portatil_picture_storage(int count, int * storage)
+void 
+gplayer_dispatcher::kid_course_change (char old_slot, char new_slot)
 {
 	_tbuf.clear();
 
-	CMD::Make<CMD::portatil_picture_storage>::From(_tbuf, count, storage);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	CMD::Make<CMD::kid_course_change>::From(_tbuf, old_slot, new_slot);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void 
+gplayer_dispatcher::kid_course_remove (char old_slot)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_course_remove>::From(_tbuf, old_slot);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_name_awakening (short name_len, const char * name)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_name_awakening>::From(_tbuf, name_len, name);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_course_info (unsigned int * course_info, int count)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_course_info>::From(_tbuf, course_info, count);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_course_perc (char level, int reserved)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_course_perc>::From(_tbuf, level, reserved);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_awakening_points(int points)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_awakening_points>::From(_tbuf, points);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void 
+gplayer_dispatcher::kid_created_info_dialog()
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_created_info_dialog>::From(_tbuf);
+	gplayer * pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_course_switch (char new_slot, char old_slot1, char old_slot2)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_course_switch>::From(_tbuf, new_slot, old_slot1, old_slot2);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_course_insert (char old_slot, char new_slot)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_course_insert>::From(_tbuf, old_slot, new_slot);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_awakening_info (unsigned int size, const void * kid_awakening_info)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_awakening_info>::From(_tbuf, size, kid_awakening_info);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_awakening_cash_info (int awakening_cash, int awakening_potential)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_awakening_cash_info>::From(_tbuf, awakening_cash, awakening_potential);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_celestial_info ( unsigned int size, const void * kid_info)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_celestial_info>::From(_tbuf, size, kid_info);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_celestial_transformation (int shape, int roleid, int reserve, int reserve2)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_celestial_transformation>::From(_tbuf, shape, roleid, reserve, reserve2);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	
+	AutoBroadcastCSMsg(_imp->_plane,pPlayer->pPiece,_tbuf,-1);
+}
+
+void
+gplayer_dispatcher::kid_celestial_awakening (int type, int reserve)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_celestial_awakening>::From(_tbuf, type, reserve);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_award_addon(unsigned int size, const void * info)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_award_addon>::From(_tbuf, size, info);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void
+gplayer_dispatcher::kid_active_info (int active_slot, int reserved)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_active_info>::From(_tbuf, active_slot, reserved);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;		
 	send_ls_msg(pPlayer, _tbuf);
 }
