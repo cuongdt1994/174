@@ -10028,7 +10028,7 @@ class create_kid_service_executor : public service_executor
 				char gender;
 				char count;
 				char name[16];
-			}
+			};
 	#pragma pack()
 	private:
 	virtual bool SendRequest(gplayer_imp * pImp, const XID & provider, const void * buf, unsigned int size)
@@ -10047,19 +10047,10 @@ class create_kid_service_executor : public service_executor
 		{
 			ASSERT(size == sizeof(player_request));
 
-			if (pImp->CreateKid(buf))
-			{
-				pImp->_runner->error_message(S2C::ERR_SERVICE_UNAVILABLE);
-				return false;
-			}
-			else
-			{
-				GLog::log(GLOG_INFO, "Create kid failed", pImp->_parent->ID.id);
-				return true;
-			}
+			pImp->CreateKid(buf);
+			return true;
 		}
-	}
-}
+};
 
 }
 using namespace NG_ELEMNET_SERVICE;
