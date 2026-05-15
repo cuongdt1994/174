@@ -925,7 +925,7 @@ void player_kid::ActivateTransform()
         filter_man::RemoveFilter(&_owner->_filters, 4550);
         return;
     }
-    if (!_owner->TrySetForm(139))
+    if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
     {
         _owner->_runner->error_message(53);
         return;
@@ -1020,7 +1020,7 @@ void player_kid::ActivateTransform()
             }
         }
     }
-    _owner->SetForm(139, 1800000, 0);
+    SetCoolDown((COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
     object_interface player(_owner);
     GNET::SkillWrapper::SetKidFilter(&_owner->_skill, player, &tmp_data.shape);
     _owner->_basic.hp = _owner->_cur_prop.max_hp;
