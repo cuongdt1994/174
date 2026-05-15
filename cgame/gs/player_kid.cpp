@@ -922,10 +922,10 @@ void player_kid::ActivateTransform()
         return;
     if (_owner->GetForm())
     {
-        filter_man::RemoveFilter(&_owner->_filters, 4550);
+        filter_man::RemoveFilter(&_owner->_filters, GNET::FILTER_KIDFORM);
         return;
     }
-    if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
+    if (!_owner->CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
     {
         _owner->_runner->error_message(53);
         return;
@@ -994,7 +994,7 @@ void player_kid::ActivateTransform()
     tmp_data.mag_inherit = (int)((double)enh * cfg->magic_penetration_inherit_rate)
                          - _owner->_anti_resistance_degree;
     tmp_data.time_reduce = (int)(cfg->enchant_time_reduce * 100.0)
-                         - GNET::SkillWrapper::GetPraySpeed(&_owner->_skill);
+                         - _owner->_skill.GetPraySpeed();
     tmp_data.skill_count = 0;
     if (cfg->id_kid_skill)
     {
@@ -1020,9 +1020,9 @@ void player_kid::ActivateTransform()
             }
         }
     }
-    SetCoolDown((COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
+    _owner->SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
     object_interface player(_owner);
-    GNET::SkillWrapper::SetKidFilter(&_owner->_skill, player, &tmp_data.shape);
+    _owner->_skill.SetKidFilter(player, &tmp_data.shape);
     _owner->_basic.hp = _owner->_cur_prop.max_hp;
     _owner->_runner->player_world_speak_info(1, 1, 1, tmp_data.skill_count, tmp_data.skill);
     _owner->PlayerGetProperty();
@@ -1031,6 +1031,7 @@ void player_kid::DeactivateTransform()
 {
     if (!tmp_data.skill_count)
         return;
+    filter_man::RemoveFilter(&_owner->_filters, GNET::FILTER_KIDFORM);
     for (int i = 0; i < tmp_data.skill_count; ++i)
         tmp_data.skill[2 * i + 1] = -tmp_data.skill[2 * i + 1];
     _owner->_runner->player_world_speak_info(1, 1, 1, tmp_data.skill_count, tmp_data.skill);

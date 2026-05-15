@@ -3,14 +3,6 @@
 #include "obj_interface.h"
 #include "clstab.h"
 
-// forward declarations for post-transform buff filters applied in OnRelease
-class filter_Giant;
-class filter_Blessmagic;
-class filter_Stoneskin;
-class filter_Incresist;
-class filter_Inchp;
-class filter_Ironshield;
-
 void GNET::SkillWrapper::SetKidFilter(object_interface player, int *buf)
 {
 	filter_Kidform *f = new filter_Kidform(player, buf);
@@ -154,13 +146,10 @@ void filter_Kidform::OnRelease()
 	_parent.UpdateSpeedData();
 	_parent.SendClientCurSpeed();
 
-	// apply post-transform buff filters
-	_parent.AddFilter(new filter_Giant(_parent, 30, 3600));
-	_parent.AddFilter(new filter_Blessmagic(_parent, 70, 3600));
-	_parent.AddFilter(new filter_Stoneskin(_parent, 60, 3600));
-	_parent.AddFilter(new filter_Incresist(_parent, 60, 3600));
-	_parent.AddFilter(new filter_Inchp(_parent, 30, 3600));
-	_parent.AddFilter(new filter_Ironshield(_parent, 60, 3600));
+	// apply post-transform buff filters via existing cash-resurrect mechanism
+	static const float kid_buff_ratios[GNET::BUFF_COUNT] = { 30.f, 70.f, 60.f, 60.f, 30.f, 60.f };
+	sw = _parent.GetSkillWrapper();
+	sw->ResurrectByCashAddFilter(_parent, 3600, kid_buff_ratios, GNET::BUFF_COUNT);
 
 	// restore HP proportionally to the new max_hp
 	float target_hp = (float)_parent.GetExtendProp()->max_hp * hp_ratio;
@@ -190,7 +179,7 @@ bool filter_Kidform::Save(archive &ar)
 	ar << _point << _ratio << _range << _speed
 	   << _attack_adj << _defend_adj
 	   << _attack_ant << _defend_ant
-	   << _time_reduce;
+	   << _time_reduce << _skill_count;
 	ar.push_back(_skill, sizeof(_skill));
 	return true;
 }
@@ -206,7 +195,7 @@ bool filter_Kidform::Load(archive &ar)
 	ar >> _point >> _ratio >> _range >> _speed
 	   >> _attack_adj >> _defend_adj
 	   >> _attack_ant >> _defend_ant
-	   >> _time_reduce;
+	   >> _time_reduce >> _skill_count;
 	ar.pop_back(_skill, sizeof(_skill));
 	return true;
 }

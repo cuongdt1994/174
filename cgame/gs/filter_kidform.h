@@ -28,7 +28,7 @@ class filter_Kidform : public timeout_filter
 
 	enum
 	{
-		FILTER_ID       = 4550,
+		FILTER_ID       = 4722,
 		MAX_SKILL_COUNT = 16,
 		MASK = FILTER_MASK_TRANSLATE_SEND_MSG | FILTER_MASK_HEARTBEAT |
 		       FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_NOSAVE,
