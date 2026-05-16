@@ -38,7 +38,6 @@ all : lib dlib
 lib : $(OBJS) $(EXPROBJS) $(STUBOBJS)
 	rm libskill.a -f
 	ar crs libskill.a $(OBJS) $(EXPROBJS) $(STUBOBJS)
-	cp libskill.a /root/iolib/libskill.a
 
 dlib : $(OBJS) $(OUTEROBJS) $(EXPROBJS) $(STUBOBJS)
 	rm libskill.so -f
