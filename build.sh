@@ -38,10 +38,11 @@ build_dir() {
         print_msg "Building $dir"
         pushd "$dir" > /dev/null
         make clean > /dev/null 2>&1 || true
-        make -j"$CORES" $target
+        make -j"$CORES" $target || { echo "ERROR: make failed in $dir"; popd > /dev/null; exit 1; }
         popd > /dev/null
     else
         echo "WARNING: Directory $dir not found, skipping."
+        exit 1
     fi
 }
 
@@ -212,6 +213,11 @@ build_gslib() {
 
 build_skill() {
     build_dir "$SKILL/skill"
+    if [ ! -f "$SKILL/skill/libskill.a" ]; then
+        echo "ERROR: $SKILL/skill/libskill.a was not created. Aborting."
+        exit 1
+    fi
+    echo "OK: $SKILL/skill/libskill.a created successfully."
     build_dir "$SKILL"
 }
 
