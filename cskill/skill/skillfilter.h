@@ -8,7 +8,7 @@
 #include "sfilterdef.h"
 #include "skillwrapper.h"
 #include "statedef.h"
-
+#include <ctime>
 using namespace GNET;
 //lgc
 enum	//seal/idle mode Index counted in _idle_seal_mode_counter
