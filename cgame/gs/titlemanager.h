@@ -3,7 +3,7 @@
 #include <hashtab.h>
 #include <unordered_map>
 #include <amemory.h>
-
+#include <vector>
 typedef unsigned short TITLE_ID;
 typedef abase::pair<TITLE_ID,int> TITLE_EXPIRE;
 
