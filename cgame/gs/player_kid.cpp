@@ -12,6 +12,7 @@
 #include "usermsg.h"
 #include "public_quest.h"
 #include "luamanager.h"
+#include "emulate_settings.h"
 #include "player_kid.h"
 
 static const int card_level_1[] = { 66225, 66227, 66228, 66229, 66230, 66231 };
