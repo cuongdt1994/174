@@ -6,14 +6,14 @@
 #include <amemory.h>
 struct MSG 
 {
-	int 	message;	//消息的类型
-	struct XID target;	//收消息的目标，可能是服务器，玩家，物品，NPC等
-	struct XID source;	//从哪里发过来的，可能的id和上面一样
-	A3DVECTOR pos;		//消息发出时的位置，有的消息可能位置并无作用
-	int	ttl;		//time to live,这个值如果小于0，那么就不会进行再次转发了
-	int	param;		//一个参数，如果这个参数够用，那么就使用这个参数
-	size_t 	content_length;	//消息的具体数据长度
-	const void * content;	//消息的具体数据 网络上传播时这个字段无效
+	int 	message;	//message type
+	struct XID target;	//The target of receiving messages may be servers, players, items, NPCs, etc.
+	struct XID source;	//Where did it come from, the possible id is the same as above
+	A3DVECTOR pos;		//The position when the message is sent, some messages may have no effect on the position
+	int	ttl;		//time to live, if this value is less than 0, then it will not be forwarded again
+	int	param;		//A parameter, if this parameter is sufficient, then use this parameter
+	size_t 	content_length;	//The specific data length of the message
+	const void * content;	//The specific data of the message This field is invalid when it is transmitted on the network
 private:
 	enum {FAST_ALLOC_LEN = 128};
 	friend void * SerializeMessage(const MSG &);
@@ -27,7 +27,7 @@ inline void * SerializeMessage(const MSG & msg)
 	if(length <= MSG::FAST_ALLOC_LEN)
 	{
 	//	printf("%d %dalloced\n",sizeof(MSG) + length,msg.message);
-		buf = abase::fast_allocator::align_alloc(sizeof(MSG) + length);		//必须对齐，考虑多个msg
+		buf = abase::fast_allocator::align_alloc(sizeof(MSG) + length);		//must be aligned, considering multiple msg
 		memcpy(buf,&msg,sizeof(MSG));
 		if(length)
 		{
@@ -80,71 +80,71 @@ inline void BuildMessage(MSG & msg, int message, const XID &target, const XID & 
 enum
 {
 //	normal message
-	GM_MSG_NULL,				//空消息
-	GM_MSG_FORWARD_USERBC,			//转发的用户广播
-	GM_MSG_FORWARD,				//转发的消息，内容应该作为一条新的消息内容来解释
-	GM_MSG_FORWARD_BROADCAST,		//转发的消息广播消息,content是另外一条完整的消息
-	GM_MSG_USER_GET_INFO,			//用户取得必要的数据
+	GM_MSG_NULL,				//Empty news
+	GM_MSG_FORWARD_USERBC,			//forwarded user broadcast
+	GM_MSG_FORWARD,				//forwarded message, the content should be interpreted as a new message content
+	GM_MSG_FORWARD_BROADCAST,		//forwarded message broadcast message,content is another complete message
+	GM_MSG_USER_GET_INFO,			//The user obtains the necessary data
 
 //5
-	GM_MSG_IDENTIFICATION,			//服务器告知自己的身份,原的类型必须是server并且id是他的符号
-	GM_MSG_SWITCH_GET,			//取得用户数据,服务器切换，取得用户数据 param是 tag,content是key
-	GM_MSG_SWITCH_USER_DATA,		//用户数据,SWITCH_GET的回应
-	GM_MSG_SWITCH_NPC,			//NPC切换服务器
-	GM_MSG_USER_MOVE_OUTSIDE,		//用户在边界移动
+	GM_MSG_IDENTIFICATION,			//The server The original type must be server and id is its symbolidentity,原的类型必须是server并且id是他的符号
+	GM_MSG_SWITCH_GET,			//Get user data, server switch, get user data param is tag, content is key
+	GM_MSG_SWITCH_USER_DATA,		//User data, response of SWITCH_GET
+	GM_MSG_SWITCH_NPC,			//NPC switch server
+	GM_MSG_USER_MOVE_OUTSIDE,		//User moves across borders
 
 //10	
-	GM_MSG_USER_NPC_OUTSIDE,		//NPC在边界处移动，不同之处在于NPC不需要取得新看到区域的对象
-	GM_MSG_ENTER_WORLD,			//给controller的，表示用户已经进入了世界
-	GM_MSG_ATTACK,				//目标和源都必须是个体
-	GM_MSG_SKILL,				//目标和源都必须是个体
-	GM_MSG_PICKUP,				//拣起物品,目标一般是物品
+	GM_MSG_USER_NPC_OUTSIDE,		//The NPC moves at the border, the difference is that the NPC does not need to fetch the objects of the newly seen area
+	GM_MSG_ENTER_WORLD,			//For the controller, indicating that the user has entered the world
+	GM_MSG_ATTACK,				//Both target and source must be individuals
+	GM_MSG_SKILL,				//Both target and source must be individuals
+	GM_MSG_PICKUP,				//Pick up items, the target is usually an item
 
 //15
-	GM_MSG_FORCE_PICKUP,			//强制捡起物品，不校验所书者ID和组队ID
-	GM_MSG_PICKUP_MONEY,			//物品通知用户拣到钱 param是钱数  content是谁丢弃的
-	GM_MSG_PICKUP_TEAM_MONEY,		//物品通知队长拣到钱 param是钱数  content是谁丢弃的
-	GM_MSG_RECEIVE_MONEY,			//通知玩家得到钱（可能是组队)
-	GM_MSG_PICKUP_ITEM,			//物品通知用户拣到物品 param是 palyer_id | 0x80000000(如果组队）
+	GM_MSG_FORCE_PICKUP,			//Mandatory to pick up items without verifying the author's ID and team ID
+	GM_MSG_PICKUP_MONEY,			//The item notifies the user that the money has been picked up. Param is the amount of money. Who discarded the content?
+	GM_MSG_PICKUP_TEAM_MONEY,		//The item notifies the team leader to pick up the money. Param is the amount of money. Who discarded the content?
+	GM_MSG_RECEIVE_MONEY,			//Notify player to get money (possibly team up)
+	GM_MSG_PICKUP_ITEM,			//The item notifies the user that the item has been picked param is palyer_id | 0x80000000(if teaming)
 
 //20
-	GM_MSG_ERROR_MESSAGE,			//让player发送一个error message
-	GM_MSG_NPC_SVR_UPDATE,			//NPC发生了服务器切换，这个消息只发给处于移走状态的原生NPC
-	GM_MSG_EXT_NPC_DEAD,			//外部的NPC的死亡消息(真正删除)，这个消息只发给处于移走状态的原生NPC
-	GM_MSG_EXT_NPC_HEARTBEAT,		//外部NPC的心跳，用于判断是否超时 
-	GM_MSG_WATCHING_YOU,			//主动怪物激活的消息,由玩家或npc发出，后面是一个watching_t的结构
+	GM_MSG_ERROR_MESSAGE,			//Let the player send an error message
+	GM_MSG_NPC_SVR_UPDATE,			//NPC has a server switch, this message is only sent to the original NPC in the removed state
+	GM_MSG_EXT_NPC_DEAD,			//Death messages for external NPCs(really delete), this message is only sent to native NPCs in the removed state
+	GM_MSG_EXT_NPC_HEARTBEAT,		//The heartbeat of the external NPC, used to determine whether it is timed out 
+	GM_MSG_WATCHING_YOU,			//Active monster activation message,Sent by the player or npc, followed by a watching_t structure
 
 //25
 //	AGGRO  message 
-	GM_MSG_GEN_AGGRO,			//生成aggro，后面附加了一个aggro_info_t的结构
-	GM_MSG_TRANSFER_AGGRO,			//aggro的传送 目前只传送第一位 content是一个XID,如果该XID的id为-1    则清空仇恨列表 param是该人仇恨值
-	GM_MSG_AGGRO_ALARM,			//aggro警报，当受到攻击时会发送，后面附加了一个aggro_alarm_t未使用
-	GM_MSG_AGGRO_WAKEUP,			//aggro警报，将休眠的怪物惊醒,后面附加了一个aggro_alarm_t未使用
-	GM_MSG_AGGRO_TEST,			//aggro测试,只有当发送者在aggro列表中，才会引发新的aggro，后面附加了一个aggro_info_t未使用
+	GM_MSG_GEN_AGGRO,			//Generate aggro, followed by an aggro_info_t structure
+	GM_MSG_TRANSFER_AGGRO,			//The transmission of aggro currently only transmits the first content. The content is an XID. If the id of the XID is -1, the hatred list will be cleared. Param is the hatred value of the person
+	GM_MSG_AGGRO_ALARM,			//aggro alarm, which will be sent when under attack, followed by an aggro_alarm_t unused
+	GM_MSG_AGGRO_WAKEUP,			//aggro alarm, wake up the dormant monster, followed by an aggro_alarm_t unused
+	GM_MSG_AGGRO_TEST,			//aggro test, only when the sender is in the aggro list, a new aggro will be triggered, followed by an aggro_info_t unused
 	
 //30
-	GM_MSG_OBJ_SESSION_END,			//对象的session完成
-	GM_MSG_OBJ_SESSION_REPEAT,		//表示session要继续执行 
-	GM_MSG_OBJ_ZOMBIE_END,			//表示要结束僵尸状态
-	GM_MSG_EXPERIENCE,			//得到经验值	content 是一个msg_exp_t
-	GM_MSG_GROUP_EXPERIENCE,		//得到组队经验值 conennt 是多个msg_grp_exp_t , param 造成的总伤害
+	GM_MSG_OBJ_SESSION_END,			//The object's session is completed
+	GM_MSG_OBJ_SESSION_REPEAT,		//Indicates that the session should continue to execute 
+	GM_MSG_OBJ_ZOMBIE_END,			//Indicates to end the zombie state
+	GM_MSG_EXPERIENCE,			//get experience points	content is a msg_exp_t
+	GM_MSG_GROUP_EXPERIENCE,		//Get team experience value conennt is the total damage caused by multiple msg_grp_exp_t, param
 	
 //35
-	GM_MSG_TEAM_EXPERIENCE,			//得到组队经验值 conennt 是msg_exp_t 超过距离经验值会被忽略 param 是杀死的npcid 如刮?则不是本队伍杀死的
-	GM_MSG_QUERY_OBJ_INFO00,		//取得对象的info00 param是发送者的sid ,content是一个int代表cs_index
-	GM_MSG_HEARTBEAT,			//发给自己的心跳消息  参数是这次Heartbeat的秒数
+	GM_MSG_TEAM_EXPERIENCE,			//Get the team experience value conennt is msg_exp_t, the experience value will be ignored if it exceeds the distance. param is the npcid killed. If scrape?, it is not killed by the team
+	GM_MSG_QUERY_OBJ_INFO00,		//The info00 param of the obtained object is the sid of the sender, and the content is an int representing cs_index
+	GM_MSG_HEARTBEAT,			//The parameter of the heartbeat message sent to oneself is the number of seconds of this Heartbeat
 	GM_MSG_HATE_YOU,
-	GM_MSG_TEAM_INVITE,			//请求某人加入队伍param是teamseq, content是一个int 表示pickup_flag
+	GM_MSG_TEAM_INVITE,			//Request someone to join the team param is teamseq, content is an int that represents pickup_flag
 
 //40	
-	GM_MSG_TEAM_AGREE_INVITE,		//被邀请人同意加入队伍 content是一个int(表示职业)+ team_mutable_prop
-	GM_MSG_TEAM_REJECT_INVITE,		//拒绝加入邀请
-	GM_MSG_JOIN_TEAM,			//队长同意某人加入队伍 param高位是捡取方式 param低位是队员个数，content是member_entry的表 
-	GM_MSG_JOIN_TEAM_FAILED,		//对象无法加入队伍，应该从队伍中去除
-	GM_MSG_MEMBER_NOTIFY_DATA,		//组队成员通知其他人自己的基础信息 content 是一个team_mutable_prop
+	GM_MSG_TEAM_AGREE_INVITE,		//The invitee agrees to join the team. content is an int (representing occupation) + team_mutable_prop
+	GM_MSG_TEAM_REJECT_INVITE,		//decline invitation to join
+	GM_MSG_JOIN_TEAM,			//The captain agrees that someone joins the team. The high part of param is the way of picking. The low part of param is the number of players, and the content is the expression of member_entry
+	GM_MSG_JOIN_TEAM_FAILED,		//Subject cannot join the party and should be removed from the party
+	GM_MSG_MEMBER_NOTIFY_DATA,		//Team members notify others of their basic information content is a team_mutable_prop
 
 //45	
-	GM_MSG_NEW_MEMBER,			//leader通知新成员加入，content是一个member_entry list param是数量
+	GM_MSG_NEW_MEMBER,			//The leader notifies new members to join, content is a member_entry list param is the quantity
 	GM_MSG_LEAVE_PARTY_REQUEST,
 	GM_MSG_LEADER_CANCEL_PARTY,
 	GM_MSG_MEMBER_NOT_IN_TEAM,
@@ -153,262 +153,262 @@ enum
 //50	
 	GM_MSG_MEMBER_LEAVE,
 	GM_MSG_LEADER_UPDATE_MEMBER,
-	GM_MSG_GET_MEMBER_POS,			//要求队友发送位置 param是发送者的sid ,content是一个int代表cs_index
-	GM_MSG_QUERY_PLAYER_EQUIPMENT,		//取得特定玩家的数据，要求平面距离在一定范围之内param是发送者的sid ,content是一个int代表cs_index
-	GM_MSG_TEAM_PICKUP,			//队友分配到物品， param 是 type, content 是count
+	GM_MSG_GET_MEMBER_POS,			//Ask teammates to send the location param is the sid of the sender, content is an int representing cs_index
+	GM_MSG_QUERY_PLAYER_EQUIPMENT,		//To obtain the data of a specific player, the plane distance is required to be within a certain range. param is the sid of the sender, and content is an int representing cs_index
+	GM_MSG_TEAM_PICKUP,			//Teammates are assigned to items, param is type, content is count
 
 //55	
-	GM_MSG_TEAM_CHAT,			//组队聊天 param 是channel, content 是内容
-	GM_MSG_SERVICE_REQUEST,			//player要求服务的消息 param 是服务类型 content 是具体数据 ?	
-	GM_MSG_SERVICE_DATA,			//服务的数据到达 param 是服务类型  content 是 具体数据
-	GM_MSG_SERVICE_HELLO,			//player 向服务商问好  param 是 player自己的faction
-	GM_MSG_SERVICE_GREETING,		//服务商进行回话 可能需要在里面返回服务列表$$$$(现在未做)
+	GM_MSG_TEAM_CHAT,			//team chat param is channel, content is the content
+	GM_MSG_SERVICE_REQUEST,			//A message from a player requesting a service param is the service type content is specific data ?	
+	GM_MSG_SERVICE_DATA,			//Service data arrives param is the service type  content yes precise data
+	GM_MSG_SERVICE_HELLO,			//player Say hello to the service provider  param yes player's own faction
+	GM_MSG_SERVICE_GREETING,		//The service provider calls back May need to return list of services inside$$$$(not done now)
 
 //60	
-	GM_MSG_SERVICE_QUIERY_CONTENT,		//取得服务内容 	 param 是服务类型, content可看作pair<cs_index,sid>
-	GM_MSG_EXTERN_OBJECT_APPEAR,		//content 是extern_object_manager::object_appear
-	GM_MSG_EXTERN_OBJECT_DISAPPEAR,		//消失或者
-	GM_MSG_EXTERN_OBJECT_REFRESH,		//更新位置和血值，param中保存的是血值 
-	GM_MSG_USER_APPEAR_OUTSIDE,		//用户在外面出现，要发送必要的数据给该玩家，content 里是sid,param是linkd id
+	GM_MSG_SERVICE_QUIERY_CONTENT,		//Get service content 	 param is the service type, content can be regarded as a pair<cs_index,sid>
+	GM_MSG_EXTERN_OBJECT_APPEAR,		//content is extern_object_manager::object_appear
+	GM_MSG_EXTERN_OBJECT_DISAPPEAR,		//disappear or
+	GM_MSG_EXTERN_OBJECT_REFRESH,		//Update the position and blood value, the blood value is saved in param 
+	GM_MSG_USER_APPEAR_OUTSIDE,		//The user appears outside, and the necessary data must be sent to the player, content where is sid,param is linkd id
 
 //65
-	GM_MSG_FORWARD_BROADCAST_SPHERE,	//转发的消息广播消息,content是另外一条完整的消息
-	GM_MSG_FORWARD_BROADCAST_CYLINDER,	//转发的消息广播消息,content是另外一条完整的消息
-	GM_MSG_FORWARD_BROADCAST_TAPER,		//转发的消息广播消息,content是另外一条完整的消息
-	GM_MSG_ENCHANT,				//使用辅助魔法
-	GM_MSG_ENCHANT_ZOMBIE,			//使用辅助魔法,专门给死人用的
+	GM_MSG_FORWARD_BROADCAST_SPHERE,	//forwarded message broadcast message,content is another complete message
+	GM_MSG_FORWARD_BROADCAST_CYLINDER,	//forwarded message broadcast message,content is another complete message
+	GM_MSG_FORWARD_BROADCAST_TAPER,		//forwarded message broadcast message,content is another complete message
+	GM_MSG_ENCHANT,				//use auxiliary magic
+	GM_MSG_ENCHANT_ZOMBIE,			//Use auxiliary magic, specially for the dead
 
 //70
-	GM_MSG_OBJ_SESSION_REPEAT_FORCE,	//表示session要repeat ，后面即使有任务也要继续执行
-	GM_MSG_NPC_BE_KILLED,			//消息发给杀死npc的玩家，param 表示被杀死npc的类型 content是NPC的级别
-	GM_MSG_NPC_CRY_FOR_HELP,		//npc 进行求救操作
-	GM_MSG_PLAYER_TASK_TRANSFER,		//任务在player之间进行传送和通讯的函数
-	GM_MSG_PLAYER_BECOME_INVADER,		//成为粉名 msg.param 是增加的时间
+	GM_MSG_OBJ_SESSION_REPEAT_FORCE,	//Indicates that the session should be repeated, even if there are tasks later, it must continue to execute
+	GM_MSG_NPC_BE_KILLED,			//The message is sent to the player who killed the npc, param indicates the type of the npc to be killed, content is the level of the npc
+	GM_MSG_NPC_CRY_FOR_HELP,		//npc for help operation
+	GM_MSG_PLAYER_TASK_TRANSFER,		//The function of task transfer and communication between players
+	GM_MSG_PLAYER_BECOME_INVADER,		//Become a fan name msg.param is added time
 
 //75
-	GM_MSG_PLAYER_BECOME_PARIAH,		//成为红名 
-	GM_MSG_FORWARD_CHAT_MSG,		//转发的用户聊天信息,param是rlevel,source是XID(-channel,self_id)
-	GM_MSG_QUERY_SELECT_TARGET,		//取得队友选择的对象
-	GM_MSG_NOTIFY_SELECT_TARGET,		//取得队友选择的对象
-	GM_MSG_SUBSCIBE_TARGET,			//要求订阅一个对象
+	GM_MSG_PLAYER_BECOME_PARIAH,		//become famous 
+	GM_MSG_FORWARD_CHAT_MSG,		//Forwarded user chat information, param is rlevel, source is XID(-channel, self_id)
+	GM_MSG_QUERY_SELECT_TARGET,		//Get the object selected by the teammate
+	GM_MSG_NOTIFY_SELECT_TARGET,		//Get the object selected by the teammate
+	GM_MSG_SUBSCIBE_TARGET,			//request to subscribe to an object
 
 //80
-	GM_MSG_UNSUBSCIBE_TARGET,		//要求订阅一个对象
-	GM_MSG_SUBSCIBE_CONFIRM,		//确认订阅是否存在
-	GM_MSG_PRODUCE_MONEY,			//通知系统产生金钱 发送源是所属者，param是组id， content是钱数
-	GM_MSG_PRODUCE_MONSTER_DROP,		//通知系统产生怪物掉落物品和金钱， 发送源是所属者，param是money， content 是 struct { int team_id; int team_seq;int npc_id;int item_count; int item[];}
-	GM_MSG_GATHER_REQUEST,			//请求收集原料，  param 是玩家的faction, content 分别是玩家级别、采集工具和任务ID
+	GM_MSG_UNSUBSCIBE_TARGET,		//request to subscribe to an object
+	GM_MSG_SUBSCIBE_CONFIRM,		//Check if the subscription exists
+	GM_MSG_PRODUCE_MONEY,			//The notification system generates money. The sending source is the owner, param is the group id, and content is the amount of money
+	GM_MSG_PRODUCE_MONSTER_DROP,		//The notification system generates items and money dropped by monsters, the sending source is the owner, param is money, content is struct { int team_id; int team_seq; int npc_id; int item_count; int item[];}
+	GM_MSG_GATHER_REQUEST,			//Request to collect raw materials, param is the player's faction, content is the player's level, collection tool and task ID
 
 //85
-	GM_MSG_GATHER_REPLY,			//通知可以进行采集  param 是采集需要的时间
-	GM_MSG_GATHER_CANCEL,			//取消采集
-	GM_MSG_GATHER,				//进行采集，要求取得物品
-	GM_MSG_GATHER_RESULT,			//采集完成，param 内是采集到的物品id, content是数量 和可能附加的任务ID
-	GM_MSG_HP_STEAL,				//收到吸血的结果
+	GM_MSG_GATHER_REPLY,			//The notification can be collected. param is the time required for collection
+	GM_MSG_GATHER_CANCEL,			//cancel collection
+	GM_MSG_GATHER,				//To gather, to claim an item
+	GM_MSG_GATHER_RESULT,			//The collection is completed, the param is the id of the collected item, the content is the quantity and the task ID that may be attached
+	GM_MSG_HP_STEAL,				//received the result of blood sucking
 
 //90
-	GM_MSG_INSTANCE_SWITCH_GET,		//取得用户数据,服务器切换，取得用户数据 用于副本间的切换 param是key
-	GM_MSG_INSTANCE_SWITCH_USER_DATA,	//用户数据,SWITCH_SWITCH_GET的回应
-	GM_MSG_EXT_AGGRO_FORWARD,		//通知原生npc进行仇恨转发 param 是rage大小， content是产生仇恨的id
-	GM_MSG_TEAM_APPLY_PARTY,		//申请进入队伍选项
-	GM_MSG_TEAM_APPLY_REPLY,		//申请成功回复 其中的param是seq	
+	GM_MSG_INSTANCE_SWITCH_GET,		//Obtain user data, server switching, obtain user data for switching between replicas param is key
+	GM_MSG_INSTANCE_SWITCH_USER_DATA,	//User data, response of SWITCH_SWITCH_GET
+	GM_MSG_EXT_AGGRO_FORWARD,		//Notify the native npc to forward hate. param is the size of rage, content is the id of hatred
+	GM_MSG_TEAM_APPLY_PARTY,		//Apply for Entry Team Options
+	GM_MSG_TEAM_APPLY_REPLY,		//The application is successfully replied, where param is seq
 
 //95
-	GM_MSG_QUERY_INFO_1,			//查询INFO1，可以发给玩家或者NPC,param的内容是cs_index,content是sid
-	GM_MSG_CON_EMOTE_REQUEST,		//进行协同动作的请求 param 是 action
-	GM_MSG_CON_EMOTE_REPLY,			//进行协同动作的回应 param 是action和同意与否的两个字节的组合
-	GM_MSG_TEAM_CHANGE_TO_LEADER,		//通知别人要成为leader
-	GM_MSG_TEAM_LEADER_CHANGED,		//通知队友队长的改变
+	GM_MSG_QUERY_INFO_1,			//Query INFO1, which can be sent to players or NPCs, the content of param is cs_index, and content is sid
+	GM_MSG_CON_EMOTE_REQUEST,		//The request param for collaborative action is action
+	GM_MSG_CON_EMOTE_REPLY,			//The response param for coordinated actions is a combination of two bytes of action and agreement
+	GM_MSG_TEAM_CHANGE_TO_LEADER,		//Inform others to become the leader
+	GM_MSG_TEAM_LEADER_CHANGED,		//Notify teammates of captain changes
 
 //100
-	GM_MSG_OBJ_ZOMBIE_SESSION_END,		//死亡后进行session的操作，其他定义和正常的session操作一样
-	GM_MSG_QUERY_PERSONAL_MARKET_NAME,	//取得摆摊的名字，param是发送者的sid ,content是一个int代表cs_index
-	GM_MSG_HURT,				//对象产生伤害 content 是msg_hurt_extra_info_t
-	GM_MSG_DEATH,				//强行让对象死亡,param=0非任务=1任务有损=2任务无损(此param仅对player有效) 
-	GM_MSG_PLANE_SWITCH_REQUEST,		//请求开始传送，content是key，如果进行传送，则返回 SWITCH_REPLAY
+	GM_MSG_OBJ_ZOMBIE_SESSION_END,		//Perform session operations after death, other definitions are the same as normal session operations
+	GM_MSG_QUERY_PERSONAL_MARKET_NAME,	//Get the name of the stall, param is the sid of the sender, content is an int representing cs_index
+	GM_MSG_HURT,				//The object generates damage content is msg_hurt_extra_info_t
+	GM_MSG_DEATH,				//Force the object to die, param=0 non-task=1 task lossy=2 task lossless (this param is only valid for the player)
+	GM_MSG_PLANE_SWITCH_REQUEST,		//Request to start transmission, content is the key, if transmission, return SWITCH_REPLAY
 
 //105
-	GM_MSG_PLANE_SWITCH_REPLY,		//传送请求被确认，content是key
-	GM_MSG_SCROLL_RESURRECT,		//卷轴复活  param表示复活者是否开启了pvp模式1表示开启了
-	GM_MSG_LEAVE_COSMETIC_MODE,		//脱离整容状态
-	GM_MSG_DBSAVE_ERROR,			//数据库保存错误
-	GM_MSG_SPAWN_DISAPPEAR,			//通知NPC和物品消失 param是condition
+	GM_MSG_PLANE_SWITCH_REPLY,		//The transfer request is confirmed, content is the key
+	GM_MSG_SCROLL_RESURRECT,		//The scroll resurrection param indicates whether the resurrected person has turned on the pvp mode 1 means it is turned on
+	GM_MSG_LEAVE_COSMETIC_MODE,		//out of cosmetic condition
+	GM_MSG_DBSAVE_ERROR,			//database save error
+	GM_MSG_SPAWN_DISAPPEAR,			//Notify NPC and items disappear param is condition
 
 //110
-	GM_MSG_PET_CTRL_CMD,			//玩家发来的控制消息会用这个消息发给宠物
-	GM_MSG_ENABLE_PVP_DURATION,		//激活PVP状态
-	GM_MSG_PLAYER_KILLED_BY_NPC,		//玩家被NPC杀死后NPC的逻辑
-	GM_MSG_PLAYER_DUEL_REQUEST,             //玩家发出要求duel的请求
-	GM_MSG_PLAYER_DUEL_REPLY,               //玩家回应duel的请求，param是是否答应duel
+	GM_MSG_PET_CTRL_CMD,			//Control messages from players will use this message to send pets
+	GM_MSG_ENABLE_PVP_DURATION,		//Activate PVP status
+	GM_MSG_PLAYER_KILLED_BY_NPC,		//NPC logic after player is killed by NPC
+	GM_MSG_PLAYER_DUEL_REQUEST,             //The player issues a request for a duel
+	GM_MSG_PLAYER_DUEL_REPLY,               //The player responds to duel's request, param is whether to agree to duel
 
 //115
-	GM_MSG_PLAYER_DUEL_PREPARE,      	//决斗准备开始 3秒倒计时后开始
-	GM_MSG_PLAYER_DUEL_START,               //决斗开始 
-	GM_MSG_PLAYER_DUEL_CANCEL,		//停止决斗
-	GM_MSG_PLAYER_DUEL_STOP,		//决斗结束
-	GM_MSG_DUEL_HURT,			//PVP对象产生伤害content 被忽略
+	GM_MSG_PLAYER_DUEL_PREPARE,      	//The duel is ready to start after a 3-second countdown
+	GM_MSG_PLAYER_DUEL_START,               //duel begins 
+	GM_MSG_PLAYER_DUEL_CANCEL,		//stop the duel
+	GM_MSG_PLAYER_DUEL_STOP,		//duel over
+	GM_MSG_DUEL_HURT,			//PVP object damage content is ignored
 
 //120
-	GM_MSG_PLAYER_BIND_REQUEST,		//请求骑在别人身上
-	GM_MSG_PLAYER_BIND_INVITE,		//邀请别人骑在自己身上
-	GM_MSG_PLAYER_BIND_REQUEST_REPLY,	//请求骑的回应
-	GM_MSG_PLAYER_BIND_INVITE_REPLY,	//邀请骑的回应
-	GM_MSG_PLAYER_BIND_PREPARE,		//准备开始连接
+	GM_MSG_PLAYER_BIND_REQUEST,		//ask to ride on someone else
+	GM_MSG_PLAYER_BIND_INVITE,		//Invite others to ride on you
+	GM_MSG_PLAYER_BIND_REQUEST_REPLY,	//response to request ride
+	GM_MSG_PLAYER_BIND_INVITE_REPLY,	//response to invitation to ride
+	GM_MSG_PLAYER_BIND_PREPARE,		//ready to connect
 
 //125
-	GM_MSG_PLAYER_BIND_LINK,		//连接开始
-	GM_MSG_PLAYER_BIND_STOP,		//停止连接
-	GM_MSG_PLAYER_BIND_FOLLOW,		//要求玩家跟随
-	GM_MSG_QUERY_EQUIP_DETAIL,		//param 为faction, content 为cs_index 和cs_sid
-	GM_MSG_PLAYER_RECALL_PET,		//让玩家强制消除召唤状态
+	GM_MSG_PLAYER_BIND_LINK,		//connection started
+	GM_MSG_PLAYER_BIND_STOP,		//stop connection
+	GM_MSG_PLAYER_BIND_FOLLOW,		//ask the player to follow
+	GM_MSG_QUERY_EQUIP_DETAIL,		//param is faction, content is cs_index and cs_sid
+	GM_MSG_PLAYER_RECALL_PET,		//Let the player forcefully remove the summoning state
 
 //130
-	GM_MSG_CREATE_BATTLEGROUND,		//要求战场服务器创建一个战场的消息，主要用于测试
-	GM_MSG_BECOME_TURRET_MASTER,		//成为攻城车的master,param是tid, content 是faction
-	GM_MSG_REMOVE_ITEM,			//删除一个物品的消息，用于攻城车控制后的物品减少 param是tid
-	GM_MSG_NPC_TRANSFORM,			//NPC变形效果，content里保存 中间状态，中间时间 中间标志 最后状态
-	GM_MSG_NPC_TRANSFORM2,			//NPC变形效果2，param 是目标ID 如果本来就和目标ID一致了，那么就不变形了
+	GM_MSG_CREATE_BATTLEGROUND,		//Request the battlefield server to create a battlefield message, mainly for testing
+	GM_MSG_BECOME_TURRET_MASTER,		//Become the master of the siege engine, param is tid, content is faction
+	GM_MSG_REMOVE_ITEM,			//The message of deleting an item is used to reduce the item after the control of the siege engine. The param is tid
+	GM_MSG_NPC_TRANSFORM,			//NPC deformation effect, save the intermediate state in the content, the intermediate time, the intermediate mark and the final state
+	GM_MSG_NPC_TRANSFORM2,			//NPC deformation effect 2, param is the target ID. If it is consistent with the target ID, then it will not be deformed.
 
 //135
-	GM_MSG_TURRET_NOTIFY_LEADER,		//攻城车通知leader自己存在，让其无法再次进行召唤
-	GM_MSG_PET_RELOCATE_POS,		//宠物要求重新定位坐标
-	GM_MSG_PET_CHANGE_POS,			//主人修改了宠物的坐标
-	GM_MSG_PET_DISAPPEAR,			//数据不正确,或者其它情况,主人要求宠物消失
-	GM_MSG_PET_NOTIFY_HP,			//宠物通知主人，告知自己的血量 param 是 stamp,content 是float hp ratio
+	GM_MSG_TURRET_NOTIFY_LEADER,		//The siege engine notifies the leader of its existence so that it cannot be summoned again
+	GM_MSG_PET_RELOCATE_POS,		//Pet requests to relocate coordinates
+	GM_MSG_PET_CHANGE_POS,			//The owner modifies the coordinates of the pet
+	GM_MSG_PET_DISAPPEAR,			//The data is incorrect, or in other situations, the owner asks the pet to disappear
+	GM_MSG_PET_NOTIFY_HP,			//The pet notifies the owner that its blood volume param is stamp, content is float hp ratio
 
 //140
-	GM_MSG_PET_NOTIFY_DEATH,		//宠物通知主人自己的死亡
-	GM_MSG_PET_MASTER_INFO,			//主人通知宠物自己的数据
-	GM_MSG_PET_LEVEL_UP,			//主人通知宠物升级了 ,content是 level
-	GM_MSG_PET_HONOR_MODIFY,		//主人通知宠物的忠诚度发生变化
-	GM_MSG_MASTER_ASK_HELP,			//主人要求宠物帮助
+	GM_MSG_PET_NOTIFY_DEATH,		//Pet notifies owner of own death
+	GM_MSG_PET_MASTER_INFO,			//The owner notifies the pet of its own data
+	GM_MSG_PET_LEVEL_UP,			//The owner notifies that the pet has been upgraded ,content is level
+	GM_MSG_PET_HONOR_MODIFY,		//The owner notifies the pet's loyalty of a change
+	GM_MSG_MASTER_ASK_HELP,			//Owner asks pet for help
 
 //145	
-	GM_MSG_PET_SET_COOLDOWN,		//宠物通知主人设置冷却时间 msg.param是 cooldown id, content 是 msec
-	GM_MSG_MOB_BE_TRAINED,			//怪物被驯服，传送宠物蛋给施法者
-	GM_MSG_PET_AUTO_ATTACK,			//主人通知宠物自动攻击 msg.param 是force attack, content是目标
-	GM_MSG_PET_SKILL_LIST,			//主人通知宠物新的技能列表
-	GM_MSG_SWITCH_FAILED,			//副本通知说传送失败
+	GM_MSG_PET_SET_COOLDOWN,		//The pet notifies the owner to set the cooldown time msg.param is cooldown id, content is msec
+	GM_MSG_MOB_BE_TRAINED,			//The monster is tamed, and the pet egg is sent to the caster
+	GM_MSG_PET_AUTO_ATTACK,			//The owner notifies the pet to automatically attack msg.param is force attack, content is the target
+	GM_MSG_PET_SKILL_LIST,			//The owner notifies the pet of the new skill list
+	GM_MSG_SWITCH_FAILED,			//The copy notifies that the transfer failed
 
 //150	
 	GM_MSG_PET_ANTI_CHEAT,
-	GM_MSG_QUERY_PROPERTY,			//查询其他人的属性，param是查询道具在包裹栏索引
-	GM_MSG_QUERY_PROPERTY_REPLY,	//查询其他人的属性返回，param是查询道具在包裹栏索引，content是属性数据
-	GM_MSG_TRY_CLEAR_AGGRO,			//自身隐身等级大于npc反隐等级则清除npc对自己的仇恨，param是自己的隐身等级
-	GM_MSG_NOTIFY_INVISIBLE_DATA,	//将自身的隐身数据通知给宠物,让宠物隐身或现身
+	GM_MSG_QUERY_PROPERTY,			//Query the properties of other people, param is the index of the query props in the package column
+	GM_MSG_QUERY_PROPERTY_REPLY,	//Query other people's attributes to return, param is the index of the query props in the package column, content is the attribute data
+	GM_MSG_TRY_CLEAR_AGGRO,			//If your own invisibility level is greater than the npc anti-invisibility level, the npc's hatred towards you will be cleared, param is your own invisibility level
+	GM_MSG_NOTIFY_INVISIBLE_DATA,	//Notify pets of their own stealth data, making pets invisible or visible
 
 //155
-	GM_MSG_NOTIFY_CLEAR_INVISIBLE,	//宠物解除隐身通知主人，让主人也解除隐身
-	GM_MSG_CONTRIBUTION_TO_KILL_NPC,//玩家杀死npc后，npc发送给玩家的消息，param是npc world_tag content是结构msg_contribution_t
-	GM_MSG_GROUP_CONTRIBUTION_TO_KILL_NPC,//队伍杀死npc后，npc发送给玩家的消息，param是npc world_tag content是结构msg_group_contribution_t
-	GM_MSG_REBUILD_TEAM_INSTANCE_KEY_REQ,	//队员发给队长的重建组队副本key的请求,param是worldtag,content是重建前的team_instance_key
-	GM_MSG_REBUILD_TEAM_INSTANCE_KEY,		//队长发给队员的重建组队副本key,param是worldtag,content是旧的和新的team_instance_key
+	GM_MSG_NOTIFY_CLEAR_INVISIBLE,	//The pet unstealth informs the owner, so that the owner also unstealth
+	GM_MSG_CONTRIBUTION_TO_KILL_NPC,//After the player kills the npc, the message sent by the npc to the player, param is the npc world_tag ??content is the structure msg_contribution_t
+	GM_MSG_GROUP_CONTRIBUTION_TO_KILL_NPC,//After the team kills the npc, the message sent by the npc to the player, param is the npc world_tag ??content is the structure msg_group_contribution_t
+	GM_MSG_REBUILD_TEAM_INSTANCE_KEY_REQ,	//The request sent by the team member to the captain to rebuild the team copy key, param is worldtag, and content is the team_instance_key before rebuilding
+	GM_MSG_REBUILD_TEAM_INSTANCE_KEY,		//The rebuilding team dungeon key sent by the team leader, param is worldtag, content is the old and new team_instance_key
 
 //160
-	GM_MSG_TRANSFER_FILTER_DATA,		//filter转移，param是filter个数，content是filter数据
-	GM_MSG_PLANT_PET_NOTIFY_DEATH,		//植物宠通知主人死亡，参数是pet_stamp
-	GM_MSG_PLANT_PET_NOTIFY_HP,			//植物宠通知主人信息，参数是pet_stamp，data是msg_plant_pet_hp_notify
-	GM_MSG_PLANT_PET_NOTIFY_DISAPPEAR,	//植物宠通知主人消失，参数是pet_stamp
-	GM_MSG_PLANT_PET_SUICIDE,			//主人通知植物使其自爆，参数是pet_stamp
+	GM_MSG_TRANSFER_FILTER_DATA,		//Filter transfer, param is the number of filters, content is filter data
+	GM_MSG_PLANT_PET_NOTIFY_DEATH,		//The plant pet notifies the owner of death, the parameter is pet_stamp
+	GM_MSG_PLANT_PET_NOTIFY_HP,			//The plant pet notifies the owner information, the parameter is pet_stamp, and the data is msg_plant_pet_hp_notify
+	GM_MSG_PLANT_PET_NOTIFY_DISAPPEAR,	//The plant pet notifies the owner of the disappearance, the parameter is pet_stamp
+	GM_MSG_PLANT_PET_SUICIDE,			//The owner notifies the plant to explode, the parameter is pet_stamp
 
 //165
-	GM_MSG_MASTER_NOTIFY_LAYER,		//主人通知宠物自身layer,参数是petstamp data是char layer
-	GM_MSG_INJECT_HP_MP,			//给目标增加hp和mp,data是msg_hp_mp_t
-	GM_MSG_DRAIN_HP_MP,				//使目标消耗hp和mp,data是msg_hp_mp_t
-	GM_MSG_CONGREGATE_REQUEST,		//集结请求, param集结类型 data:msg_congregate_req_t
-	GM_MSG_REJECT_CONGREGATE,		//拒绝集结请求, param集结类型
+	GM_MSG_MASTER_NOTIFY_LAYER,		//The owner notifies the pet's own layer, the parameter is petstamp data is char layer
+	GM_MSG_INJECT_HP_MP,			//Add hp and mp to the target, data is msg_hp_mp_t
+	GM_MSG_DRAIN_HP_MP,				//Make the target consume hp and mp, data is msg_hp_mp_t
+	GM_MSG_CONGREGATE_REQUEST,		//Congregate request, param Congregate type data:msg_congregate_req_t
+	GM_MSG_REJECT_CONGREGATE,		//Reject the assembly request, param assembly type
 
 //170
-	GM_MSG_NPC_BE_KILLED_BY_OWNER,	//NPC被玩家杀死,param是npc tid,content是msg_dps_dph_t
-	GM_MSG_EXCHANGE_POS,			//玩家之间交换位置，会同时发给两个人
-	GM_MSG_EXTERN_HEAL,				//给某某对象加血的消息
-	GM_MSG_QUERY_INVENTORY_DETAIL,	//查询玩家包裹详细数据
-	GM_MSG_TURRET_OUT_OF_CONTROL,	//解除攻城车的控制
+	GM_MSG_NPC_BE_KILLED_BY_OWNER,	//NPC is killed by player, param is npc tid, content is msg_dps_dph_t
+	GM_MSG_EXCHANGE_POS,			//Exchange positions between players, will be sent to two people at the same time
+	GM_MSG_EXTERN_HEAL,				//The message of adding blood to so-and-so
+	GM_MSG_QUERY_INVENTORY_DETAIL,	//Query player package details
+	GM_MSG_TURRET_OUT_OF_CONTROL,	//Disarm the siege engine
 
 //175
-	GM_MSG_TRANSFER_FILTER_GET,		//filter转移, param是filter_mask content是转移的数量
-	GM_MSG_PET_TEST_SANCTUARY,		//通知宠物进入了安全区
-	GM_MSG_PLAYER_KILLED_BY_PLAYER,	//玩家被玩家杀死，param是msg_player_killed_info_t
-	GM_MSG_CREATE_COUNTRYBATTLE,	//要求国战战场服务器创建一个战场的消息，主要用于测试
-	GM_MSG_COUNTRYBATTLE_HURT_RESULT,	//国战中通知攻击者实际造成的伤害，param为伤害值，content受攻击者魂力(player)或0(npc)
+	GM_MSG_TRANSFER_FILTER_GET,		//filter transfer, param is filter_mask content is the number of transfers
+	GM_MSG_PET_TEST_SANCTUARY,		//Notify that pets have entered the safe zone
+	GM_MSG_PLAYER_KILLED_BY_PLAYER,	//The player is killed by the player, param is msg_player_killed_info_t
+	GM_MSG_CREATE_COUNTRYBATTLE,	//A message requesting the National War battlefield server to create a battlefield, mainly for testing
+	GM_MSG_COUNTRYBATTLE_HURT_RESULT,	//In the national war, the actual damage caused by the attacker is notified, param is the damage value, and the content is affected by the soul power of the attacker (player) or 0 (npc)
 	
 //180
-	GM_MSG_LONGJUMP,				//玩家瞬移，param是worldtag, content是pos
+	GM_MSG_LONGJUMP,				//Player teleports, param is worldtag, content is pos
 	GM_MSG_TRICKBATTLE_PLAYER_KILLED,
-	GM_MSG_COUNTRYBATTLE_PLAYER_KILLED,	//国战中玩家死亡
-	GM_MSG_MAFIA_PVP_AWARD, //帮派pvp特殊活动奖励
-	GM_MSG_MAFIA_PVP_STATUS, //帮派pvp 状态通知
+	GM_MSG_COUNTRYBATTLE_PLAYER_KILLED,	//Player died in the national war
+	GM_MSG_MAFIA_PVP_AWARD, //Gang pvp special event rewards
+	GM_MSG_MAFIA_PVP_STATUS, //Gang pvp status notification
 //185	
-	GM_MSG_MAFIA_PVP_ELEMENT,// 帮派pvp 加载请求
-	GM_MSG_PUNISH_ME,	// 请求对方对己enchant技能
-	GM_MSG_REDUCE_CD,	// 给目标降cd
-	GM_MSG_DELIVER_TASK, // 发放任务给目标
-	GM_MSG_OBJ_ACTION_END,			//对象的action完成
+	GM_MSG_MAFIA_PVP_ELEMENT,// gang pvp loading request
+	GM_MSG_PUNISH_ME,	// Request the other party's own enchant skills
+	GM_MSG_REDUCE_CD,	// Lower the cd of the target
+	GM_MSG_DELIVER_TASK, // Send tasks to targets
+	GM_MSG_OBJ_ACTION_END,			//The action of the object is completed
 //190	
-	GM_MSG_OBJ_ACTION_REPEAT,		//表示action要继续执行 
-	GM_MSG_SUBSCIBE_SUBTARGET,			//要求订阅一个次级目标
-	GM_MSG_UNSUBSCIBE_SUBTARGET,		//要求取消订阅一个次级目标
-	GM_MSG_SUBSCIBE_SUBTARGET_CONFIRM, // 确认次级目标订阅是否存在
-	GM_MSG_NOTIFY_SELECT_SUBTARGET,	   // 通知订阅者次级订阅者改变
+	GM_MSG_OBJ_ACTION_REPEAT,		//Indicates that the action should continue 
+	GM_MSG_SUBSCIBE_SUBTARGET,			//Requires subscription to a sub-goal
+	GM_MSG_UNSUBSCIBE_SUBTARGET,		//Request to unsubscribe from a secondary goal
+	GM_MSG_SUBSCIBE_SUBTARGET_CONFIRM, // Verify that the secondary target subscription exists
+	GM_MSG_NOTIFY_SELECT_SUBTARGET,	   // Notify subscribers of subsubscriber changes
 //195
 	GM_MSG_ATTACK_CRIT_FEEDBACK,
-	GM_MSG_DELIVER_STORAGE_TASK,       // 发放随机库任务
-    GM_MSG_CHANGE_GENDER_LOGOUT,       // 角色变性成功后下线
-	GM_MSG_CLEAR_TOWER_TASK,           // 清除单人副本任务
-	GM_MSG_CREATE_MNFACTION,	//要求跨服帮派战场服务器创建一个战场的消息，主要用于测试
+	GM_MSG_DELIVER_STORAGE_TASK,       // Issue random library tasks
+    GM_MSG_CHANGE_GENDER_LOGOUT,       // Offline after successful character change
+	GM_MSG_CLEAR_TOWER_TASK,           // Clear single-player missions
+	GM_MSG_CREATE_MNFACTION,	//A message requesting the cross-service gang battlefield server to create a battlefield, mainly for testing
 //200
     GM_MSG_LOOKUP_ENEMY,
     GM_MSG_LOOKUP_ENEMY_REPLY,
 
 //GM所采用的消息	
-	GM_MSG_GM_GETPOS=600,			//取得指定玩家的坐标 param 是 cs_index, content 是sid
-	GM_MSG_GM_MQUERY_MOVE_POS,		//GM要求查询坐标 用于下一步跳转到玩家处 
-	GM_MSG_GM_MQUERY_MOVE_POS_REPLY,	//GM要求查询坐标的回应,用于GM的跳转命令 content是当前的instance key
-	GM_MSG_GM_RECALL,			//GM要求进行跳转
-	GM_MSG_GM_CHANGE_EXP,			//GM增加exp 和sp , param 是 exp , content 是sp
-	GM_MSG_GM_ENDUE_ITEM,			//GM给与了若干物品 ，param 是item id, content 是数目 
-	GM_MSG_GM_ENDUE_SELL_ITEM,		//GM给与了商店里卖的物品，其他同上
-	GM_MSG_GM_REMOVE_ITEM,			//GM要求删除某些物品，param 是item id, content 是数目
-	GM_MSG_GM_ENDUE_MONEY,			//GM增加或者减少金钱
-	GM_MSG_GM_RESURRECT,			//GM要求复活
-	GM_MSG_GM_OFFLINE,			//GM要求下线 
-	GM_MSG_GM_DEBUG_COMMAND,		//GM要求下线 
-	GM_MSG_GM_RESET_PP,			//GM进行洗点操作
-	GM_MSG_GM_QUERY_SPEC_ITEM,	//GM查询玩家是否存在指定物品
-	GM_MSG_GM_REMOVE_SPEC_ITEM,	//GM删除玩家指定物品
+	GM_MSG_GM_GETPOS=600,			//Get the coordinates of the specified player, param is cs_index, content is sid
+	GM_MSG_GM_MQUERY_MOVE_POS,		//The GM asks to query the coordinates for the next step to jump to the player
+	GM_MSG_GM_MQUERY_MOVE_POS_REPLY,	//GM requests a response to query coordinates, used for GM's jump command content is the current instance key
+	GM_MSG_GM_RECALL,			//GM asks for a jump
+	GM_MSG_GM_CHANGE_EXP,			//GM increases exp and sp, param is exp, content is sp
+	GM_MSG_GM_ENDUE_ITEM,			//The GM has given several items, param is the item id, content is the number
+	GM_MSG_GM_ENDUE_SELL_ITEM,		//The GM gave the items sold in the store, the other same as above
+	GM_MSG_GM_REMOVE_ITEM,			//GM requests to delete certain items, param is the item id, content is the number
+	GM_MSG_GM_ENDUE_MONEY,			//GM increases or decreases money
+	GM_MSG_GM_RESURRECT,			//GM calls for resurrection
+	GM_MSG_GM_OFFLINE,			//GM asks to go offline 
+	GM_MSG_GM_DEBUG_COMMAND,		//GM asks to go offline 
+	GM_MSG_GM_RESET_PP,			//GM performs wash point operation
+	GM_MSG_GM_QUERY_SPEC_ITEM,	//The GM queries whether the player has the specified item
+	GM_MSG_GM_REMOVE_SPEC_ITEM,	//GM deletes player-specified items
 
-	GM_MSG_PICKUP_MONEY2,			//物品通知用户拣到钱 param是钱数  content是谁丢弃的 172
-	GM_MSG_PICKUP_TEAM_MONEY2,		//物品通知队长拣到钱 param是钱数  content是谁丢弃的 172
-	GM_MSG_RECEIVE_MONEY2,			//通知玩家得到钱（可能是组队) 172
+	GM_MSG_PICKUP_MONEY2,			//The item notifies the user that the money has been picked up. Param is the amount of money. The content is who discarded it. 172
+	GM_MSG_PICKUP_TEAM_MONEY2,		//The item notifies the captain to pick up the money param is the amount of money  who discarded the content 172
+	GM_MSG_RECEIVE_MONEY2,			//Notify player to get money (possibly team up) 172
 
 	GM_MSG_MAX,
 
 };
 
-struct msg_usermove_t	//用户移动并且跨越边界的消息
+struct msg_usermove_t	//Messages where users move and cross borders
 {
 	int cs_index;
 	int cs_sid;
 	int user_id;
-	A3DVECTOR newpos;	//消息里面有oldpos
-	size_t leave_data_size;	//离开发送的消息大小（该消息附加在后面)
-	size_t enter_data_size;	//离开发送的消息大小（该消息附加在后面)
+	A3DVECTOR newpos;	//There is oldpos in the message
+	size_t leave_data_size;	//The size of the message sent away (the message is appended)
+	size_t enter_data_size;	//The size of the message sent away (the message is appended)
 };
 
 struct msg_aggro_info_t
 {
-	XID source;		//谁生成了这些仇恨
-	int aggro;		//仇恨的大小
-	int aggro_type;		//仇恨的类型
-	int faction;		//对方所属的派系
-	int level;		//对方的级别
+	XID source;		//who generated this hate
+	int aggro;		//size of hate
+	int aggro_type;		//type of hate
+	int faction;		//opponent's faction
+	int level;		//opponent's level
 };
 
 struct msg_watching_t
 {
-	int level;		//源的级别
-	int faction;		//源的派系
-	int invisible_degree;//源的隐身级别
+	int level;		//source level
+	int faction;		//source faction
+	int invisible_degree;//Stealth level of the source
 };
 
 struct msg_aggro_list_t
@@ -430,10 +430,10 @@ struct msg_cry_for_help_t
 
 struct msg_aggro_alarm_t
 {
-	XID attacker;	//攻击者
+	XID attacker;	//attacker
 	int rage;	
-	int faction;	//发送者的派系
-	int target_faction;	//目标的接受求救类型
+	int faction;	//sender's faction
+	int target_faction;	//The type of distress accepted by the target
 };
 
 struct team_exp_entry
@@ -464,24 +464,24 @@ struct msg_grpexp_t
 	int damage;
 	int reserve;
 	/*
-		组队的数据较多
-		组队的经验由多个人的伤害组成
-		所以附带了所有人的伤害列表,
-		列表的第一个元素分别在who.type,who.id damage里保存了 经验值 level/sp 和队伍的team_seq
-		其中who.id的高16位为级别，低16位为sp的数目
-		这个结构在npc.cpp内部的对象类型为TempDmgNode(备查)
+		The team has more data
+		The experience of the team is composed of the damage of multiple people
+		So comes the damage list for everyone,
+		The first element of the list stores the experience value level/sp and team_seq of the team in who.type and who.id damage respectively
+		Among them, the upper 16 bits of who.id are the level, and the lower 16 bits are the number of sp
+		The object type of this structure inside npc.cpp is TempDmgNode (for reference)
 
-		如果是该队伍造成了最大伤害，则列表的第二个元素保存了杀死的怪物名称和级别
-		其中who.type 保存npc tid,who.id 保存了一个随机数,使得大家任务奖励一致
+		If it was the team that did the most damage, the second element of the list holds the name and level of the monster killed
+		Among them, who.type saves the npc tid, and who.id saves a random number, so that everyone's task rewards are consistent
 
-		第二个元素的damage 始终保存怪物的世界tag，无论是否该队伍造成最大伤害
+		The second element of damage always saves the monster's world tag, regardless of whether the team did the most damage
 	*/
 };
 
 struct gather_reply
 {
 	int can_be_interrupted;
-	int eliminate_tool;	//消耗工具的ID
+	int eliminate_tool;	//The ID of the consumer tool
 	unsigned short gather_time_min;
 	unsigned short gather_time_max;
 };
@@ -490,10 +490,10 @@ struct gather_result
 {
 	int amount;
 	int task_id;
-	int eliminate_tool;		//如果删除物品则附加此ID
+	int eliminate_tool;		//Append this ID if item is deleted
 	int mine_tid;
-	int life;		//采集到物品的寿命
-	char mine_type;	//矿物的类型
+	int life;		//Lifespan of collected items
+	char mine_type;	//type of mineral
 };
 
 struct msg_pickup_t
@@ -530,10 +530,10 @@ struct msg_pet_hp_notify
 {
 	float hp_ratio;
 	int   cur_hp;
-	char  aggro_state;		//三种仇恨状态  0 被动 1 主动 2 发呆
-	char  stay_mode;		//两种跟随方式: 0 跟随，1　停留
-	char  combat_state;		//是否在战斗
-	char  attack_monster;	//是否攻击怪物
+	char  aggro_state;		//Three hatred states 0 passive 1 active 2 dazed
+	char  stay_mode;		//Two follow modes: 0 follow, 1 stay
+	char  combat_state;		//are you fighting
+	char  attack_monster;	//Whether to attack the monster
 	float mp_ratio;
 	int   cur_mp;
 };
@@ -546,17 +546,17 @@ struct msg_invisible_data
 
 struct msg_contribution_t
 {
-	int npc_id;				//npc的模板id
-	bool is_owner;			//是否是怪物所属，所属判定同任务杀怪
-	float team_contribution;//队伍贡献，如玩家不在队伍中则为个人贡献
-	int team_member_count;	//队伍人数，如玩家不在队伍中则为1
-	float personal_contribution;	//个人贡献度
+	int npc_id;				//npc template id
+	bool is_owner;			//Whether it belongs to the monster or not, the determination of belonging is the same as that of killing monsters in the task
+	float team_contribution;//Team contribution, or individual contribution if the player is not in a team
+	int team_member_count;	//The number of people in the team, or 1 if the player is not in the team
+	float personal_contribution;	//personal contribution
 };
 
 struct msg_group_contribution_t
 {
-	int npc_id;				//npc的模板id
-	bool is_owner;			//是否是怪物所属，所属判定同任务杀怪
+	int npc_id;				//npc template id
+	bool is_owner;			//Whether it belongs to the monster or not, the determination of belonging is the same as that of killing monsters in the task
 	int count;
 	struct _list{
 		XID xid;	

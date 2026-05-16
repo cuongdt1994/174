@@ -4308,6 +4308,15 @@ void gplayer_dispatcher::get_lotery_info( unsigned int manager, unsigned int sco
     send_ls_msg(pPlayer, _tbuf);
 }
 
+void gplayer_dispatcher::lottery_reward_info( unsigned int unk /* 14 */, unsigned int score, unsigned int count, unsigned int itemid )
+{
+    _tbuf.clear();
+
+    CMD::Make<CMD::lottery_reward_info>::From(_tbuf, unk, score, count, itemid );
+    gplayer* pPlayer = (gplayer*)_imp->_parent;
+    send_ls_msg(pPlayer, _tbuf);
+}
+
 void gplayer_dispatcher::get_treasure_info( unsigned char manager, unsigned int score, unsigned int free_count, unsigned int lot_count, unsigned int box_count, void * _lot, void * _box )
 {
     _tbuf.clear();
@@ -4428,11 +4437,11 @@ void gplayer_dispatcher::get_finish_notify(int rst1, int rst2)
     send_ls_msg(pPlayer, _tbuf);
 }
 
-void gplayer_dispatcher::player_world_speak_info( char enabled, char enabled2, char enabled3, int skills_count, int * skills )
+void gplayer_dispatcher::player_world_speak_info( char enabled, char enabled2, char kid, int skills_count, int * skills )
 {
     _tbuf.clear();
 
-    CMD::Make<CMD::player_world_speak_info>::From(_tbuf, enabled, enabled2, enabled3, skills_count, skills );
+    CMD::Make<CMD::player_world_speak_info>::From(_tbuf, enabled, enabled2, kid, skills_count, skills );
 	gplayer* pPlayer = (gplayer*)_imp->_parent;
 	send_ls_msg(pPlayer, _tbuf);
 }
@@ -4806,88 +4815,8 @@ void gplayer_dispatcher::codex_rename_pet_info(int pet_id ,const char * name, sh
 	send_ls_msg(pPlayer, _tbuf);
 
 }
-/*174+*/
 
-void gplayer_dispatcher::reward_interface_notify(unsigned int mode, unsigned int value_index, int count)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::reward_interface_notify>::From(_tbuf, mode, value_index, count);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	
-	//send_ls_msg(pPlayer, _tbuf);
-	AutoBroadcastCSMsg(_imp->_plane,pPlayer->pPiece,_tbuf,-1);
-}
-
-void gplayer_dispatcher::activity_event_spend_cash(unsigned int roleid, unsigned int cash)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::activity_event_spend_cash>::From(_tbuf, roleid, cash);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
-void gplayer_dispatcher::activity_event_shop(int count, char unk6, unsigned int * values)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::activity_event_shop>::From(_tbuf, count, unk6, values);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
-// Memorial Celestial
-
-void gplayer_dispatcher::celestial_memorial_info(bool type, unsigned int size, const void * info,unsigned int size2, const void * info2, unsigned int size3, const void * info3)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::celestial_memorial_info>::From(_tbuf, type, size, info, size2, info2, size3, info3);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
-void gplayer_dispatcher::celestial_memorial_lottery( int count, unsigned int size, const void * lotterys)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::celestial_memorial_lottery>::From(_tbuf, count, size, lotterys);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
-// G17
-
-void gplayer_dispatcher::armor_info_notify(unsigned int reserved, unsigned int count, int reserved3, int reserved4, int inv_slot) 
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::armor_info_notify>::From(_tbuf, reserved, count, reserved3, reserved4, inv_slot);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
-void gplayer_dispatcher::armor_info_purification(int count, unsigned int * values)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::armor_info_purification>::From(_tbuf, count, values);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	send_ls_msg(pPlayer, _tbuf);
-}
-
-/*176+*/
-void gplayer_dispatcher::portatil_picture_info(int roleid, int res, int res2, int idx, int res3)
-{
-	_tbuf.clear();
-
-	CMD::Make<CMD::portatil_picture_info>::From(_tbuf, roleid, res, res2, idx, res3);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;
-	//send_ls_msg(pPlayer, _tbuf);
-	AutoBroadcastCSMsg(_imp->_plane,pPlayer->pPiece,_tbuf,-1);
-}
-
+/*170+ Bebe Celestial*/
 void 
 gplayer_dispatcher::kid_course_change (char old_slot, char new_slot)
 {
@@ -4897,7 +4826,6 @@ gplayer_dispatcher::kid_course_change (char old_slot, char new_slot)
 	gplayer* pPlayer = (gplayer*)_imp->_parent;		
 	send_ls_msg(pPlayer, _tbuf);
 }
-
 void 
 gplayer_dispatcher::kid_course_remove (char old_slot)
 {
@@ -4914,7 +4842,7 @@ gplayer_dispatcher::kid_name_awakening (char gender, short name_len, const char 
 	_tbuf.clear();
 
 	CMD::Make<CMD::kid_name_awakening>::From(_tbuf, gender, name_len, name);
-	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
 	send_ls_msg(pPlayer, _tbuf);
 }
 
@@ -5046,5 +4974,109 @@ gplayer_dispatcher::kid_active_info (int active_slot, int reserved)
 
 	CMD::Make<CMD::kid_active_info>::From(_tbuf, active_slot, reserved);
 	gplayer* pPlayer = (gplayer*)_imp->_parent;		
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void gplayer_dispatcher::reward_interface_notify(unsigned int mode, unsigned int value_index, int count)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::reward_interface_notify>::From(_tbuf, mode, value_index, count);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	
+	//send_ls_msg(pPlayer, _tbuf);
+	AutoBroadcastCSMsg(_imp->_plane,pPlayer->pPiece,_tbuf,-1);
+}
+
+void gplayer_dispatcher::activity_event_spend_cash(unsigned int roleid, unsigned int cash)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::activity_event_spend_cash>::From(_tbuf, roleid, cash);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void gplayer_dispatcher::activity_event_shop(int count, char unk6, unsigned int * values)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::activity_event_shop>::From(_tbuf, count, unk6, values);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+// Memorial Celestial
+
+void gplayer_dispatcher::celestial_memorial_info(bool type, unsigned int size, const void * info,unsigned int size2, const void * info2, unsigned int size3, const void * info3)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::celestial_memorial_info>::From(_tbuf, type, size, info, size2, info2, size3, info3);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void gplayer_dispatcher::celestial_memorial_lottery( int count, unsigned int size, const void * lotterys)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::celestial_memorial_lottery>::From(_tbuf, count, size, lotterys);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void gplayer_dispatcher::celestial_memorial_lottery_count( int perg1, int perg2, int perg3)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::celestial_memorial_lottery_count>::From(_tbuf, perg1, perg2, perg3);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void gplayer_dispatcher::armor_info_notify(unsigned int reserved, unsigned int count, int reserved3, int reserved4, int inv_slot) 
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::armor_info_notify>::From(_tbuf, reserved, count, reserved3, reserved4, inv_slot);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+void gplayer_dispatcher::armor_info_purification(int count, unsigned int * values)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::armor_info_purification>::From(_tbuf, count, values);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+
+/*176+*/
+void gplayer_dispatcher::portatil_picture_info(int roleid, int res, int res2, int idx, int res3)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::portatil_picture_info>::From(_tbuf, roleid, res, res2, idx, res3);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	//send_ls_msg(pPlayer, _tbuf);
+	AutoBroadcastCSMsg(_imp->_plane,pPlayer->pPiece,_tbuf,-1);
+}
+
+void gplayer_dispatcher::portatil_picture_storage(int count, int * storage)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::portatil_picture_storage>::From(_tbuf, count, storage);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
+	send_ls_msg(pPlayer, _tbuf);
+}
+void gplayer_dispatcher::kid_system_points_notify(int points)
+{
+	_tbuf.clear();
+
+	CMD::Make<CMD::kid_system_points_notify>::From(_tbuf, points);
+	gplayer* pPlayer = (gplayer*)_imp->_parent;
 	send_ls_msg(pPlayer, _tbuf);
 }

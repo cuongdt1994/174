@@ -60,6 +60,19 @@ public:
 		return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y) + abs(pos1.z-pos2.z);
 	}
 
+	// Admissible heuristic for 3D 26-connectivity with costs 10/14/17.
+	// h = 10*max + 4*mid + 3*min  (derived from optimal corner/edge/face mix)
+	inline int GetOctileDist3D(const Pos3DInt& pos1, const Pos3DInt& pos2)
+	{
+		int dx = abs(pos1.x - pos2.x);
+		int dy = abs(pos1.y - pos2.y);
+		int dz = abs(pos1.z - pos2.z);
+		int a = (dx > dy) ? ((dx > dz) ? dx : dz) : ((dy > dz) ? dy : dz);
+		int c = (dx < dy) ? ((dx < dz) ? dx : dz) : ((dy < dz) ? dy : dz);
+		int b = dx + dy + dz - a - c;
+		return 10 * a + 4 * b + 3 * c;
+	}
+
 	int GetEuclidDistSqr(const Pos3DInt& pos1, const Pos3DInt& pos2)
 	{
 		int dx = pos1.x - pos2.x, dy = pos1.y - pos2.y, dz = pos1.z - pos2.z;

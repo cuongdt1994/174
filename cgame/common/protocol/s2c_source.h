@@ -3684,7 +3684,8 @@ namespace S2C
         struct home_task_info
         {
             single_data_header header;
-            int task_id[16];
+            int size;
+            //char buf[];
 			int task_trigger_times;
 			int task_refresh_times;
         };
@@ -3781,7 +3782,7 @@ namespace S2C
 			single_data_header header;
 			char enabled; // 0
 			char desabled; // 1
-			char enabled3; //170+
+			char kid; //170+
 			int count_skills;
 			SKILL skill[];
 

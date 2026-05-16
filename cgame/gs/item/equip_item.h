@@ -1016,6 +1016,9 @@ protected:
 	virtual void AfterChipChanged(); 
 	virtual void SetSocketAndStone(int count, int * stone_type);
 	virtual int Is16Por9JWeapon();
+public:
+	virtual void ForceOnRefreshItem() { OnRefreshItem (); };
+
 };
 
 class armor_item : public socket_item

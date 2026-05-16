@@ -1959,7 +1959,9 @@ void object_interface::ChangeShape(int shape)
 void object_interface::ChangeShape2(int shape, int timeout)
 {
 	_imp->ChangeShape(shape);
-	_imp->_runner->kid_celestial_transformation(shape, 0, 0, 0);
+	int roleid = _imp->_parent ? _imp->_parent->ID.id : 0;
+	int end_time = (timeout > 0) ? ((int)time(NULL) + timeout) : 0;
+	_imp->_runner->kid_celestial_transformation(shape, roleid, timeout, end_time);
 }
 
 int object_interface::GetForm()
@@ -4555,9 +4557,9 @@ object_interface::SendClientCooldownCarrier(int skill_id, int cooldown)
 }
 
 void 
-object_interface::SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, char enabled3, int skills_count, int * skills )
+object_interface::SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, int skills_count, int * skills )
 {
-	_imp->_runner->player_world_speak_info(enabled,enabled2,enabled3,skills_count,skills);
+	_imp->_runner->player_world_speak_info(enabled,enabled2,0,skills_count,skills);
 }
 
 // money 172 end
@@ -4619,10 +4621,4 @@ object_interface::QueryObjectSoulPower(const XID & who)
 	if(!_imp->_plane->QueryObject(who,info)) return 0;
 	
 	return info.soulpower;
-}
-
-void
-object_interface::KidTransformEnd()
-{
-	return ((gplayer_imp *)_imp)->KidTransformEnd();
 }

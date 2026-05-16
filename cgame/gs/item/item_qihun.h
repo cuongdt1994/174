@@ -126,7 +126,9 @@ public:
 	{
 		return ITEM_TYPE_QIHUN;
 	}
-	
+public:
+	virtual void ForceOnRefreshItem() { OnRefreshItem (); };
+			
 };
 
 #endif

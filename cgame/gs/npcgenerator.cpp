@@ -1394,9 +1394,9 @@ npc_stubs_manager::LoadTemplate(itemdataman & dataman)
 				// TODO
 			}
 
-			if (npc.combined_services3 & 0x20000) // serviço Matrona Celestial
+			if (npc.combined_services3 & 0x20000) /*170+ Bebê Celestial*/
 			{
-				// TODO
+				nt.npc_data.service_kid_create = 1;
 			}
 
 			if(npc.combined_services3 & 0x48000) /*170+ Códice*/
@@ -3591,6 +3591,13 @@ npc_spawner::CreateNPCBase(npc_spawner * __this, world * pPlane, const entry_t &
 	if(pTemplate->npc_data.service_rename_codex)
 	{
 		service_provider * provider = service_manager::CreateProviderInstance(130);
+		pImp->AddProvider(provider,NULL,0);
+	}
+
+	/*170+ Bebê Celestial*/
+	if(pTemplate->npc_data.service_kid_create)
+	{
+		service_provider * provider = service_manager::CreateProviderInstance(131);
 		pImp->AddProvider(provider,NULL,0);
 	}
 

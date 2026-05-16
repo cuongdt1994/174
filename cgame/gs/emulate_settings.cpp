@@ -44,5 +44,15 @@ void EmulateSettings::Init()
 	nw_config.min_level2_required_nw = atoi(emulate_settings->find("Nw_Setting", "min_level2_required_nw").c_str()) > MAX_LEVEL_2 ? MAX_LEVEL_2 : atoi(emulate_settings->find("Nw_Setting", "min_level2_required_nw").c_str());
 	nw_config.min_realm_level_required_nw = atoi(emulate_settings->find("Nw_Setting", "min_realm_level_required_nw").c_str()) > MAX_REALM_LEVEL ? MAX_REALM_LEVEL : atoi(emulate_settings->find("Nw_Setting", "min_realm_level_required_nw").c_str());
 
+	msg_language = atoi(emulate_settings->find("Static_Setting", "msg_language").c_str()) > MAX_MSG_LANGUAGE ? MAX_MSG_LANGUAGE : atoi(emulate_settings->find("Static_Setting", "msg_language").c_str());
 
+	enabled_memorial_reset = atoi(emulate_settings->find("Default_Setting", "enabled_memorial_reset").c_str()) > MAX_ENABLED_MEMORIAL_RESET ? MAX_ENABLED_MEMORIAL_RESET : atoi(emulate_settings->find("Default_Setting", "enabled_memorial_reset").c_str());
+	enabled_child = atoi(emulate_settings->find("Custom_Setting", "enabled_child").c_str()) > MAX_ENABLED_CHILD ? MAX_ENABLED_CHILD : atoi(emulate_settings->find("Custom_Setting", "enabled_child").c_str());
+
+	// Kid (Child Awakening) tuning — all keys in [Custom_Setting]; missing keys fall back to safe defaults via getters.
+	child_awakening_days     = atoi(emulate_settings->find("Custom_Setting", "child_awakening_days").c_str())     > MAX_CHILD_AWAKENING_DAYS     ? MAX_CHILD_AWAKENING_DAYS     : atoi(emulate_settings->find("Custom_Setting", "child_awakening_days").c_str());
+	kid_points_rate          = atoi(emulate_settings->find("Custom_Setting", "kid_points_rate").c_str())          > MAX_KID_POINTS_RATE          ? MAX_KID_POINTS_RATE          : atoi(emulate_settings->find("Custom_Setting", "kid_points_rate").c_str());
+	kid_awakening_cash       = atoi(emulate_settings->find("Custom_Setting", "kid_awakening_cash").c_str())       > MAX_KID_AWAKENING_CASH       ? MAX_KID_AWAKENING_CASH       : atoi(emulate_settings->find("Custom_Setting", "kid_awakening_cash").c_str());
+	kid_free_celestial_level = atoi(emulate_settings->find("Custom_Setting", "kid_free_celestial_level").c_str()) > MAX_KID_FREE_CELESTIAL_LEVEL ? MAX_KID_FREE_CELESTIAL_LEVEL : atoi(emulate_settings->find("Custom_Setting", "kid_free_celestial_level").c_str());
+	kid_force_new_day        = atoi(emulate_settings->find("Custom_Setting", "kid_force_new_day").c_str())        > MAX_KID_FORCE_NEW_DAY        ? MAX_KID_FORCE_NEW_DAY        : atoi(emulate_settings->find("Custom_Setting", "kid_force_new_day").c_str());
 }

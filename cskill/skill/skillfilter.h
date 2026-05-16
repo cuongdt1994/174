@@ -8,7 +8,7 @@
 #include "sfilterdef.h"
 #include "skillwrapper.h"
 #include "statedef.h"
-#include <ctime>
+
 using namespace GNET;
 //lgc
 enum	//seal/idle mode Index counted in _idle_seal_mode_counter
@@ -9208,7 +9208,7 @@ protected:
 		//This filter is saved after going offline and timed
 		//backup_timeout
 		int tmp = _timeout;
-		_timeout += time(NULL);;
+		_timeout += time(NULL);
 		
 		filter_Soulbase::Save(ar);
 		ar << _retort_damage;
@@ -9224,7 +9224,7 @@ protected:
 		ar >> _retort_damage;
 
 		//restore_timeout
-		_timeout -= time(NULL);;
+		_timeout -= time(NULL);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -9311,7 +9311,7 @@ protected:
 		//restore_timeout
 		int tmp = _timeout;
 		//Save the absolute time when the filter expires
-		_timeout += time(NULL);;
+		_timeout += time(NULL);
 
 		filter_Soulbase::Save(ar);
 		ar << _level;
@@ -9327,7 +9327,7 @@ protected:
 		ar >> _level;
 		
 		//restore_timeout
-		_timeout -= time(NULL);;
+		_timeout -= time(NULL);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -13059,7 +13059,7 @@ protected:
 		//���filter�����ߺ󱣴棬����ʱ
 		//����_timeout
 		int tmp = _timeout;
-		_timeout += time(NULL);;
+		_timeout += time(NULL);
 		
 		filter_Soulbase::Save(ar);
 		ar << _ratio;
@@ -13075,7 +13075,7 @@ protected:
 		ar >> _ratio;
 
 		//�ָ�_timeout
-		_timeout -= time(NULL);;
+		_timeout -= time(NULL);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -15368,6 +15368,118 @@ public:
 	}
 };
 
+
+class filter_Kidform : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_HEARTBEAT | FILTER_MASK_NOSAVE
+	};
+
+	int   _shape;
+	int   _attack_type;
+	int   _hp;
+	int   _damage_low;
+	int   _damage_high;
+	int   _damage_magic_low;
+	int   _damage_magic_high;
+	int   _defence;
+	int   _resistance[5];
+	int   _point;
+	int   _ratio;
+	float _range;
+	float _speed;
+	int   _attack_adj;
+	int   _defend_adj;
+	int   _attack_ant;
+	int   _defend_ant;
+	int   _time_reduce;
+	int   _skill_count;
+	int   _skill[32];
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _shape << _attack_type << _hp;
+		ar << _damage_low << _damage_high << _damage_magic_low << _damage_magic_high;
+		ar << _defence;
+		ar.push_back(_resistance, sizeof(_resistance));
+		ar << _point << _ratio << _range << _speed;
+		ar << _attack_adj << _defend_adj << _attack_ant << _defend_ant;
+		ar << _time_reduce << _skill_count;
+		ar.push_back(_skill, sizeof(_skill));
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _shape >> _attack_type >> _hp;
+		ar >> _damage_low >> _damage_high >> _damage_magic_low >> _damage_magic_high;
+		ar >> _defence;
+		ar.pop_back(_resistance, sizeof(_resistance));
+		ar >> _point >> _ratio >> _range >> _speed;
+		ar >> _attack_adj >> _defend_adj >> _attack_ant >> _defend_ant;
+		ar >> _time_reduce >> _skill_count;
+		ar.pop_back(_skill, sizeof(_skill));
+		return true;
+	}
+	
+	virtual void filter_Kidform::TranslateSendAttack(const XID & target, attack_msg & msg)
+	{
+		if ( !msg.skill_id )
+			msg.attack_attr = _attack_type;
+	}
+
+	filter_Kidform(){}
+public:
+	DECLARE_SUBSTANCE(filter_Kidform);
+	filter_Kidform(object_interface object, int* buf)
+		: timeout_filter(object, 30, FILTER_MASK)
+	{
+		_shape             = buf[0];
+		_attack_type       = buf[1];
+		_hp                = buf[2];
+		_damage_low        = buf[3];
+		_damage_high       = buf[4];
+		_damage_magic_low  = buf[5];
+		_damage_magic_high = buf[6];
+		_defence           = buf[7];
+		_resistance[0]     = buf[8];
+		_resistance[1]     = buf[9];
+		_resistance[2]     = buf[10];
+		_resistance[3]     = buf[11];
+		_resistance[4]     = buf[12];
+		_point             = buf[13];
+		_ratio             = buf[14];
+		*((int*)&_range)   = buf[15];
+		*((int*)&_speed)   = buf[16];
+		_attack_adj        = buf[17];
+		_defend_adj        = buf[18];
+		_attack_ant        = buf[19];
+		_defend_ant        = buf[20];
+		_time_reduce       = buf[21];
+		_skill_count       = buf[22];
+		if(_skill_count > 16) _skill_count = 16;
+		memset(_skill, 0, sizeof(_skill));
+		memcpy(_skill, buf + 23, 8 * _skill_count);
+		_filter_id = FILTER_KIDFORM;
+	}
+
+	void OnAttach();
+	void OnRelease();
+
+	void Heartbeat(int tick)
+	{
+		if(_timeout > 0)
+		{
+			_timeout -= tick;
+			if(_timeout <= 0) _is_deleted = true;
+		}
+	}
+};
+
 class filter_Palsy : public timeout_filter
 {
 protected:
@@ -16119,7 +16231,7 @@ protected:
 		//���filter�����ߺ󱣴棬����ʱ
 		//����_timeout
 		int tmp = _timeout;
-		_timeout += time(NULL);;
+		_timeout += time(NULL);
 		
 		timeout_filter::Save(ar);
 		ar << _vigour;
@@ -16137,7 +16249,7 @@ protected:
 		ar >> _crit_damage_reduce;
 
 		//�ָ�_timeout
-		_timeout -= time(NULL);;
+		_timeout -= time(NULL);
 		if(_timeout <= 0) _timeout = 1;
 		return true;
 	}
@@ -18345,7 +18457,7 @@ protected:
     virtual bool Save(archive& ar)
     {
         int tmp = _timeout;
-        _timeout += time(NULL);;
+        _timeout += time(NULL);
 
         timeout_filter::Save(ar);
         ar << _exp_sp_factor << _realm_exp_factor;
@@ -18359,7 +18471,7 @@ protected:
         timeout_filter::Load(ar);
         ar >> _exp_sp_factor >> _realm_exp_factor;
 
-        _timeout -= time(NULL);;
+        _timeout -= time(NULL);
         if (_timeout <= 0) _timeout = 1;
 
         return true;
@@ -29907,7 +30019,7 @@ public:
 		skills_shape[1].id = _skill2;
 		skills_shape[1].level = 5;
 
-		_parent.SendClientPlayerWorldSpeakInfo((char)1, (char)1, (char)1, 2, (int*)skills_shape);
+		_parent.SendClientPlayerWorldSpeakInfo((char)1, (char)1, 2, (int*)skills_shape);
 		_parent.DenyUseItemCmd();
 		_parent.DenyNormalAttackCmd();
 		_parent.DenyPetCmd();
@@ -29925,7 +30037,7 @@ public:
 		skills_shape[1].id = _skill2;
 		skills_shape[1].level = 5;
 
-		_parent.SendClientPlayerWorldSpeakInfo((char)0, (char)1, (char)1, 2, (int*)skills_shape);
+		_parent.SendClientPlayerWorldSpeakInfo((char)0, (char)1, 2, (int*)skills_shape);
 		_parent.AllowUseItemCmd();
 		_parent.AllowNormalAttackCmd();
 		_parent.AllowPetCmd();

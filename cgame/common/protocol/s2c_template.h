@@ -5643,12 +5643,12 @@ namespace  S2C
 		struct Make<CMD::player_world_speak_info>
 		{
 			template<typename WRAPPER>
-			inline static WRAPPER & From( WRAPPER & wrapper, char enabled, char enabled2, char enabled3, int skills_count, int * skills )
+			inline static WRAPPER & From( WRAPPER & wrapper, char enabled, char enabled2, char kid, int skills_count, int * skills )
 			{				
 				Make<single_data_header>::From(wrapper,PLAYER_WORLD_SPEAK_INFO);
 				player_world_speak_info::SKILL * skill = (player_world_speak_info::SKILL *)skills;
 				
-				wrapper << enabled << enabled2 << enabled3 << skills_count;								
+				wrapper << enabled << enabled2 << kid << skills_count;								
 				for(int i = 0; i < skills_count; i++)
 				{
 					wrapper << skill[i].id << skill[i].level;

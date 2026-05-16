@@ -6,6 +6,9 @@
 #include <iostream>
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdio>
+#include <stdlib.h>
 
 #include <common/protocol.h>
 #include "obj_interface.h"
@@ -73,7 +76,7 @@ DEFINE_SUBSTANCE(gplayer_imp,gobject_imp,CLS_PLAYER_IMP)
 
 void TrySwapPlayerData(world * pPlane,const int cid[3],gplayer * pPlayer)
 {
-	__PRINTF("��ʼ������ҵ������û�\n");
+	//__PRINTF("��ʼ������ҵ������û�\n");
 	gplayer_imp * imp = (gplayer_imp*) pPlayer->imp;
 	gplayer_controller * ctrl = (gplayer_controller *)imp->_commander;
 	gplayer_dispatcher * dis = (gplayer_dispatcher*)imp->_runner;
@@ -107,7 +110,7 @@ gplayer_imp::gplayer_imp()
 	_equipment(item::BODY,item::EQUIP_INVENTORY_COUNT),
 	_task_inventory(item::TASK_INVENTORY,TASKITEM_LIST_SIZE),
 	_player_state(PLAYER_STATE_NORMAL),_combat_timer(0),
-	_player_title(this),_player_dailysign(this),_player_kid(this),_player_fatering(this),_trashbox(TRASHBOX_BASE_SIZE,TRASHBOX_BASE_SIZE4,TRASHBOX_BASE_SIZE5,TRASHBOX_BASE_SIZE6),
+	_player_title(this),_player_dailysign(this),_player_fatering(this),_trashbox(TRASHBOX_BASE_SIZE,TRASHBOX_BASE_SIZE4,TRASHBOX_BASE_SIZE5,TRASHBOX_BASE_SIZE6),
     _user_trashbox(0u,0u,0u,0u),_player_force(this),_player_reincarnation(this)
 {
 	memset(&_instance_switch_key,0,sizeof(_instance_switch_key));
@@ -281,7 +284,12 @@ gplayer_imp::gplayer_imp()
 	_charge_merc = 0;
 	_charge_merc_time = 0;
 	memset(&_repository_addons, 0x00, sizeof(_repository_addons));
-	
+	memset(&_kids_addons, 0x00, sizeof(_kids_addons));
+
+	_kid_transformation = 0;
+	_kid_transformation_time = 0;
+	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
+
 	_check_interface = 0;
 	_check_genesis_lvl = 0;
 	_dungeon_999_timer = 0;
@@ -304,17 +312,17 @@ gplayer_imp::gplayer_imp()
 	_double_factor_sp = 0;
 	_double_factor_realm = 0;
 	
-	memset(&_autoswap         , 0x00 , sizeof( _autoswap));
-	memset(&_skillsender      , 0x00 , sizeof( _skillsender));
-	memset(&_glyph            , 0x00 , sizeof( _glyph ));
-	memset(&_carrier          , 0x00 , sizeof( _carrier));
-	memset(&_repository       , 0x00 , sizeof( _repository));
-	memset(&_pet_skill_temp   , 0x00 , sizeof( _pet_skill_temp));
-	memset(&_pet_skin         , 0x00 , sizeof( _pet_skin));
+	memset(&_autoswap         , 0x00 , sizeof( _autoswap         ));
+	memset(&_skillsender      , 0x00 , sizeof( _skillsender      ));
+	memset(&_glyph            , 0x00 , sizeof( _glyph            ));
+	memset(&_carrier          , 0x00 , sizeof( _carrier          ));
+	memset(&_repository       , 0x00 , sizeof( _repository       ));
+	memset(&_pet_skill_temp   , 0x00 , sizeof( _pet_skill_temp   ));
+	memset(&_pet_skin         , 0x00 , sizeof( _pet_skin         ));
 	memset(&_day_world_points , 0x00 , sizeof( _day_world_points ));
-	memset(&_activity 		  , 0x00 , sizeof( _activity));
+	memset(&_activity 		  , 0x00 , sizeof( _activity		 ));
 	//memset(&_question_data	  , 0x00 , sizeof( _question_data	 ));
-	memset(&_home_task_info, 0x00, sizeof(_home_task_info));
+	
 	_repository.lock_time = 2;
 	// storage data 2
 
@@ -326,7 +334,9 @@ gplayer_imp::gplayer_imp()
 	_celestial.Init();
 	
 	_glua.Init();
-	memset(&_codex, 0x00 , sizeof( _codex));
+	memset(&_codex 		  , 0x00 , sizeof( _codex		 ));
+	memset(&_kid 		  , 0x00 , sizeof( _kid		 	 ));
+	_kid_addon.Init();
 
 }
 
@@ -636,12 +646,6 @@ gplayer_imp::PlayerEnterWorld()
 
 	_real_weapon_class = _cur_item.weapon_class;
 
-	/*176+*/
-	if(EmulateSettings::GetInstance()->GetEmulateVersion() >= 176)
-	{
-		ProtocolPortatilPicture();		
-	}
-
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
 
@@ -649,7 +653,7 @@ gplayer_imp::PlayerEnterWorld()
 	FashionUpdateActivate(true);
 
 	/*161+*/
-	RefreshInventoryNewArmorEnter(false);
+	RefreshInventoryNewArmorEnter(false, false);
 	// Correção de bug na paleta e nos tesouros
 	int level_get = _basic.level;
 	int reincarnation_get = GetReincarnationTimes();
@@ -662,15 +666,63 @@ gplayer_imp::PlayerEnterWorld()
 			PlayerTeasouresReset();
 		 }
 	}
+	// Reseta Memorial celesital (Bebe Celestial)
+	if (EmulateSettings::GetInstance()->GetEnabledMemorialReset() && !GetLua()->GetResetCelestialMemorial())
+	{		
+		GetLua()->SetResetCelestialMemorial(true);
+
+		if (EmulateSettings::GetInstance()->GetEnabledChild())
+		{
+			for (unsigned int i = 0; i < gplayer_kid::MAX_CELESTIAL; i++)
+			{
+				_kid.SetCelestial(i, 0, 0, 0, 0);
+			}
+		} else
+		{
+			_celestial.ClearAllCelestialMemorial();
+			ProtocolCelestialMemorial();
+			ProtocolCelestialMemorialLottery();
+		}
+	}
+
+	// Reseta a Paleta (07/05)
+	if(!GetLua()->GetResetLottery())
+	{
+		GetLua()->SetResetLottery(true);
+
+		if(_lottery.GetScore() > 0)
+		{
+			_lottery.SetScore(0);
+			GetLotteryItems();
+			GetLoteryInfo();
+		}
+	}
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		KidAwakeningInfoProtocol ();
+		KidCelestialInfoProtocol (0);
+		KidCelestialActivityProtocol ();
+		_kid_addon.UpdateKidsAddonsProtocol(_parent->ID.id);
+
+		// Nova contagem de pontos (notificação para o client)
+		_runner->kid_system_points_notify(KidGetSuitePoints());
+	}
+
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.SetKidsWipe(_parent->ID.id);
+	}	
+
 }
 
-void 
+void
 gplayer_imp::GetCommonDataList(bool send_content)
 {
 	packet_wrapper  h1(8192);
 	using namespace S2C;
 	CMD::Make<CMD::common_data_list>::From(h1);
-	if(send_content){
+	if(send_content)
+	{
 		class my_stream : public common_data::stream
 		{
 			packet_wrapper  & _wrapper;
@@ -3228,7 +3280,6 @@ gplayer_imp::FromSwitchToNormal()
 
 	if(_parent->b_disconnect)
 	{
-		//����Ѿ�����
 		_player_state = PLAYER_DISCONNECT;
 		_disconnect_timeout = LOGOUT_TIME_IN_NORMAL;
 	}
@@ -3237,7 +3288,6 @@ gplayer_imp::FromSwitchToNormal()
 bool 
 gplayer_imp::CanAttack(const XID & target)
 {
-	//�����κεط������Խ�����ͨ����
 	if(!_layer_ctrl.CheckAttack()) return false;
 	return _equipment[item::EQUIP_INDEX_WEAPON].CheckAttack(_equipment);
 }
@@ -3942,7 +3992,7 @@ gplayer_imp::PlayerGetInventoryDetail(int where)
 	}
 	_runner->self_inventory_detail_data(where,size, rw.data(),rw.size());
 	/*161+*/
-	RefreshInventoryNewArmorEnter(true);	
+	RefreshInventoryNewArmorEnter(true, false);		
 }
 
 void
@@ -5798,26 +5848,41 @@ gplayer_imp::OnHeartbeat(unsigned int tick)
 		_inviting_tm.time = 0;
 	}
 
-	_charge_merc_time++;
-
-	if (_charge_merc_time >= 15)
+	if (!(_write_timer % 1))
 	{
-		ChargeMercHeartBeat();
+		_charge_merc_time++;
+
+		if (_charge_merc_time >= 15)
+		{
+			ChargeMercHeartBeat();
+		}
+	}
+
+	if (_kid_transformation)
+	{
+		if (!(_write_timer % 1))
+		{
+			_kid_transformation_time--;
+
+			if(_kid_transformation_time <= 0)
+			{
+				KidCelestialTransformation(0);
+			}
+		}
 	}
 	
-	if (!(_write_timer % 30)) // Verifica a cada 30 segundos
+	if (!(_write_timer % 15)) // Verifica a cada 15 segundos
 	{
 		SetAnecdotePoints();
-	}
-
-	if (!(_write_timer % 1)) // Verifica a cada segundo
-	{
+		FixExpHeartBeat();
 		/*160+*/
 		SpeedSkillManager();
 		ActivityEventActivate();
 
 		if(_activity.enable_skill)
+		{
 		ActivityEventSkillManager();
+		}
 	}
 
 	// Espírito Imperial
@@ -6978,10 +7043,6 @@ gplayer_imp::Save(archive & ar)
 	_player_title.Save(ar);
 	//����ǩ��
 	_player_dailysign.Save(ar);
-	//kid
-	_player_kid.Save(ar);
-	//home
-	_home_task_info.Save(ar);
     // ������Ұ�ȫ��״̬
     _player_sanctuary_check.Save(ar);
 
@@ -7064,6 +7125,9 @@ gplayer_imp::Save(archive & ar)
 	ar << _charge_merc;
 	ar << _charge_merc_time;
 
+	ar << _kid_transformation;
+	ar << _kid_transformation_time;
+
 	ar << _dungeon_999_timer;
 
 	ar << _check_interface;
@@ -7122,7 +7186,11 @@ gplayer_imp::Save(archive & ar)
 	
 	ar.push_back(&_money,sizeof(_money));
 	ar.push_back(&_glua,sizeof(_glua));
+
+
 	ar.push_back(&_codex,sizeof(_codex));
+	ar.push_back(&_kid,sizeof(_kid));
+	ar.push_back(&_kid_addon,sizeof(_kid_addon));
 	return true;
 }
 
@@ -7259,10 +7327,6 @@ gplayer_imp::Load(archive & ar)
 	_player_title.Load(ar);
 	//ǩ����ȡ
 	_player_dailysign.Load(ar);
-	//kid
-	_player_kid.Load(ar);
-	//
-	_home_task_info.Load(ar);
     // ��ȡ��Ұ�ȫ��״̬
     _player_sanctuary_check.Load(ar);
 
@@ -7371,6 +7435,9 @@ gplayer_imp::Load(archive & ar)
 	ar >> _charge_merc;
 	ar >> _charge_merc_time;
 
+	ar >> _kid_transformation;
+	ar >> _kid_transformation_time;
+
 	ar >> _dungeon_999_timer;
 
 	ar >> _check_interface;
@@ -7430,6 +7497,8 @@ gplayer_imp::Load(archive & ar)
 	ar.pop_back(&_money,sizeof(_money));
 	ar.pop_back(&_glua,sizeof(_glua));
 	ar.pop_back(&_codex,sizeof(_codex));
+	ar.pop_back(&_kid,sizeof(_kid));
+	ar.pop_back(&_kid_addon,sizeof(_kid_addon));
 	return true;
 }
 
@@ -8354,8 +8423,6 @@ gplayer_imp::Swap(gplayer_imp * rhs)
 	_player_giftcard.Swap(rhs->_player_giftcard);	
 	_player_title.Swap(rhs->_player_title);
 	_player_dailysign.Swap(rhs->_player_dailysign);
-	_player_kid.Swap(rhs->_player_kid);
-	_home_task_info.Swap(rhs->_home_task_info);
 	_player_fatering.Swap(rhs->_player_fatering);
     _player_sanctuary_check.Swap(rhs->_player_sanctuary_check);
 
@@ -8427,6 +8494,10 @@ gplayer_imp::Swap(gplayer_imp * rhs)
 	Set(_charge_merc, rhs);
 	Set(_charge_merc_time, rhs);
 
+	Set(_kid_transformation, rhs);
+	Set(_kid_transformation_time, rhs);
+	memcpy(&_kid_transform_skill_state, &rhs->_kid_transform_skill_state, sizeof(_kid_transform_skill_state));
+
 	Set(_check_interface, rhs);
 	Set(_check_genesis_lvl, rhs);
 	Set(_check_codex_get_storage, rhs);
@@ -8485,6 +8556,7 @@ gplayer_imp::Swap(gplayer_imp * rhs)
 	memcpy(&_glua,&rhs->_glua,sizeof(_glua));
 
 	memcpy(&_codex,&rhs->_codex,sizeof(_codex));
+	memcpy(&_kid,&rhs->_kid,sizeof(_kid));
 #undef Set
 	gactive_imp::Swap(rhs);
 }
@@ -9052,12 +9124,6 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 
 	SetAnecdotePoints();
 
-	/*176+*/
-	if(EmulateSettings::GetInstance()->GetEmulateVersion() >= 176)
-	{
-		ProtocolPortatilPicture();
-	}
-
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
 
@@ -9065,7 +9131,33 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 	FashionUpdateActivate(true);
 
 	/*161+*/
-	RefreshInventoryNewArmorEnter(false);
+	RefreshInventoryNewArmorEnter(false, false);
+	
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.ActivateKidsAddons(_parent->ID.id);
+	}
+
+	if (_kid_transformation)
+	{
+		object_interface obj_if_kid(this);
+
+		_skill.EventChange(obj_if_kid, GetForm(), 0);
+		obj_if_kid.LockEquipment(false);
+		obj_if_kid.SetNoMount(false);
+		obj_if_kid.SetNoBind(false);
+		
+		_kid_transformation = 0;
+		_kid_transformation_time = 0;
+		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
+
+		obj_if_kid.ChangeShape2(0, 0);
+		property_policy::UpdatePlayer(GetPlayerClass(), this);
+		RefreshEquipment();
+		if (_basic.hp > _cur_prop.max_hp) _basic.hp = _cur_prop.max_hp;
+	}
+
+	FixExpHeartBeat();
 }
 
 void 
@@ -9088,13 +9180,14 @@ gplayer_imp::PlayerLeaveServer()
 	}
 
 	DeactivateRepositoryAddons();
+	_kid_addon.DeactivateKidsAddons(_parent->ID.id);
+
 
 }
 
 void 
 gplayer_imp::PlayerLeaveWorld()
 {
-	LuaManager::GetInstance()->PlayerLeaveWorld(_parent->ID.id);
 
 	if(_carrier.npcid > 0)
 	LeaveCarrier(_carrier.npcid, _carrier.pos);
@@ -9139,6 +9232,12 @@ gplayer_imp::PlayerLeaveWorld()
 	if(world_manager::GetIsSoloTowerChallengeInstance())
 	{
 		PlayerLeaveSoloChallengeInstance();
+	}
+	LuaManager * lua = LuaManager::GetInstance();
+	lua->PlayerLeaveWorld(_parent->ID.id);
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.DeactivateKidsAddons(_parent->ID.id);
 	}
 }
 
@@ -10843,15 +10942,8 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 	GetLoteryItems();
 	TreasureInfo();
 	GetLibItems();
-	//Kid
-	_player_kid.ClientSync(1);
-	_player_kid.ClientSync(4);
-	_player_kid.ClientSync(5);
-	_player_kid.ClientSync(15);
-	
-	//home_task_info
-	_runner->home_task_info(_home_task_info.GetTaskId(), 64, _home_task_info.GetTriggerTimes(), _home_task_info.GetRefreshTimes());
 
+	
 	/*170+*/
 	if(_passwd_safe.passwd_active != 2)
 	{
@@ -10889,7 +10981,9 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 	ActivityEventActivate();
 
 	if(_activity.enable_skill)
+	{
 	ActivityEventSkillManager();
+	}
 
 	ProtocolActivityEvent();
 	/*QuestionTask();
@@ -10908,6 +11002,11 @@ void gplayer_imp::SendAllData(bool detail_inv, bool detail_equip, bool detail_ta
 	/*171+*/
 	PlayerWeaponUpdateEnterWorld();
 	
+	if (EmulateSettings::GetInstance()->GetEnabledChild())
+	{
+		_kid_addon.ActivateKidsAddons(_parent->ID.id);
+	}
+
 }
 
 unsigned int 
@@ -14182,7 +14281,7 @@ gplayer_imp::ProduceItem3(const recipe_template & rt,int materials[16], int idxs
 	{
 		eq_refine_level = eq_it.body->GetRefineLevel();
 
-		if(eq_refine_level > 12 || eq_refine_level < 0) eq_refine_level = 0;
+		if(eq_refine_level > 12 || eq_refine_level <= 0) eq_refine_level = 0;
 		if(eq_refine_level > 0)
 		{
 			ASSERT(eq_refine_level <= 12);
@@ -14488,6 +14587,9 @@ gplayer_imp::ProduceItem3(const recipe_template & rt,int materials[16], int idxs
 	{
 		_runner->produce_null(rt.recipe_id);
 	}
+
+	/*161+*/
+	RefreshInventoryNewArmorEnter(true, false);
 	return true;
 }
 
@@ -17854,17 +17956,17 @@ gplayer_imp::GodEvilConvert(unsigned char mode)
 		if(skill1 <= 0 || skill2 <= 0)
 		{
 			if(skill1 > 0 || skill2 > 0)
-				GLog::log(GLOG_ERR, "仙魔转换表中技能不同时为零skill_map[%d]", i);
+                GLog::log(GLOG_ERR, "The skills in the conversion table between fairy and devil are zero at the same time skill_map[%d]", i);
 			continue;	
 		}
 		if(_skill.GetType(skill1) == -1 || _skill.GetType(skill2) == -1)
 		{
-			GLog::log(GLOG_ERR, "仙魔转换表中技能不存在skill_map[%d]", i);
+            GLog::log(GLOG_ERR, "Does not exist in the fairy conversion table skill_map[%d]", i);
 			continue;	
 		}
 		if(convert_table.find(skill1) != convert_table.end() || convert_table.find(skill2) != convert_table.end())
 		{
-			GLog::log(GLOG_ERR, "仙魔转换表中技能有重复skill_map[%d]", i);
+            GLog::log(GLOG_ERR, "There are duplications of skills in the fairy conversion table skill_map[%d]", i);
 			continue;
 		}
 		convert_table.insert(std::make_pair(skill1,skill2));
@@ -21814,6 +21916,8 @@ void gplayer_imp::ReceiveRealmExp(int exp, int daily_exp)
 	// Pontos diários
 	if(daily_exp > 0)
 	{
+		if(daily_exp > 4000 && daily_exp < 0) return;
+
 		int resultrealm = _diary_exp + (int)(daily_exp * (1.0f + _realm_exp_factor) + 0.1f);
 		_diary_exp = resultrealm;
 	}
@@ -22238,6 +22342,7 @@ void gplayer_imp::PlayerRandMallPay(int eid)
 		_runner->player_cash(GetMallCash());
 		//�����Ѽ�¼���͸�gdelivery,�������ӿ��Ը������ߵĺ������������ѻ���
 		GMSV::SendRefCashUsed(_parent->ID.id, cash_used, _basic.level);
+		
 
 		GLog::log(GLOG_INFO,"�û�%d������̳�%d����%d����Ʒ%d������%d��ʣ��%d��",self_id,eid,ocount,id,cash_used,GetMallCash());
 
@@ -22584,7 +22689,6 @@ bool gplayer_imp::IncAstrolabeExternExp(int exp)
  	if(_equipment.IsSlotEmpty(item::EQUIP_INDEX_ASTROLABE)) return S2C::ERR_NO_EQUAL_EQUIPMENT_FAIL;\
  	if(!IsItemExist(item_inv_idx,item_id,num)) return S2C::ERR_ITEM_NOT_IN_INVENTORY;\
  }
- 
  
 int gplayer_imp::GetAstrolabeLevelMax() 
 {
@@ -24586,6 +24690,7 @@ void gplayer_imp::LotteryAward()
 				FreeItem(data);
 			}
 			
+			_runner->lottery_reward_info( 14, score, 1, item);
 			_treasure_items.Add(item , count);
 		}
 	}
@@ -24605,21 +24710,23 @@ void gplayer_imp::Lottery2Init(unsigned int param)
 		if ( _lottery.IsStart() )
 		{
 			if (param == 2)
-			{
-				if ( !InvPlayerSpendItem(0 , 61729, 5) )
+			{		
+				if(!CheckItemExist(61729,5)) 
 				{
 					_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
-					return;
-				}
+					return;	
+				}	
+				RemoveItems(61729,5, S2C::DROP_TYPE_USE, true);							
 				_lottery.StartX5();
 			}
 			else
-			{
-				if ( !InvPlayerSpendItem(0 , 61729, 1) )
+			{				
+				if(!CheckItemExist(61729,1)) 
 				{
 					_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
-					return;
-				}
+					return;	
+				}	
+				RemoveItems(61729,1, S2C::DROP_TYPE_USE, true);	
 				_lottery.StartX1();
 			}
 			LotteryAward();
@@ -24693,6 +24800,7 @@ void gplayer_imp::Lottery2OpenBox(unsigned int param)
 						FreeItem(data);
 					}
 
+					_runner->lottery_reward_info( 14, _lottery.GetScore (), 0, 0);
 					_treasure_items.Add(pItem , pCount);
 					update = true;
 				}
@@ -24758,7 +24866,16 @@ void gplayer_imp::TreasureInit(unsigned int param)
 	{
 		unsigned int req_item = tc->GetReqItem();
 		unsigned int box_count = tc->GetReqCount();
-		if ( InvPlayerSpendItem(0 , req_item, box_count) )
+
+		bool check = true;
+		if(!CheckItemExist(req_item,box_count)) 
+		{
+			_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
+			check = false;
+		}	
+		RemoveItems(req_item,box_count, S2C::DROP_TYPE_USE, true);	
+
+		if (check)
 		{
 			if ( param && _treasure.GetScore() >= 20 )
 			{
@@ -24784,7 +24901,16 @@ void gplayer_imp::GetTreasureOpenBox(unsigned int lot)
 	{
 		unsigned int req_item = tc->GetReqItem();
 		unsigned int req_item_count = _treasure.GetFreeCount() ? 0 : tc->GetReqCost( _treasure.GetOpenLotCount() );
-		if ( !req_item_count || InvPlayerSpendItem(0 , req_item, req_item_count) )
+
+		bool check = true;
+		if(!CheckItemExist(req_item,req_item_count)) 
+		{
+			_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
+			check = false;
+		}	
+		RemoveItems(req_item,req_item_count, S2C::DROP_TYPE_USE, true);	
+
+		if ( !req_item_count || check)
 		{
 			unsigned int item_id, item_count;
 			item_id = item_count = 0;
@@ -25168,21 +25294,44 @@ bool gplayer_imp::GetTrashBoxItemByTable(int where, int * table, int & id, int &
 bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time /*0*/, int proctype /*-1*/)
 {
 	bool res = false;
-	
+
 	if ( id > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
 	{
-		if(GetTrashInventory(where).GetEmptySlotCount() < 1) 
+		item_list & trash_inv = GetTrashInventory(where);
+		unsigned int pile_limit = world_manager::GetDataMan().get_item_pile_limit(id);
+
+		// Allow operation if there is at least one empty slot OR an existing pile of the
+		// same id that still has capacity. The previous implementation only checked the
+		// empty-slot count, which prevented merging into an existing stack and made the
+		// "open" silently fail when the panel was technically full but had a mergeable pile.
+		if (trash_inv.GetEmptySlotCount() < 1)
 		{
-			_runner->error_message(S2C::ERR_INVENTORY_IS_FULL);
-			return res;
+			bool can_merge = false;
+			if (pile_limit > 1)
+			{
+				for (unsigned int i = 0; i < trash_inv.Size(); ++i)
+				{
+					if ((unsigned int)trash_inv[i].type == (unsigned int)id
+						&& (unsigned int)trash_inv[i].count < pile_limit)
+					{
+						can_merge = true;
+						break;
+					}
+				}
+			}
+			if (!can_merge)
+			{
+				_runner->error_message(S2C::ERR_INVENTORY_IS_FULL);
+				return res;
+			}
 		}
-		
+
 		element_data::item_tag_t tag = {element_data::IMT_CREATE,0};
 		item_data * it = world_manager::GetDataMan().generate_item_from_player(id,&tag,sizeof(tag));
-		
+
 		if (it)
 		{
-			if (count > 0 && count <= world_manager::GetDataMan().get_item_pile_limit(id))
+			if (count > 0 && (unsigned int)count <= pile_limit)
 			{
 				it->count = count;
 			}
@@ -25190,23 +25339,33 @@ bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time 
 			{
 				count = it->count;
 			}
-			
-			if (time) 
+
+			if (time)
 			{
 				it->expire_date = time += g_timer.get_systime();
 			}
-			
+
 			if (proctype != -1)
 			{
 				it->proc_type = proctype;
 			}
-		
-			int pos = GetTrashInventory(where).Push(*it);
+
+			// Save original count so we can compute the actual delta added.
+			// item_list::Push merges into existing piles when possible; whatever
+			// is left in it->count after the call is what was NOT placed.
+			int original_count = it->count;
+			int pos = trash_inv.Push(*it);
 			if (pos >= 0)
 			{
-				item & inv_it = GetTrashInventory(where)[pos];
-				_runner->produce_once(it->type, inv_it.count, inv_it.count, where, pos);
+				item & inv_it = trash_inv[pos];
+				// obtain_item(type, expire_date, amount_added, slot_total, where, slot)
+				// Sending (delta, total) lets the client UI update the slot in-place
+				// instead of overwriting it with a wrong value (which forced a relogin).
+				_runner->obtain_item(it->type, it->expire_date,
+									 original_count - it->count, inv_it.count,
+									 where, pos);
 				FirstAcquireItem(it);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 			FreeItem(it);
@@ -25218,7 +25377,7 @@ bool gplayer_imp::GiveTrashBoxItem(int where, int id, int count /*1*/, int time 
 bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 {
 	bool res = false;
-	
+
 	if ( id > 0 && count > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
 	{
 		int pos = GetTrashInventory(where).Find(16,id);
@@ -25230,6 +25389,7 @@ bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 				UpdateMallConsumptionDestroying(it.type, it.proc_type, count);
 				GetTrashInventory(where).DecAmount(pos, count);
 				_runner->player_drop_item(where,pos,it.type,count,S2C::DROP_TYPE_USE);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 			else
@@ -25237,11 +25397,43 @@ bool gplayer_imp::SpendTrashBoxItem(int where, int id, int count /*1*/)
 				UpdateMallConsumptionDestroying(it.type, it.proc_type, it.count);
 				GetTrashInventory(where).DecAmount(pos, it.count);
 				_runner->player_drop_item(gplayer_imp::IL_INVENTORY,pos,it.type,it.count,S2C::DROP_TYPE_USE);
+				IncTrashBoxChangeCounter();
 				res = true;
 			}
 		}
 	}
-	
+
+	return res;
+}
+
+bool gplayer_imp::SpendTrashBoxItem2(int where, int inv, int count)
+{
+	bool res = false;
+
+	if ( inv >= 0 && count > 0 && where >= IL_TRASH_BOX && where <= IL_TRASH_BOX8 )
+	{
+		if (inv >= 0)
+		{
+			item it = GetTrashInventory(where)[inv];
+			if(it.count >= count)
+			{
+				UpdateMallConsumptionDestroying(it.type, it.proc_type, count);
+				GetTrashInventory(where).DecAmount(inv, count);
+				_runner->player_drop_item(where,inv,it.type,count,S2C::DROP_TYPE_PRODUCE);
+				IncTrashBoxChangeCounter();
+				res = true;
+			}
+			else
+			{
+				UpdateMallConsumptionDestroying(it.type, it.proc_type, it.count);
+				GetTrashInventory(where).DecAmount(inv, it.count);
+				_runner->player_drop_item(gplayer_imp::IL_INVENTORY,inv,it.type,it.count,S2C::DROP_TYPE_PRODUCE);
+				IncTrashBoxChangeCounter();
+				res = true;
+			}
+		}
+	}
+
 	return res;
 }
 
@@ -25908,12 +26100,16 @@ gplayer_imp::SystemRealmExpDaily(unsigned int mobid)
 	int daily_exp = 0;
 	unsigned int daily_exp_max = 0;
 
+	if(mobid == 3218) return;
+
 	// Busca o monstro
 	DATA_TYPE dt;
 	const MONSTER_ESSENCE *mon = (const MONSTER_ESSENCE*)world_manager::GetDataMan().get_data_ptr(mobid,ID_SPACE_ESSENCE,dt);
 	if(!mon && dt != DT_MONSTER_ESSENCE) return;
 
 	daily_exp_max = GetTableDailyExp(_realm_level);
+
+	if(mon->vigour > 4000 || mon->vigour < 0) return;
 
 	if(daily_exp_max > _diary_exp && mon->vigour > 0)
 	{	
@@ -25971,6 +26167,62 @@ gplayer_imp::CheckRealmDay()
 		_diary_exp = 0;
 		/*172+*/
 		memset(&_day_world_points, 0x00, sizeof(_day_world_points) );
+	}
+	// Bebê Celestial
+	bool force_new_day = EmulateSettings::GetInstance()->GetKidForceNewDay();
+	int  target_days   = EmulateSettings::GetInstance()->GetChildAwakeningDays();
+
+	// Recovery: nếu state mồ côi (name_length==0 nhưng day_count>0) — ví dụ save cũ
+	// đã bị heartbeat tăng day_count khi chưa tạo kid — reset về 0 để KidAwakeningCreate
+	// không bị chặn bởi điều kiện day_count>0 trong error_message(627).
+	if (_kid.GetNameLength() == 0 && _kid.GetAwakeningDayCount() > 0)
+	{
+		_kid.SetAwakeningDayCount(0);
+		_kid.SetCheckDay(false);
+		_kid.SetAwakening(false);
+		_kid.SetBlockDay(false);
+		_kid.SetAwakeningCash(0);
+		_kid.SetPointsAwakening(0);
+		_kid.SetAwakeningPotential(0);
+	}
+
+	// Finalize: nếu kid đã đủ chu kỳ nhưng đang stuck ở state #3 (active session,
+	// is_awakening=true) — ví dụ kid được tạo trước khi build có fix, hoặc tick cuối
+	// cùng của KidAwakeningNewDay đẩy day_count đúng = target — thì flip về state #2
+	// (block_day=true, is_awakening=false, check_day=false) để client mở nút hoàn tất
+	// thức tỉnh ngay heartbeat tiếp theo, không cần tạo lại kid.
+	if (EmulateSettings::GetInstance()->GetEnabledChild()
+		&& _kid.GetNameLength() > 0
+		&& _kid.GetAwakeningDayCount() >= target_days
+		&& _kid.IsAwakening())
+	{
+		_kid.SetAwakening(false);
+		_kid.SetBlockDay(true);
+		_kid.SetCheckDay(false);
+		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+		KidAwakeningInfoProtocol();
+		return;
+	}
+
+	// Khi force=1, chỉ tick khi day_count chưa đạt mốc — tránh chạy quá target.
+	if (force_new_day && _kid.GetAwakeningDayCount() >= target_days)
+		force_new_day = false;
+
+	if (force_new_day || tm_now->tm_mday != (int)GetLua()->GetChildResetDay())
+	{
+		// Chỉ tick chu kỳ awakening khi kid thực sự đã được tạo (name_length>0).
+		// Nếu không gate, mỗi heartbeat sẽ tăng day_count cho player chưa có kid,
+		// khiến KidAwakeningCreate bị chặn vĩnh viễn bởi check day_count>0.
+		if(EmulateSettings::GetInstance()->GetEnabledChild() && _kid.GetNameLength() > 0)
+		{
+			KidUnlockNewDay();
+			KidAwakeningNewDay();
+			GetLua()->SetChildResetDay(force_new_day ? 0 : (char)tm_now->tm_mday);
+
+			GLog::log(GLOG_ERR,"formatlog: reset child:roleid=%d:resetday=%d:force=%d:count=%d/%d",
+			         GetParent()->ID.id, tm_now->tm_mday, force_new_day,
+			         _kid.GetAwakeningDayCount(), target_days);
+		}
 	}
 }
 
@@ -28187,17 +28439,20 @@ gplayer_imp::RewardWorldPoints()
 }
 
 /*160+*/
-void 
+void
 gplayer_imp::SpeedSkillManager()
 {
 	if(LuaManager::GetInstance()->GetConfig()->speed_skill_enable < 1)
 	return;
-	
+
+	if (_kid_transformation)
+		return;
+
 	int level = _basic.level;
 	int reincarnation = GetReincarnationTimes();
 	float speed = 10.4f;
 	object_interface obj_if(this);
-	
+
 	if(level <= ActivityEventConfig::GetInstance()->GetExpBonusMaxLevel()
 		&& reincarnation <= ActivityEventConfig::GetInstance()->GetExpBonusMaxReincarnation())
 	{
@@ -28206,9 +28461,9 @@ gplayer_imp::SpeedSkillManager()
 		_cur_prop.swim_speed = speed;
 		_cur_prop.flight_speed = speed;
 		obj_if.InsertTeamVisibleState(GNET::HSTATE_NEWBUFFSPEED, 99999);
-	
+
 		PlayerGetProperty();
-	} else 
+	} else
 	{
 		property_policy::UpdatePlayer(GetPlayerClass(),this);
 		PlayerGetProperty();
@@ -28562,6 +28817,8 @@ gplayer_imp::ProtocolCelestialMemorial()
 	int pos_level_2[CelestialMemorialConfig::MAX_LEVEL_RED_BOX];
 	int pos_level_1[CelestialMemorialConfig::MAX_LEVEL_RED_BOX_1];
 
+	_celestial.ClearPos500MemorialRewardPos_1();
+
 	bool type = _celestial.GetCelestialMemorialStruct()._type;
 
 	new_info.level = _celestial.GetCelestialMemorialStruct()._memorial_level;
@@ -28572,7 +28829,7 @@ gplayer_imp::ProtocolCelestialMemorial()
 	new_info.level_max = CelestialMemorialConfig::MAX_LEVEL_RED_BOX;
 	new_info.ticket_1 = _celestial.GetCelestialMemorialTicket(0);
 	new_info.ticket_2 = _celestial.GetCelestialMemorialTicket(1);
-	new_info.level_max_2 =  CelestialMemorialConfig::MAX_LEVEL_RED_BOX_1;
+	new_info.level_max_2 =  (CelestialMemorialConfig::MAX_LEVEL_RED_BOX_1 + (_celestial.GetCelestialNewMaxLevel() > 0 ? _celestial.GetCelestialNewMaxLevel() : 0));
 	new_info.count_level_2 = _celestial.GetCelestialMemorialRewardCount(1);
 	new_info.count_level_1 = _celestial.GetCelestialMemorialRewardCount(0);
 
@@ -28601,7 +28858,7 @@ gplayer_imp::TaskExpCelestialMemorial(int swallow_exp)
 	int new_level = 0;
 
 	int levelup_exp = CelestialMemorialConfig::EXP_REQUIRED_PER_LEVEL;
-	int max_level = CelestialMemorialConfig::MAX_LEVEL_RED_BOX;
+	int max_level = CelestialMemorialConfig::MAX_LEVEL_RED_BOX_FINISH;
 	int exp_celestial = _celestial.GetCelestialMemorialStruct()._memorial_exp;
 	int level_celestial = _celestial.GetCelestialMemorialStruct()._memorial_level;
 
@@ -28622,8 +28879,9 @@ gplayer_imp::TaskExpCelestialMemorial(int swallow_exp)
 
 		new_level += level_celestial;
 
-		if(new_level > max_level)
-		new_level = max_level;
+		// Removido limite de 500
+		//if(new_level > max_level)
+		//new_level = max_level;
 		
 		_celestial.SetLevelandExpMemorial(new_level, new_exp);
 	}
@@ -28659,7 +28917,7 @@ gplayer_imp::ConsumCelestialMemorial(int idx_inv)
 	int max_count_required = 0;
 
 	int levelup_exp = CelestialMemorialConfig::EXP_REQUIRED_PER_LEVEL;
-	int max_level = CelestialMemorialConfig::MAX_LEVEL_RED_BOX;
+	int max_level = CelestialMemorialConfig::MAX_LEVEL_RED_BOX_FINISH;
 	int exp_celestial = _celestial.GetCelestialMemorialStruct()._memorial_exp;
 	int level_celestial = _celestial.GetCelestialMemorialStruct()._memorial_level;
 	
@@ -28678,22 +28936,13 @@ gplayer_imp::ConsumCelestialMemorial(int idx_inv)
 		}		
 	}
 
-
-	if(level_celestial == max_level)
-	{
-		if(open_red_book != 1)
-		return;
-	}
-
-	
-	// Funções matemátícas	
 	if(swallow_exp > 0)
 	{
 		count_it += it.count;
 
 		int var1;
 		int var2;
-		var1 = (max_level - level_celestial) * levelup_exp;
+		var1 = level_celestial * levelup_exp;
     	var2 = (var1 - exp_celestial) / swallow_exp;
 
 		if(count_it > var2)
@@ -28758,8 +29007,9 @@ gplayer_imp::ConsumCelestialMemorial(int idx_inv)
 
 				new_level += level_celestial;
 
-				if(new_level > max_level)
-				new_level = max_level;
+				// Removido Limite 500
+				//if(new_level > max_level)
+				//new_level = max_level;
 		
 				_celestial.SetLevelandExpMemorial(new_level, new_exp);
 			}
@@ -28848,7 +29098,7 @@ gplayer_imp::ProtocolCelestialMemorialLotteryReward(unsigned int idx_pos_type)
 
 	for(unsigned int n = 0; n < 5; n++)
 	{
-		lotterys.storage_rest_cnt[n] = (int)_celestial.GetCelestialMemorialPerg(idx_pos_type);
+		lotterys.storage_rest_cnt[n] = (int)_celestial.GetCelestialUsePergProb(idx_pos_type);
 	}
 
 	for(unsigned int j = 0; j < CelestialMemorialConfig::MAX_STORAGE_LOTTERY; j++)
@@ -28888,8 +29138,18 @@ gplayer_imp::GetCelestialMemorialReward(unsigned int pos, unsigned int type)
 	// Salva no banco de dados
 	if(res)
 	{
-		if(!_celestial.SetCelestialMemorialRewardPos(type, item_id, pos))
-		return;
+		if(pos >= 500 && type == 1)
+		{
+			item_id = CelestialMemorialConfig::PERG_RANDOM_LOTTERY_ID;
+			item_count = 1 * ((_celestial.GetCelestialMemorialStruct()._memorial_level - (CelestialMemorialConfig::MAX_LEVEL_RED_BOX_1 + _celestial.GetCelestialNewMaxLevel())) / 2);
+
+			 _celestial.SetCelestialNewMaxLevel(_celestial.GetCelestialNewMaxLevel()+(item_count * 2));			 
+
+		} else 
+		{
+			if(!_celestial.SetCelestialMemorialRewardPos(type, item_id, pos)) 
+				return;
+		}		
 	}
 	else
 	{
@@ -28923,6 +29183,8 @@ gplayer_imp::GetCelestialMemorialReward(unsigned int pos, unsigned int type)
 		{
 			int rand = abase::Rand(0, 2);
 			_celestial.SetCelestialMemorialPerg(rand, item_count);
+
+			_runner->celestial_memorial_lottery_count( rand == 0 ? item_count : 0, rand == 1 ? item_count : 0, rand == 2 ? item_count : 0 );
 		}	break;
 		
 		default:
@@ -28944,6 +29206,7 @@ gplayer_imp::InitCelestialLottery(unsigned int idx_pos_type)
 	return;
 
 	_celestial.SetCelestialMemorialPerg2(idx_pos_type, 1);
+	_celestial.SetCelestialUsePergProb(idx_pos_type, _celestial.GetCelestialUsePergProb(idx_pos_type)+1);
 
 	CelestialMemorialConfig * conf = CelestialMemorialConfig::GetInstance();
 	float prob_low = 0.0f;
@@ -28971,7 +29234,7 @@ gplayer_imp::InitCelestialLottery(unsigned int idx_pos_type)
 			award_times_max = conf->GetLotteryConfig(idx_pos_type)->award_pool_middle[i].award_times_max;
 
 			prob_mid += conf->GetLotteryConfig(idx_pos_type)->award_pool_middle[i].award_prob_init;			
-			prob_add += (conf->GetLotteryConfig(idx_pos_type)->award_pool_middle[i].award_prob_add * _celestial.GetCelestialMemorialPerg(idx_pos_type));
+			prob_add += (conf->GetLotteryConfig(idx_pos_type)->award_pool_middle[i].award_prob_add * _celestial.GetCelestialUsePergProb(idx_pos_type));
 
 			if((prob_mid + prob_add) >= prob_rand && _celestial.GetCountLottery(idx_pos_type) < award_times_max)
 			{
@@ -29214,9 +29477,11 @@ bool gplayer_imp::DBLoadNewData( const GDB::vecdata_new & base )
 		GDB::DBSGet (base.lib_items        , &_lib_items        , sizeof( _lib_items        ));
 		GDB::DBSGet (base.celestial        , &_celestial        , sizeof( _celestial        ));
 		GDB::DBSGet (base.codex       	   , &_codex        	, sizeof( _codex        ));
+		GDB::DBSGet (base.kid       	   , &_kid        		, sizeof( _kid      		));
+		GDB::DBSGet (base.kid_addon        , &_kid_addon        , sizeof( _kid_addon        ));
 
 	}
-	
+
 	return true;
 }
 
@@ -29262,6 +29527,8 @@ bool gplayer_imp::DBSaveNewData( GDB::vecdata_new & base )
 		GDB::DBSSet (base.lib_items        , &_lib_items        , sizeof( _lib_items        ));
 		GDB::DBSSet (base.celestial        , &_celestial        , sizeof( _celestial        ));
 		GDB::DBSSet (base.codex        , &_codex        	, sizeof( _codex        ));
+		GDB::DBSSet (base.kid        	   , &_kid        		, sizeof( _kid        		));
+		GDB::DBSSet (base.kid_addon        , &_kid_addon        , sizeof( _kid_addon        ));
 
 	}
 	return true;
@@ -29831,6 +30098,11 @@ gplayer_imp::SetPurificationChangeSpiritExec(unsigned int idx_inv, addon_data * 
 {
 	if(idx_inv >= _inventory.Size()) return false;
 	item & it = _inventory[idx_inv];
+
+	if ( it.type <= 0 )
+	{
+		return false;
+	}
 	
 	// Addons
 	for (int i = 0; i < it.body->GetAddonsSpiritCount(); i++)
@@ -29847,8 +30119,6 @@ bool
 gplayer_imp::SetIncSpiritArmor(unsigned int idx_pos_spirit, unsigned int idx_pos_armor, bool apply)
 {	
 	// Espírito
-	item& it = _inventory[idx_pos_spirit];
-	item& it_armor = _inventory[idx_pos_armor];
 	
 	if ( idx_pos_spirit >= _inventory.Size() )
 	{
@@ -29856,6 +30126,14 @@ gplayer_imp::SetIncSpiritArmor(unsigned int idx_pos_spirit, unsigned int idx_pos
 	}
 
 	if ( idx_pos_armor >= _inventory.Size() )
+	{
+		return false;
+	}
+
+	item& it = _inventory[idx_pos_spirit];
+	item& it_armor = _inventory[idx_pos_armor];
+
+	if ( it.type <= 0 || it_armor.type <= 0 )
 	{
 		return false;
 	}
@@ -29920,9 +30198,14 @@ gplayer_imp::SetIncSpiritArmor(unsigned int idx_pos_spirit, unsigned int idx_pos
 bool
 gplayer_imp::SetDecSpiritArmor(unsigned int idx_pos_armor, bool remove)
 {	
-	item& it_armor = _inventory[idx_pos_armor];
-			
 	if ( idx_pos_armor >= _inventory.Size() )
+	{
+		return false;
+	}
+
+	item& it_armor = _inventory[idx_pos_armor];
+
+	if ( it_armor.type <= 0 )
 	{
 		return false;
 	}
@@ -30014,10 +30297,6 @@ gplayer_imp::SetDecSpiritArmor(unsigned int idx_pos_armor, bool remove)
 bool
 gplayer_imp::SetIncCrystalArmor(unsigned int idx_pos_crystal, unsigned int idx_pos_armor, bool apply)
 {	
-	// Cristal
-	item& it = _inventory[idx_pos_crystal];
-	item& it_armor = _inventory[idx_pos_armor];
-	
 	if ( idx_pos_crystal >= _inventory.Size() )
 	{
 		return false;
@@ -30028,6 +30307,15 @@ gplayer_imp::SetIncCrystalArmor(unsigned int idx_pos_crystal, unsigned int idx_p
 		return false;
 	}
 
+	// Cristal
+	item& it = _inventory[idx_pos_crystal];
+	item& it_armor = _inventory[idx_pos_armor];
+
+	if ( it.type <= 0 || it_armor.type <= 0 )
+	{
+		return false;
+	}
+		
 	if(it_armor.body->GetLuarSpiritid() == 0)
 	{
 		_runner->error_message(506); //Você deve fundir a Alma do Crepúsculo correta antes de fundir um Cristal do Luar.
@@ -30075,9 +30363,14 @@ gplayer_imp::SetIncCrystalArmor(unsigned int idx_pos_crystal, unsigned int idx_p
 bool
 gplayer_imp::SetDecCrystalArmor(unsigned int idx_pos_armor, bool remove)
 {	
-	item& it_armor = _inventory[idx_pos_armor];
-			
 	if ( idx_pos_armor >= _inventory.Size() )
+	{
+		return false;
+	}
+
+	item& it_armor = _inventory[idx_pos_armor];
+
+	if ( it_armor.type <= 0 )
 	{
 		return false;
 	}
@@ -30174,6 +30467,13 @@ gplayer_imp::SetLockCrystal(unsigned int idx_inv, int lock)
 		return false;
 	}
 
+	item& it = _inventory[idx_inv];
+
+	if ( it.type <= 0 )
+	{
+		return false;
+	}
+
 	enum 
 	{
 		silver_cost_lvl_lock = 1000000,
@@ -30195,8 +30495,7 @@ gplayer_imp::SetLockCrystal(unsigned int idx_inv, int lock)
 	SpendAllMoney(lock == 1 ? silver_cost_lvl_lock : silver_cost_lvl_unlock,true);
 	SelfPlayerMoney();
 
-	// Bloquea/Desbloqueia
-	item& it = _inventory[idx_inv];
+	// Bloquea/Desbloqueia	
 	it.body->SetCrystalLock((char)lock);
 	PlayerGetItemInfo(IL_INVENTORY,idx_inv);
 
@@ -30214,8 +30513,12 @@ gplayer_imp::SetDevourCrystal(unsigned int count_cystals, int * pos_crystal_cons
 
 	item& it = _inventory[pos_crystal_consum[0]];
 
+	if ( it.type <= 0 )
+	{
+		return false;
+	}
 
-	if(it.body->GetCrystalLock() == (char)1)
+	if(it.body->GetCrystalLock())
 	{
 		_runner->error_message(497); //A Alma do Crepúsculo ou o Cristal do Luar foram trancados.
 		return false;
@@ -30263,7 +30566,12 @@ gplayer_imp::SetDevourCrystal(unsigned int count_cystals, int * pos_crystal_cons
 		}
 		item& itrem = _inventory[pos_crystal_consum[i]];
 
-		if(itrem.body->GetCrystalLock() == (char)1)
+		if ( itrem.type <= 0 )
+		{
+			return false;
+		}
+
+		if(itrem.body->GetCrystalLock())
 		{
 			_runner->error_message(497); //A Alma do Crepúsculo ou o Cristal do Luar foram trancados.
 			return false;
@@ -30345,88 +30653,57 @@ gplayer_imp::SetDevourCrystal(unsigned int count_cystals, int * pos_crystal_cons
 	return true;
 }
 
-void gplayer_imp::RefreshInventoryNewArmorEnter(bool trade)
+void 
+gplayer_imp::RefreshInventoryNewArmorEnter(bool trade, bool equip)
 {
-	// Atualiza no inventário
-    unsigned int inventorySize = _inventory.Size();
-    for (unsigned int i = 0; i < inventorySize; i++)
+    UpdateInventoryType(_equipment, IL_EQUIPMENT, true);
+
+    if (equip) return;
+
+    UpdateInventoryType(_inventory, IL_INVENTORY, false);
+
+    if (trade) return;
+
+    UpdateInventoryType(GetTrashInventory(IL_TRASH_BOX), IL_TRASH_BOX, false);
+
+    UpdateInventoryType(GetTrashInventory(IL_USER_TRASH_BOX), IL_USER_TRASH_BOX, false);
+}
+
+void 
+gplayer_imp::UpdateInventoryType(item_list& itemList, int inventoryType, bool refreshEquipment)
+{
+    unsigned int size = itemList.Size();
+    for (unsigned int i = 0; i < size; i++)
     {
-        item &it_eq = _inventory[i];
+        item& it_eq = itemList[i];
         if (it_eq.type != -1 && it_eq.body)
         {
-            if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR)
+            if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR || 
+                it_eq.body->GetItemType() == item_body::ITEM_TYPE_QIHUN ||  
+                it_eq.body->GetItemType() == item_body::ITEM_TYPE_QILING)
             {
-				std::string ITEM1, ITEM2;
-				it_eq.DumpDetail(ITEM1);
+                std::string ITEM1, ITEM2;
+                it_eq.DumpDetail(ITEM1);
 
-				X_EQUIP id0;
-				id0.type = it_eq.type;
-				id0.mask = it_eq.GetIdModify();
+                X_EQUIP id0;
+                id0.type = it_eq.type;
+                id0.mask = it_eq.GetIdModify();
 
-				it_eq.Activate(item::BODY, _equipment, i, this);
-				it_eq.DumpDetail(ITEM2);
-				it_eq.Deactivate(item::BODY, i, this);
-			
-				PlayerGetItemInfo(IL_INVENTORY, i);
-				RefreshEquipment();
-			}			
-        }
+                it_eq.Activate(item::BODY, _equipment, i, this);
+                it_eq.DumpDetail(ITEM2);
+                it_eq.Deactivate(item::BODY, i, this);
+
+                //it_eq.ForceOnRefreshItem();
+
+                PlayerGetItemInfo(inventoryType, i);
+            }
+		}
     }
 
-	if(trade) return;
-	// Atualiza no Banqueiro
-	item_list & box = GetTrashInventory(IL_TRASH_BOX);
-    unsigned int boxSize = box.Size();
-	for (unsigned int i = 0; i < boxSize; i++)
-	{
-		item &it_eq = box[i];
-		if (it_eq.type != -1 && it_eq.body)
-		{
-			if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR)
-			{
-				std::string ITEM1, ITEM2;
-				it_eq.DumpDetail(ITEM1);
-
-				X_EQUIP id0;
-				id0.type = it_eq.type;
-				id0.mask = it_eq.GetIdModify();
-
-				it_eq.Activate(item::BODY, _equipment, i, this);
-				it_eq.DumpDetail(ITEM2);
-				it_eq.Deactivate(item::BODY, i, this);
-
-				PlayerGetItemInfo(IL_TRASH_BOX, i);
-				RefreshEquipment();
-			}
-		}
-	}
-
-	// Atualiza no Armazem
-	item_list & box2 = GetTrashInventory(IL_USER_TRASH_BOX);
-    unsigned int boxSize2 = box2.Size();
-	for (unsigned int i = 0; i < boxSize2; i++)
-	{
-		item &it_eq = box2[i];
-		if (it_eq.type != -1 && it_eq.body)
-		{
-			if (it_eq.body->GetItemType() == item_body::ITEM_TYPE_NEW_ARMOR)
-			{
-				std::string ITEM1, ITEM2;
-				it_eq.DumpDetail(ITEM1);
-
-				X_EQUIP id0;
-				id0.type = it_eq.type;
-				id0.mask = it_eq.GetIdModify();
-
-				it_eq.Activate(item::BODY, _equipment, i, this);
-				it_eq.DumpDetail(ITEM2);
-				it_eq.Deactivate(item::BODY, i, this);
-
-				PlayerGetItemInfo(IL_USER_TRASH_BOX, i);
-				RefreshEquipment();
-			}
-		}
-	}
+    if (refreshEquipment)
+    {
+        RefreshEquipment();
+    }
 }
 
 void
@@ -31072,12 +31349,13 @@ void gplayer_imp::SetImperialSpirtActivate()
     {
         expire_date = now + (IMPERIAL_MAX_DAYS_ACUMULATE * IMPERIAL_SECOND_TIME);
     }
-
-	if (!InvPlayerSpendItem(0, IMPERIAL_SPIRIT_ITEM_ID, 1))
-    {
-        _runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
-        return;
-    }
+	
+	if(!CheckItemExist(IMPERIAL_SPIRIT_ITEM_ID,1)) 
+	{
+		_runner->error_message(S2C::ERR_ITEM_NOT_IN_INVENTORY);
+		return;
+	}	
+	RemoveItems(IMPERIAL_SPIRIT_ITEM_ID,1, S2C::DROP_TYPE_USE, true);	
 
     _glua.SetImperialEnabled(1);
     _glua.SetImperialExpireTime(expire_date);
@@ -32380,7 +32658,10 @@ gplayer_imp::CodexChangePetName(unsigned int pet_id,const char name[] , unsigned
 bool 
 gplayer_imp::CheckProctypeCodexCondition(unsigned int index)
 {
+	if(index >= _inventory.Size()) return true;
 	const item & it = _inventory[index];
+	if(it.type <= 0) return true;
+	
 	if(it.proc_type == item::ITEM_PROC_NO_CODEX_USE_MASK ||
 	it.proc_type == item::ITEM_PROC_NO_CODEX_USE_MASK2)
 	{
@@ -32394,3 +32675,1234 @@ gplayer_imp::GetEquipSlotCount()
 {
 	return _equipment[item::EQUIP_INDEX_DYNSKILL0].count;
 }
+
+
+/*170+ Bebe Celestial*/
+void
+gplayer_imp::KidAwakeningNameProtocol()
+{
+	// 173 gửi opcode 570 với [gender][name_len][name] — đây là gói trigger hoạt
+	// ảnh sinh kid + auto-mở bảng. Gender lấy từ _kid.GetType() (0=male, 1=female,
+	// đã normalize trong KidAwakeningCreate).
+	_runner->kid_name_awakening(_kid.GetType(), _kid.GetNameLength(), _kid.GetName());
+}
+
+void 
+gplayer_imp::KidAwakeningInfoProtocol()
+{
+	if(_kid.GetNameLength() <= 0) return;
+
+	packet_wrapper h1(512);
+
+#pragma pack(push, 1)
+	struct AWAKENING_INFO
+	{
+		struct COURSE_INFO
+		{
+			int course_id;
+			char course_level;
+		};
+
+		int course_info[gplayer_kid::MAX_RANDOM_COURSE];
+		char course_level;
+		char course_random_cost;
+		int exp_course_required;
+		COURSE_INFO course_equip[gplayer_kid::MAX_EQUIPED_COURSE];
+		COURSE_INFO course_storage[gplayer_kid::MAX_STORAGE_COURSE];
+		char name[gplayer_kid::MAX_NAME_LENGTH];
+		char type;
+		int points_awakening;
+		int days_awakening;
+		char enabled_day;
+		int cash_awakening;
+		char block_day;
+		char reserve5;
+	};
+#pragma pack(pop)
+
+	AWAKENING_INFO getinfo;
+	memset(&getinfo, 0, sizeof(getinfo));
+
+	for (unsigned int i = 0; i < gplayer_kid::MAX_RANDOM_COURSE; i++)
+	{
+		getinfo.course_info[i] = _kid.GetRandomCourse(i);
+	}
+
+	getinfo.course_level = _kid.GetCardLevel();
+	getinfo.course_random_cost = _kid.GetCourseRandomCost();
+		
+	int exp_min_level[] = { 0, 0, 2, 6, 14, 26, 46, 66, 86, 106 };
+	getinfo.exp_course_required = _kid.GetExpCourseRequired () + exp_min_level[_kid.GetCardLevel()];
+
+	for (unsigned int i = 0; i < gplayer_kid::MAX_EQUIPED_COURSE; i++)
+	{
+		getinfo.course_equip[i].course_id = _kid.GetEquipedCourse(i)->course_id;
+		getinfo.course_equip[i].course_level = _kid.GetEquipedCourse(i)->course_level;
+	}
+
+	for (unsigned int i = 0; i < gplayer_kid::MAX_STORAGE_COURSE; i++)
+	{
+		getinfo.course_storage[i].course_id = _kid.GetStorageCourse(i)->course_id;
+		getinfo.course_storage[i].course_level = _kid.GetStorageCourse(i)->course_level;
+	}
+
+	memcpy(getinfo.name, _kid.GetName(), gplayer_kid::MAX_NAME_LENGTH);
+	
+	if(!_kid.GetType()) 
+		getinfo.type = 4; 
+	else 
+		getinfo.type = 1; 
+
+	getinfo.points_awakening = _kid.GetPointsAwakening();
+	getinfo.days_awakening = _kid.GetAwakeningDayCount();
+
+	getinfo.enabled_day = _kid.IsAwakening();
+	getinfo.cash_awakening = _kid.GetAwakeningCash();
+	getinfo.block_day = _kid.IsBlockDay();
+
+	getinfo.reserve5 = true;
+
+	h1.push_back(&getinfo, sizeof(getinfo));
+	_runner->kid_awakening_info(h1.size(), h1.data());
+}
+
+void 
+gplayer_imp::KidCelestialInfoProtocol(int type)
+{
+	packet_wrapper h1(512);
+	struct KID_INFO
+	{
+		int level;
+		int rank;
+		int exp;
+		int idx;
+		int atk;
+		int atk_mag;
+		int def;
+		int def_mag[5];
+		int hp;
+		int crit;
+	};
+	
+	int count = gplayer_kid::MAX_CELESTIAL;
+
+	KID_INFO _kid_info[gplayer_kid::MAX_CELESTIAL];	
+	for (unsigned int i = 0; i < gplayer_kid::MAX_CELESTIAL; i++)
+	{
+		_kid_info[i].level = _kid.GetCelestial(i)->level;
+		_kid_info[i].rank = _kid.GetCelestial(i)->rank;
+		_kid_info[i].exp = _kid.GetCelestial(i)->exp;
+		_kid_info[i].idx = _kid.GetCelestial(i)->idx;
+
+		int level = _kid_info[i].level;
+		int rank = _kid_info[i].rank;
+
+		DATA_TYPE data;
+		const KID_PROPERTY_CONFIG *config = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(_kid_info[i].idx, ID_SPACE_CONFIG, data);
+		if (config || data == DT_KID_PROPERTY_CONFIG)
+		{
+			float mutiple_val = 0.0f; 
+
+			DATA_TYPE data2;
+			const KID_UPGRADE_STAR_CONFIG *config2 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_STAR_CONFIG, ID_SPACE_CONFIG, data2);
+			if (config2 || data2 == DT_KID_UPGRADE_STAR_CONFIG)
+			{
+				if(rank > 0)
+				{
+					mutiple_val += config2->upgrade_star_info[rank-1].star_param;
+				} else 
+				{
+					mutiple_val +=  config2->zero_star_param;
+				}	
+			}
+
+			_kid_info[i].atk = ((config->damage * level) * mutiple_val);
+			_kid_info[i].atk_mag = ((config->magic_damage * level) * mutiple_val);
+			_kid_info[i].def = ((config->defence * level) * mutiple_val);
+	
+			for (unsigned int y = 0; y < 5; y++)
+			{
+				_kid_info[i].def_mag[y] = ((config->magic_defence * level) * mutiple_val);
+			}
+
+			_kid_info[i].hp = ((config->hp * level) * mutiple_val);
+			_kid_info[i].crit = (static_cast<int>((config->crit_hit_probability * 100) * level) * mutiple_val);					
+		}	
+	}
+
+	h1 << type << count;
+	h1.push_back(&_kid_info, sizeof(_kid_info));
+	
+	_runner->kid_celestial_info(h1.size(), h1.data());
+}
+
+
+void 
+gplayer_imp::KidAwakeningCashProtocol()
+{
+	_runner->kid_awakening_cash_info(_kid.GetAwakeningCash(), _kid.GetAwakeningPotential());
+}
+
+void 
+gplayer_imp::KidAwakeningPercProtocol()
+{
+	_runner->kid_course_perc(_kid.GetCardLevel (), 0);
+}
+
+static const int card_level_1[] = { 66225, 66227, 66228, 66229,	66230, 66231 };
+static const int card_level_2[] = { 66232, 66233, 66234, 66235, 66236, 66237, 66238, 66239 };
+static const int card_level_3[] = { 66240, 66241, 66242, 66243, 66244, 66245, 66246 };
+static const int card_level_4[] = { 66247, 66248, 66249, 66250, 66251, 66252, 66253 };
+static const int card_level_5[] = { 66254 };
+
+int 
+gplayer_imp::GetCardLevel(std::mt19937& rng, std::uniform_real_distribution<double>& dist, int level) 
+{
+    double random_value = dist(rng) * 100.0;
+
+    if (level == 1) {
+        return (random_value <= 70) ? card_level_1[rand() % 6] : card_level_2[rand() % 8];
+    } else if (level == 2) {
+        return (random_value <= 60) ? card_level_1[rand() % 6] : ((random_value <= 95) ? card_level_2[rand() % 8] : card_level_3[rand() % 7]);
+    } else if (level == 3) {
+        return (random_value <= 50) ? card_level_1[rand() % 6] : ((random_value <= 90) ? card_level_2[rand() % 8] : card_level_3[rand() % 7]);
+    } else if (level == 4) {
+        return (random_value <= 40) ? card_level_1[rand() % 6] : ((random_value <= 80) ? card_level_2[rand() % 8] : card_level_3[rand() % 7]);
+    } else if (level == 5) {
+        return (random_value <= 30) ? card_level_1[rand() % 6] : ((random_value <= 65) ? card_level_2[rand() % 8] : ((random_value <= 95) ? card_level_3[rand() % 7] : card_level_4[rand() % 7]));
+    } else if (level == 6) {
+        return (random_value <= 30) ? card_level_1[rand() % 6] : ((random_value <= 60) ? card_level_2[rand() % 8] : ((random_value <= 90) ? card_level_3[rand() % 7] : card_level_4[rand() % 7]));
+    } else if (level == 7) {
+        return (random_value <= 24) ? card_level_1[rand() % 6] : ((random_value <= 54) ? card_level_2[rand() % 8] : ((random_value <= 84) ? card_level_3[rand() % 7] : ((random_value <= 99) ? card_level_4[rand() % 7] : card_level_5[0])));
+    } else if (level == 8) {
+        return (random_value <= 17) ? card_level_1[rand() % 6] : ((random_value <= 47) ? card_level_2[rand() % 8] : ((random_value <= 77) ? card_level_3[rand() % 7] : ((random_value <= 97) ? card_level_4[rand() % 7] : card_level_5[0])));
+    } else if (level == 9) {
+        return (random_value <= 15) ? card_level_1[rand() % 6] : ((random_value <= 40) ? card_level_2[rand() % 8] : ((random_value <= 70) ? card_level_3[rand() % 7] : ((random_value <= 95) ? card_level_4[rand() % 7] : card_level_5[0])));
+    } else if (level == 10) {
+        return (random_value <= 10) ? card_level_1[rand() % 6] : ((random_value <= 35) ? card_level_2[rand() % 8] : ((random_value <= 60) ? card_level_3[rand() % 7] : ((random_value <= 90) ? card_level_4[rand() % 7] : card_level_5[0])));
+    } else {
+        return -1;
+    }
+}
+
+void
+gplayer_imp::GenerateCards(int level) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+    for (int i = 0; i < gplayer_kid::MAX_RANDOM_COURSE; ++i) 
+	{
+        int card = GetCardLevel(rng, dist, level);        
+		_kid.SetRandomCourse(i, card);
+    }
+}
+
+bool 
+gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
+{
+	if(name_len > gplayer_kid::MAX_NAME_LENGTH) 
+	{
+		_runner->error_message(633);
+		return false;
+	}
+
+	if(_kid.GetNameLength() > 0 || _kid.GetAwakeningDayCount() > 0)
+	{
+		_runner->error_message(627);
+		return false;
+	}
+
+	// Theo 173: gender chuẩn hoá về 0/1 (gender_list[2] chỉ có male=0, female=1).
+	// Bất kỳ giá trị != 0 đều coi là female. Tránh OOB tại NewDay3.
+	type = (type != 0) ? 1 : 0;
+
+	// Init
+	_kid.SetNameLength(name_len);
+	_kid.SetName(name);
+	_kid.SetCardLevel(1);
+	_kid.SetCourseRandomCost(false);
+
+	GenerateCards(_kid.GetCardLevel());
+
+	_kid.SetType(type);
+
+	bool instant_awaken = EmulateSettings::GetInstance()->GetKidForceNewDay();
+	if (instant_awaken)
+	{
+		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
+		_kid.SetAwakeningDayCount(target + 1);
+		_kid.SetAwakening(false);
+		_kid.SetBlockDay(true);
+		_kid.SetCheckDay(false);
+		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
+
+		time_t nnow; time(&nnow);
+		struct tm *tm_now = localtime(&nnow);
+		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+	}
+
+	KidAwakeningNameProtocol ();
+	KidAwakeningInfoProtocol (); 
+
+	if (instant_awaken)
+	{
+		KidAwakeningPercProtocol();
+		KidAwakeningCashProtocol();
+	}
+
+	_runner->kid_created_info_dialog();
+
+	return true;
+}
+
+void 
+gplayer_imp::KidUnlockNewDay()
+{
+	if (_kid.GetCheckDay())
+	{
+		_kid.SetCheckDay(false);
+		_kid.SetBlockDay(true);
+		_kid.SetAwakening(false);
+
+		KidAwakeningInfoProtocol();
+	}
+}
+
+bool
+gplayer_imp::KidAwakeningNewDay()
+{
+	if (!_kid.GetCheckDay())
+	{
+		int target = EmulateSettings::GetInstance()->GetChildAwakeningDays();
+		if (_kid.GetAwakeningDayCount() >= target + 1)
+			return true;
+
+		_kid.SetBlockDay(false);
+		_kid.SetAwakening(true);
+		_kid.SetAwakeningDayCount(_kid.GetAwakeningDayCount() + 1);
+		_kid.SetAwakeningCash(EmulateSettings::GetInstance()->GetKidAwakeningCash());
+		_kid.SetCourseRandomCost(false);
+		_kid.SetCheckDay(true);
+
+		KidAwakeningInfoProtocol();
+		KidAwakeningPercProtocol();
+		KidAwakeningCashProtocol();
+	}
+
+	return true;
+}
+
+static const int suite_idx_course[] = { 66226, 66255, 66256, 66257,	66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265 };
+static const int suite_idx_mask[] = { 1, 2, 4, 8, 16, 32, 64, 128, 65536, 131072, 262144, 524288 };
+
+int gplayer_imp::KidGetSuitePoints()
+{
+	int points_now = _kid.GetPointsAwakening();
+	int points_recv = 0;
+
+	std::unordered_map<unsigned int, int> suite_trigger_count;
+
+	for (unsigned int i = 0; i < gplayer_kid::MAX_EQUIPED_COURSE; i++)
+	{
+		DATA_TYPE dt;
+		COURSE_ESSENCE *ess;
+		ess = (COURSE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(_kid.GetEquipedCourse(i)->course_id, ID_SPACE_ESSENCE, dt);
+		if (ess && dt == DT_COURSE_ESSENCE)
+		{
+			points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
+
+			for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265})
+			{
+				DATA_TYPE dt2;
+				COURSE_SUITE_ESSENCE *suite_ess;
+				suite_ess = (COURSE_SUITE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt2);
+				if (suite_ess && dt2 == DT_COURSE_SUITE_ESSENCE)
+				{
+					if ((ess->course_mask & suite_ess->suite_mask) == suite_ess->suite_mask)
+					{
+						suite_trigger_count[suite_id]++;
+					}
+				}
+			}
+		}
+	}
+
+	float mutiple_add = 0.0f;
+
+	for (const auto &pair : suite_trigger_count)
+	{
+		unsigned int suite_id = pair.first;
+		int count = pair.second;
+
+		COURSE_SUITE_ESSENCE *suite_ess;
+		DATA_TYPE dt3;
+		suite_ess = (COURSE_SUITE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt3);
+		if (suite_ess && dt3 == DT_COURSE_SUITE_ESSENCE)
+		{
+			float max_bonus_multiplier = 0.0f;
+			for (int level = 0; level < 3; level++)
+			{
+				if (count >= suite_ess->bonus_info[level].bonus_require_count)
+				{
+					float bonus_multiplier = 0.0f;
+					if (suite_ess->bonus_info[level].bonus_percent_add > 0)
+					{
+						float bonus_multiplier = (suite_ess->bonus_info[level].bonus_percent_add / suite_ess->bonus_info[level].bonus_trigger_probability);
+					}
+
+					if (bonus_multiplier > max_bonus_multiplier)
+					{
+						max_bonus_multiplier = bonus_multiplier;
+					}
+				}
+			}
+
+			if (max_bonus_multiplier > 0.0f)
+			{
+				mutiple_add += max_bonus_multiplier;
+				max_bonus_multiplier = 0.0f;
+			}
+		}
+	}
+
+	points_recv += (points_recv * mutiple_add);
+
+	// Bônus pela redução para 7 dias
+	if (points_recv > 0)
+		points_recv *= (3.5f + (0.2f * _kid.GetAwakeningDayCount()));
+
+	points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
+
+	return points_recv;
+}
+
+bool gplayer_imp::KidAwakeningNewDay2()
+{
+    if (_kid.GetCheckDay() && !_kid.IsBlockDay())
+	{
+        int points_now = _kid.GetPointsAwakening();
+        int points_recv = 0;
+
+        std::unordered_map<unsigned int, int> suite_trigger_count;
+
+        for (unsigned int i = 0; i < gplayer_kid::MAX_EQUIPED_COURSE; i++) 
+		{
+            DATA_TYPE dt;
+            COURSE_ESSENCE* ess;
+            ess = (COURSE_ESSENCE*)world_manager::GetDataMan().get_data_ptr(_kid.GetEquipedCourse(i)->course_id, ID_SPACE_ESSENCE, dt);
+            if (ess && dt == DT_COURSE_ESSENCE) 
+			{
+                points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
+
+                for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265}) 
+				{
+					DATA_TYPE dt2;
+                    COURSE_SUITE_ESSENCE* suite_ess;
+                    suite_ess = (COURSE_SUITE_ESSENCE*)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt2);
+                    if (suite_ess && dt2 == DT_COURSE_SUITE_ESSENCE)
+					{
+                        if ((ess->course_mask & suite_ess->suite_mask) == suite_ess->suite_mask) 
+						{						
+                            suite_trigger_count[suite_id]++;
+                        }
+                    }
+                }
+            }
+        }
+
+		float mutiple_add = 0.0f;
+
+        for (const auto& pair : suite_trigger_count) 
+		{
+            unsigned int suite_id = pair.first;
+            int count = pair.second;
+
+            COURSE_SUITE_ESSENCE* suite_ess;
+            DATA_TYPE dt3;
+            suite_ess = (COURSE_SUITE_ESSENCE*)world_manager::GetDataMan().get_data_ptr(suite_id, ID_SPACE_ESSENCE, dt3);
+            if (suite_ess && dt3 == DT_COURSE_SUITE_ESSENCE) 
+			{
+                float max_bonus_multiplier = 0.0f;
+                for (int level = 0; level < 3; level++)
+				{
+                    if (count >= suite_ess->bonus_info[level].bonus_require_count) 
+					{
+						float bonus_multiplier = 0.0f;
+                        if(suite_ess->bonus_info[level].bonus_percent_add > 0)
+						{
+							float bonus_multiplier = (suite_ess->bonus_info[level].bonus_percent_add / suite_ess->bonus_info[level].bonus_trigger_probability);
+						}
+
+                        if (bonus_multiplier > max_bonus_multiplier) 
+						{
+                            max_bonus_multiplier = bonus_multiplier;
+                        }
+                    }
+                }
+
+	
+				if(max_bonus_multiplier > 0.0f)
+				{
+					mutiple_add += max_bonus_multiplier;
+					max_bonus_multiplier = 0.0f;
+				}
+            }
+        }
+	
+
+		points_recv += (points_recv * mutiple_add);
+
+		points_recv *= EmulateSettings::GetInstance()->GetKidPointsRate();
+
+        _kid.SetPointsAwakening(points_now + points_recv);
+        _kid.SetAwakeningCash(0);
+        _kid.SetBlockDay(true);
+
+        _runner->kid_awakening_points(/*_kid.GetPointsAwakening()*/ points_recv);
+    }
+
+    return true;
+}
+
+static const int exp_required_next_level[] = { 0, 2, 4, 8, 12, 20, 20, 20, 20, 20 };
+static const int exp_min_level[] = { 0, 0, 2, 6, 14, 26, 46, 66, 86, 106 };
+
+bool 
+gplayer_imp::KidAwakeningCardLevel()
+{
+	char level_now = _kid.GetCardLevel ();
+	if(level_now >= 10) return false;
+
+	int exp_now = _kid.GetExpCourseRequired ();
+	int cash_awakening = _kid.GetAwakeningCash ();
+	int cash_cost = 4;
+	
+	// Verifica os ouros e remove
+	if(cash_cost > cash_awakening) return false;
+	_kid.SetAwakeningCash(cash_awakening-cash_cost);
+
+	if(exp_now+4 >= exp_required_next_level[level_now])
+	{
+		_kid.SetCardLevel(level_now+1);
+		_kid.SetExpCourseRequired(exp_now+4-exp_required_next_level[level_now] < 0 ? 0 : exp_now+4-exp_required_next_level[level_now]);		
+	} else 
+	{
+		_kid.SetExpCourseRequired(exp_now+4);
+	}
+
+	_runner->kid_course_perc(_kid.GetCardLevel (), _kid.GetExpCourseRequired () + exp_min_level[_kid.GetCardLevel()]);
+	KidAwakeningCashProtocol ();	
+	return true;
+}
+
+bool 
+gplayer_imp::KidAwakeningCardRandom()
+{	
+	std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+	int cash_awakening = _kid.GetAwakeningCash ();
+	int cash_cost = 2;
+
+	if(!_kid.GetCourseRandomCost ())
+	{
+		cash_cost -= 2;
+		_kid.SetCourseRandomCost (true);
+	}
+	
+	if(cash_cost > cash_awakening) return false;
+	_kid.SetAwakeningCash(cash_awakening-cash_cost);
+
+	unsigned int cards[5];
+	for (int i = 0; i < gplayer_kid::MAX_RANDOM_COURSE; ++i) 
+	{
+        int card = GetCardLevel(rng, dist, _kid.GetCardLevel ());   
+		cards[i] = card;     
+		_kid.SetRandomCourse(i, card);
+    }
+	
+	_runner->kid_course_info(cards, gplayer_kid::MAX_RANDOM_COURSE);
+	KidAwakeningCashProtocol ();
+	return true;
+}
+
+bool 
+gplayer_imp::KidAwakeningCardPutInventory(char old_slot)
+{	
+	int cash_awakening = _kid.GetAwakeningCash ();
+	int cash_cost = 0;
+
+	DATA_TYPE dt;
+	COURSE_ESSENCE * ess;
+	ess = (COURSE_ESSENCE*) world_manager::GetDataMan().get_data_ptr(_kid.GetRandomCourse(old_slot), ID_SPACE_ESSENCE, dt);
+	if(!ess || dt != DT_COURSE_ESSENCE) return false;
+
+	cash_cost += ess->cost;
+
+	if(cash_cost > cash_awakening) return false;
+	_kid.SetAwakeningCash(cash_awakening-cash_cost);
+
+	int new_slot = -1;
+	
+	for (unsigned int i = 0; i < gplayer_kid::MAX_STORAGE_COURSE; i++)
+	{
+		if(_kid.GetStorageCourse(i)->course_id == 0 && new_slot < 0)
+		{
+			new_slot = i;
+			break;
+		}			
+	}
+	
+	if(new_slot < 0) return false;
+		
+	bool res = false;
+	int card_id = _kid.GetRandomCourse(old_slot);
+
+	if(!res)
+	{
+		_kid.SetStorageCourse(new_slot,_kid.GetRandomCourse(old_slot), 1);
+		_kid.SetRandomCourse(old_slot, 0);
+	}
+
+	_runner->kid_course_change(old_slot, new_slot+6);
+	KidAwakeningCashProtocol ();
+
+	_runner->kid_system_points_notify(KidGetSuitePoints());
+	return true;
+}
+
+void 
+gplayer_imp::KidAwakeningCardSwitchInventory(char new_slot, char old_slot1, char old_slot2)
+{
+	int get_level = _kid.GetStorageCourse(new_slot-6)->course_level;
+	int get_id = _kid.GetStorageCourse(new_slot-6)->course_id;
+
+	if(get_level > 3) return;
+	if(get_id <= 0) return;
+
+	_kid.SetStorageCourse(new_slot-6, get_id, get_level+1);
+	_kid.SetStorageCourse(old_slot1-6, 0, 0);
+	_kid.SetStorageCourse(old_slot2-6, 0, 0);
+
+	_runner->kid_course_switch(new_slot, old_slot1, old_slot2);
+
+	_runner->kid_system_points_notify(KidGetSuitePoints());
+}
+
+bool 
+gplayer_imp::KidAwakeningCardRemoveInventory(char old_slot)
+{
+	int cash_awakening = _kid.GetAwakeningCash ();
+	int cash_cost = 0;
+	int course_id = 0;
+	int course_level = 0;
+
+	if(old_slot < 6)
+	{
+		course_id = _kid.GetEquipedCourse(old_slot)->course_id;
+		course_level = _kid.GetEquipedCourse(old_slot)->course_level;
+	}
+	else
+	{
+		course_id = _kid.GetStorageCourse(old_slot-6)->course_id;
+		course_level = _kid.GetStorageCourse(old_slot-6)->course_level;
+	}
+
+	DATA_TYPE dt;
+	COURSE_ESSENCE * ess;
+	ess = (COURSE_ESSENCE*) world_manager::GetDataMan().get_data_ptr(course_id, ID_SPACE_ESSENCE, dt);
+	if(!ess || dt != DT_COURSE_ESSENCE) return false;
+
+	cash_cost += ess->cost;
+
+	_kid.SetAwakeningCash(cash_awakening+cash_cost);
+		
+	bool res = false;
+	if(!res)
+	{
+		if(old_slot < 6)
+			_kid.SetEquipedCourse(old_slot, 0, 0);
+		else
+			_kid.SetStorageCourse(old_slot-6, 0, 0);
+	}
+
+	_runner->kid_course_remove(old_slot);
+	KidAwakeningCashProtocol ();
+
+	_runner->kid_system_points_notify(KidGetSuitePoints());
+	return true;
+}
+
+void 
+gplayer_imp::KidAwakeningCardMoveEquipInventory(char old_slot, char new_slot)
+{
+	if(old_slot < 6) 
+	{
+		int course_id = _kid.GetEquipedCourse(old_slot)->course_id;
+		char course_level = _kid.GetEquipedCourse(old_slot)->course_level;	
+	
+		if(new_slot < 6)
+			_kid.SetEquipedCourse(new_slot, course_id, course_level);
+		else
+			_kid.SetStorageCourse(new_slot-6, course_id, course_level);
+
+		_kid.SetEquipedCourse(old_slot, 0, 0);
+
+		_runner->kid_course_insert(old_slot, new_slot);
+	} else 
+	{
+		int course_id = _kid.GetStorageCourse(old_slot-6)->course_id;
+		char course_level = _kid.GetStorageCourse(old_slot-6)->course_level;
+
+		if(new_slot < 6)
+			_kid.SetEquipedCourse(new_slot, course_id, course_level);
+		else
+			_kid.SetStorageCourse(new_slot-6, course_id, course_level);
+
+		_kid.SetStorageCourse(old_slot-6, 0, 0);
+
+		_runner->kid_course_insert(old_slot, new_slot);
+	}
+
+	_runner->kid_system_points_notify(KidGetSuitePoints());
+}
+
+
+bool
+gplayer_imp::KidAwakeningNewDay3()
+{
+	if (_kid.GetAwakeningDayCount() >= EmulateSettings::GetInstance()->GetChildAwakeningDays())
+	{
+		int get_points = _kid.GetPointsAwakening();
+		int gender = _kid.GetType();
+		int get_pos = -1;
+
+		if (gender != 0 && gender != 1)
+			return false;
+
+		DATA_TYPE data;
+		const KID_QUALITY_CONFIG *config = (const KID_QUALITY_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_QUALITY_CONFIG, ID_SPACE_CONFIG, data);
+		if (!config || data != DT_KID_QUALITY_CONFIG)
+			return false;
+
+		for (unsigned int i = 0; i < 4; i++)
+		{
+			if ((unsigned int)get_points >= config->list[i].require_score_min && (unsigned int)get_points <= config->list[i].require_score_max)
+			{
+				get_pos = i;
+				break;
+			}
+		}
+
+		if (get_pos < 0)
+		{
+			unsigned int best_min = 0;
+			bool found = false;
+			for (unsigned int i = 0; i < 4; i++)
+			{
+				if (config->list[i].require_score_min <= (unsigned int)get_points
+					&& (!found || config->list[i].require_score_min >= best_min))
+				{
+					best_min = config->list[i].require_score_min;
+					get_pos = (int)i;
+					found = true;
+				}
+			}
+		}
+
+		// list[4] — phòng thủ cuối: nếu vẫn không tìm được tier (điểm dưới mọi min).
+		if (get_pos < 0 || get_pos >= 4)
+			return false;
+
+		int finish_idx = abase::RandSelect(&(config->list[get_pos].gender_list[gender].kid[0].probability), sizeof(config->list[get_pos].gender_list[gender].kid[0]), 8);
+		// kid[8] — RandSelect trả về [0..7] khi config hợp lệ; phòng thủ thêm.
+		if (finish_idx < 0 || finish_idx >= 8)
+			return false;
+
+		int idx_item = config->list[get_pos].gender_list[gender].kid[finish_idx].id;
+		bool item_get = false;
+
+		DATA_TYPE data2;
+		const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(idx_item, ID_SPACE_CONFIG, data2);
+		if (!config2 || data2 != DT_KID_PROPERTY_CONFIG)
+			return false;
+
+		// celestial[MAX_CELESTIAL=6] — slot index từ config phải hợp lệ, không sẽ ghi OOB.
+		int slot = config2->kid_debri_type;
+		if (slot < 0 || slot >= (int)gplayer_kid::MAX_CELESTIAL)
+			return false;
+
+		if (_kid.GetCelestial(slot)->idx > 0)
+		{
+			if (_kid.GetCelestial(slot)->idx < idx_item)
+			{
+				_kid.SetCelestial(slot, _kid.GetCelestial(slot)->level, _kid.GetCelestial(slot)->rank, _kid.GetCelestial(slot)->exp+config2->kid_debri_exp, idx_item);
+				item_get = true;
+			}
+			InvPlayerGiveItem(config2->kid_debri_id, 1);
+		}
+		else
+		{
+			if(config2->broadcast > 0)
+			{
+				SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), idx_item);
+			}
+
+			DATA_TYPE data3;
+			const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)world_manager::GetDataMan().get_data_ptr(6877, ID_SPACE_CONFIG, data3);
+			if (!config3 || data3 != DT_KID_LEVEL_MAX_CONFIG)
+				return false;
+
+			// level_max[10] — rahk dùng làm chỉ số, kẹp về dải hợp lệ.
+			unsigned int rahk = config2->rahk;
+			if (rahk >= 10) return false;
+
+			int newlevel = config3->level_max[rahk];
+			int newexp = 0;
+
+			_kid.SetCelestial(slot, newlevel < 1 ? 1 : newlevel, rahk >= 3 ? 1 : 0, newexp, idx_item);
+		}
+
+		_kid.ClearAwakening();
+
+		KidCelestialInfoProtocol(0);
+		_runner->kid_celestial_awakening(item_get ? _kid.GetCelestial(slot)->rank : 0, idx_item);
+
+	}
+	return true;
+}
+
+void 
+gplayer_imp::KidCelestialActivityProtocol()
+{
+	if(_kid.GetActivity()->reserved != -1) return;
+
+	_runner->kid_active_info(_kid.GetActivity()->active_slot, _kid.GetActivity()->reserved);
+}
+
+bool 
+gplayer_imp::KidCelestialActivity(int val1, int val2, int val3)
+{
+	if(val1 < 0 && val2 > 5) return false;
+
+	_kid.SetActivity(val1, -1);
+	KidCelestialActivityProtocol();
+	return true;
+}
+
+bool gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
+{
+    item_list & _trashbox = GetTrashInventory(IL_TRASH_BOX8);
+
+    if(inv_idx < 0 || (unsigned int)inv_idx >= _trashbox.Size())
+        return false;
+
+    item & item_box = _trashbox[inv_idx];
+
+    if(item_box.type <= 0 || item_box.count <= 0)
+        return false;
+
+    int celestial_idx = _kid.GetCelestial(pos)->idx;
+    if (celestial_idx <= 0) return false;
+
+    DATA_TYPE dt;
+    const KID_DEBRIS_ESSENCE *ess = (KID_DEBRIS_ESSENCE*)world_manager::GetDataMan().get_data_ptr(item_box.type, ID_SPACE_ESSENCE, dt);
+    if(!ess || dt != DT_KID_DEBRIS_ESSENCE) return false;
+
+    DATA_TYPE dt2;
+    const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(celestial_idx, ID_SPACE_CONFIG, dt2);
+    if (!config2 || dt2 != DT_KID_PROPERTY_CONFIG) return false;
+
+    int total_count = item_box.count;
+    int base_stone_exp = ess->swallow_exp;
+    if (base_stone_exp <= 0) return false;
+
+    int current_exp = _kid.GetCelestial(pos)->exp;
+    int current_star = _kid.GetCelestial(pos)->rank;
+    int initial_star = current_star;
+    int new_idx = celestial_idx;
+    int stones_used = 0;
+    int protocol_mode = 0;
+
+    // Type-upgrade pass: consume stones to evolve celestial until id_kid_upgrade == 0 or stones exhausted
+    while (total_count > 0 && config2->id_kid_upgrade != 0)
+    {
+        int required_exp = config2->upgrade_exp;
+        if (required_exp <= 0) break;
+
+        if (current_exp + base_stone_exp >= required_exp)
+        {
+            current_exp = (current_exp + base_stone_exp) - required_exp;
+            total_count--;
+            stones_used++;
+
+            new_idx = config2->id_kid_upgrade;
+            DATA_TYPE dt2_next;
+            const KID_PROPERTY_CONFIG *config2_next = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(new_idx, ID_SPACE_CONFIG, dt2_next);
+            if (!config2_next || dt2_next != DT_KID_PROPERTY_CONFIG) break;
+            config2 = config2_next;
+            protocol_mode = 1;
+        }
+        else
+        {
+            current_exp += base_stone_exp;
+            total_count--;
+            stones_used++;
+            protocol_mode = 1;
+        }
+    }
+
+    // Star-upgrade pass: if celestial is fully evolved (id_kid_upgrade == 0) and star config exists,
+    // continue consuming the remaining stones to push star rank — matches AddDebri recursion in 173 ref.
+    if (total_count > 0 && config2->id_kid_upgrade == 0 && config2->kid_upgrade_star_config != 0)
+    {
+        DATA_TYPE dt3;
+        const KID_UPGRADE_STAR_CONFIG *config3 = (const KID_UPGRADE_STAR_CONFIG *)world_manager::GetDataMan().get_data_ptr(config2->kid_upgrade_star_config, ID_SPACE_CONFIG, dt3);
+        if (config3 && dt3 == DT_KID_UPGRADE_STAR_CONFIG)
+        {
+            while (total_count > 0)
+            {
+                if (current_star >= 6)
+                {
+                    current_star = 6;
+                    current_exp = 0;
+                    break;
+                }
+
+                int required_exp = config3->upgrade_star_info[current_star].start_exp;
+                if (required_exp <= 0) break;
+
+                if (current_exp + base_stone_exp >= required_exp)
+                {
+                    current_exp = (current_exp + base_stone_exp) - required_exp;
+                    current_star++;
+                    stones_used++;
+                    total_count--;
+                }
+                else
+                {
+                    current_exp += base_stone_exp;
+                    stones_used++;
+                    total_count--;
+                }
+            }
+        }
+    }
+
+    if (stones_used <= 0) return false;
+
+    // fee_cost — chuẩn theo UpKidLvl (173full): cộng dồn KID_EXP_CONFIG.exp[i] qua khoảng rank được nâng,
+    // kiểm tra GetAllMoney rồi SpendAllMoney trước khi cam kết tiêu đá và set state.
+    int fee_cost = 0;
+    if (current_star > initial_star)
+    {
+        DATA_TYPE dt_exp;
+        const KID_EXP_CONFIG *pCfgExp = (const KID_EXP_CONFIG *)world_manager::GetDataMan().get_data_ptr(gplayer_kid_addons::IDX_MAX_LEVEL_MONEY_COST, ID_SPACE_CONFIG, dt_exp);
+        if (pCfgExp && dt_exp == DT_KID_EXP_CONFIG)
+        {
+            for (int i = initial_star; i < current_star && i < 150; ++i)
+                fee_cost += pCfgExp->exp[i];
+        }
+    }
+
+    if (fee_cost > 0 && !EmulateSettings::GetInstance()->GetKidFreeCelestialLevel())
+    {
+        if (GetAllMoney() < (unsigned int)fee_cost)
+        {
+            _runner->error_message(S2C::ERR_OUT_OF_FUND);
+            return false;
+        }
+        SpendAllMoney(fee_cost, true);
+        SelfPlayerMoney();
+    }
+
+    if (SpendTrashBoxItem2(IL_TRASH_BOX8, inv_idx, stones_used))
+    {
+        _kid.SetCelestial(pos, _kid.GetCelestial(pos)->level, current_star, current_exp, new_idx);
+        KidCelestialInfoProtocol(protocol_mode);
+        return true;
+    }
+
+    return false;
+}
+
+// Mirror 173 player_kid::ActivateTransform / DeactivateTransform.
+//   mode != 0  → kích hoạt hóa thân Tiểu Hài Nhi tại slot active
+//   mode == 0  → kết thúc hóa thân (timeout 30 phút hoặc lệnh client)
+// 174 idiom: filter_Kidform (sfilterdef.h FILTER_KIDFORM=4722) đã bao trọn:
+//   OnAttach   → ChangeShape2 + Enhance* + ActivateDynSkill cho từng kid skill
+//   OnRelease  → reverse Enhance/Impair + DeactivateDynSkill + ChangeShape2(0,0)
+// → Activate chỉ cần build buf + SetKidFilter; Deactivate chỉ cần RemoveFilter.
+void
+gplayer_imp::KidCelestialTransformation(int mode)
+{
+	object_interface obj_if(this);
+
+	// ---------- Deactivate ----------
+	if (!mode)
+	{
+		if (!_kid_transformation)
+			return;
+
+		// Báo client gỡ kid skill khỏi skill bar trước khi xoá filter.
+		// Mirror IDA: skill[2*i+1] = -skill[2*i+1] rồi send_new_skill_list.
+		// 174 player_world_speak_info(1,1,1, count, [id, -level, ...]).
+		const int saved_count = _kid_transform_skill_state.saved_count;
+		if (saved_count > 0)
+		{
+			int neg_skills[32];
+			memset(neg_skills, 0, sizeof(neg_skills));
+			int n = saved_count > 16 ? 16 : saved_count;
+			for (int i = 0; i < n; ++i)
+			{
+				neg_skills[2 * i]     = _kid_transform_skill_state.saved_skill_id[i];
+				neg_skills[2 * i + 1] = -_kid_transform_skill_state.saved_kid_skill_level[i];
+			}
+			_runner->player_world_speak_info(1, 1, 1, n, neg_skills);
+		}
+
+		_kid_transformation = 0;
+		_kid_transformation_time = 0;
+		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
+
+		// filter_Kidform::OnRelease tự lo Impair* + DeactivateDynSkill + ChangeShape2(0,0)
+		_filters.RemoveFilter(FILTER_KIDFORM);
+
+		PlayerGetProperty();
+		return;
+	}
+
+	// ---------- Activate ----------
+	if (_kid_transformation)
+		return;
+
+	// Đang ở form khác (tiger/fox/...) → không cho hóa thân kid
+	if (GetForm())
+	{
+		_runner->error_message(53);
+		return;
+	}
+
+	int slot = _kid.GetActivity()->active_slot;
+	if (slot < 0 || slot >= (int)gplayer_kid::MAX_CELESTIAL)
+	{
+		_runner->error_message(53);
+		return;
+	}
+
+	const gplayer_kid::KID_STRUCT *celestial = _kid.GetCelestial(slot);
+	if (!celestial || celestial->idx <= 0 || celestial->level <= 0)
+	{
+		_runner->error_message(53);
+		return;
+	}
+
+	DATA_TYPE dt;
+	const KID_PROPERTY_CONFIG *cfg = (const KID_PROPERTY_CONFIG *)
+		world_manager::GetDataMan().get_data_ptr(celestial->idx, ID_SPACE_CONFIG, dt);
+	if (!cfg || dt != DT_KID_PROPERTY_CONFIG)
+	{
+		_runner->error_message(53);
+		return;
+	}
+
+	// Lookup star_param: rank 0 dùng zero_star_param, rank ≥ 1 dùng upgrade_star_info[rank-1].star_param.
+	float star_param = 0.0f;
+	{
+		DATA_TYPE dt_star;
+		const KID_UPGRADE_STAR_CONFIG *cfg_star = (const KID_UPGRADE_STAR_CONFIG *)
+			world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_STAR_CONFIG, ID_SPACE_CONFIG, dt_star);
+		if (cfg_star && dt_star == DT_KID_UPGRADE_STAR_CONFIG)
+		{
+			if (celestial->rank > 0 && celestial->rank <= 6)
+				star_param = cfg_star->upgrade_star_info[celestial->rank - 1].star_param;
+			else
+				star_param = cfg_star->zero_star_param;
+		}
+	}
+
+	// Stat cơ bản từ celestial (mirror cách KidCelestialInfoProtocol đang tính):
+	const int kid_lvl       = celestial->level;
+	const int ess_hp        = (int)(cfg->hp            * kid_lvl * star_param);
+	const int ess_dmg       = (int)(cfg->damage        * kid_lvl * star_param);
+	const int ess_dmg_mag   = (int)(cfg->magic_damage  * kid_lvl * star_param);
+	const int ess_def       = (int)(cfg->defence       * kid_lvl * star_param);
+	const int ess_resist    = (int)(cfg->magic_defence * kid_lvl * star_param);
+	const int ess_crit      = (int)(cfg->crit_hit_probability * 100.0f * kid_lvl * star_param);
+
+	// Result(base, base2, percent) = (base + base2) * 0.01 * (100 + percent) (làm tròn)
+	#define KID_RESULT(b1, b2, p)  ((int)(((b1) + (b2)) * 0.01f * (100 + (p)) + 0.5f))
+
+	// Stat-degree enh (str/vit, eng/vit) — công thức 173: 0.04 * (3*A + 2*B)
+	int enh_def = (int)((3 * _cur_prop.strength + 2 * _cur_prop.vitality) * 0.04f + 0.5f);
+	int enh_res = (int)((3 * _cur_prop.energy   + 2 * _cur_prop.vitality) * 0.04f + 0.5f);
+
+	int sum_atk_def = _attack_degree + _defend_degree;
+	int sum_anti    = _anti_defense_degree + _anti_resistance_degree;
+
+	// ---- Build delta buffer (layout filter_Kidform) ----
+	// 24 ints meta + 32 ints skill = 56
+	int buf[56];
+	memset(buf, 0, sizeof(buf));
+
+	buf[0]  = cfg->unk1; // shape
+	buf[1]  = cfg->attack_type;
+	buf[2]  = KID_RESULT(ess_hp,      _cur_prop.max_hp,      _en_percent.max_hp);
+	buf[3]  = KID_RESULT(ess_dmg,     _cur_prop.damage_low,  _en_percent.damage + _en_percent.base_damage);
+	buf[4]  = KID_RESULT(ess_dmg,     _cur_prop.damage_high, _en_percent.damage + _en_percent.base_damage);
+	buf[5]  = KID_RESULT(ess_dmg_mag, _cur_prop.damage_magic_low,  _en_percent.base_magic + _en_percent.magic_dmg);
+	buf[6]  = KID_RESULT(ess_dmg_mag, _cur_prop.damage_magic_high, _en_percent.base_magic + _en_percent.magic_dmg);
+	buf[7]  = KID_RESULT(ess_def,     _cur_prop.defense,     _en_percent.defense    + enh_def);
+	buf[8]  = KID_RESULT(ess_resist,  _cur_prop.resistance[0], _en_percent.resistance[0] + enh_res);
+	buf[9]  = KID_RESULT(ess_resist,  _cur_prop.resistance[1], _en_percent.resistance[1] + enh_res);
+	buf[10] = KID_RESULT(ess_resist,  _cur_prop.resistance[2], _en_percent.resistance[2] + enh_res);
+	buf[11] = KID_RESULT(ess_resist,  _cur_prop.resistance[3], _en_percent.resistance[3] + enh_res);
+	buf[12] = KID_RESULT(ess_resist,  _cur_prop.resistance[4], _en_percent.resistance[4] + enh_res);
+	buf[13] = ess_crit - _crit_rate - _base_crit_rate;                    // crit point delta
+	buf[14] = _cur_prop.attack_speed - (int)(cfg->attack_interval * 20.0f + 0.00001f); // attack speed ratio delta
+
+	// range/speed là float ép qua bit-cast (int*) — filter_Kidform đọc *((int*)&_range)=buf[15]
+	{
+		float range_delta = cfg->attack_dist - _cur_prop.attack_range;
+		float speed_delta = cfg->fly_speed   - _cur_prop.run_speed;
+		memcpy(&buf[15], &range_delta, sizeof(float));
+		memcpy(&buf[16], &speed_delta, sizeof(float));
+	}
+
+	buf[17] = (int)(sum_atk_def * cfg->attack_lvl_rank_param)  - _attack_degree;
+	buf[18] = (int)(sum_atk_def * cfg->defence_lvl_rank_param) - _defend_degree;
+	buf[19] = (int)(sum_anti    * cfg->anti_defence_param)     - _anti_defense_degree;
+	buf[20] = (int)(sum_anti    * cfg->anti_magic_param)       - _anti_resistance_degree;
+	buf[21] = (int)(cfg->enchant_time_reduce * 100.0f) - _skill.GetPraySpeed();
+
+	// ---- Skills (clamp 16) ----
+	int skill_count = 0;
+	if (cfg->id_kid_skill)
+	{
+		DATA_TYPE dt_sk;
+		const KID_SKILL_CONFIG *cfg_sk = (const KID_SKILL_CONFIG *)
+			world_manager::GetDataMan().get_data_ptr(cfg->id_kid_skill, ID_SPACE_CONFIG, dt_sk);
+		if (cfg_sk && dt_sk == DT_KID_SKILL_CONFIG)
+		{
+			for (int i = 0; i < 16 && skill_count < 16; ++i)
+			{
+				if (cfg_sk->skill[i].id <= 0) continue;
+				for (int j = 9; j >= 0; --j)
+				{
+					if (cfg_sk->skill[i].level[j] > 0 && kid_lvl >= cfg_sk->skill[i].level[j])
+					{
+						buf[23 + 2 * skill_count]     = cfg_sk->skill[i].id;
+						buf[23 + 2 * skill_count + 1] = j + 1;
+						++skill_count;
+						break;
+					}
+				}
+			}
+		}
+	}
+	buf[22] = skill_count;
+
+	#undef KID_RESULT
+
+	// ---- Lưu state để FixChildSystem / cross-server / leave-world handle ----
+	_kid_transformation      = 1;
+	_kid_transformation_time = 1800; // 30 phút
+	_kid_transform_skill_state.saved_count = skill_count;
+	_kid_transform_skill_state.saved_slot  = slot;
+	_kid_transform_skill_state.saved_idx   = celestial->idx;
+	for (int i = 0; i < skill_count; ++i)
+	{
+		_kid_transform_skill_state.saved_skill_id[i]       = buf[23 + 2 * i];
+		_kid_transform_skill_state.saved_kid_skill_level[i] = buf[23 + 2 * i + 1];
+	}
+
+	// ---- Attach filter (filter_Kidform::OnAttach làm phần còn lại) ----
+	_skill.SetKidFilter(obj_if, buf);
+
+	// Broadcast skill list cho client để skill bar hiển thị kid skill mới.
+	// Mirror IDA error.txt: _runner->vptr+427(1,1,1, count, &skill[]) — 174 là
+	// player_world_speak_info(enabled=1, enabled2=1, kid=1, count, skills[id,level]).
+	// buf+23 là mảng (id, level) pairs đúng format mà client cần.
+	if (skill_count > 0)
+		_runner->player_world_speak_info(1, 1, 1, skill_count, buf + 23);
+
+	// HP về max sau hóa thân (theo IDA: _basic.hp = _cur_prop.max_hp;)
+	_basic.hp = _cur_prop.max_hp;
+
+	PlayerGetProperty();
+}
+void
+gplayer_imp::FixChildSystem()
+{
+	for (unsigned int i = 0; i < 6; i++)
+	{	
+		if (_kid.GetCelestial(i)->idx > 0)
+		{
+			DATA_TYPE data2;
+			const KID_PROPERTY_CONFIG *config2 = (const KID_PROPERTY_CONFIG *)world_manager::GetDataMan().get_data_ptr(_kid.GetCelestial(i)->idx, ID_SPACE_CONFIG, data2);
+			if (config2 && data2 == DT_KID_PROPERTY_CONFIG)
+			{
+				DATA_TYPE data3;
+				const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)world_manager::GetDataMan().get_data_ptr(6877, ID_SPACE_CONFIG, data3);
+				if (!config3 || data3 != DT_KID_LEVEL_MAX_CONFIG)
+					return;
+
+				int newlevel = 0;
+				newlevel += config3->level_max[config2->rahk];
+				int old_level = config3->level_max[_kid.GetCelestial(i)->rank];
+
+				if(_kid.GetCelestial(i)->level > old_level)
+				{	
+					_kid.SetCelestial(i, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, _kid.GetCelestial(i)->exp, _kid.GetCelestial(i)->idx);
+				}
+			}
+		}
+	}
+	KidCelestialInfoProtocol(0);
+}
+
+void gplayer_imp::FixExpHeartBeat()
+{
+	if(_basic.exp < 0)
+	{
+		int next_exp = player_template::GetLvlupExp(GetPlayerClass(),_basic.level);
+		_basic.exp = next_exp+1;
+
+		LevelUp();
+	}
+	if(_player_reincarnation.GetTomeExp() < 0)
+	{
+		_player_reincarnation.SetTomeExp(0);
+	}
+}
+
+void
+gplayer_imp::SendClientMsgChild(char* child_name, int child_name_len, int type)
+{
+	struct
+	{
+		char player_name[MAX_USERNAME_LENGTH];
+		char child_name[MAX_USERNAME_LENGTH_NOTIFY];
+		int type;
+	}data;
+	memset(&data, 0, sizeof(data));
+
+	unsigned int len = _username_len;
+	if(len > MAX_USERNAME_LENGTH) len = MAX_USERNAME_LENGTH;
+	memcpy(data.player_name, _username, len);
+
+	unsigned int len2 = (child_name_len > 0) ? (unsigned int)child_name_len : 0;
+	if(len2 > MAX_USERNAME_LENGTH_NOTIFY) len2 = MAX_USERNAME_LENGTH_NOTIFY;
+	memcpy(data.child_name, child_name, len2);
+
+	data.type = type;
+
+	packet_wrapper buf(sizeof(data));
+	buf.push_back(&data, sizeof(data));
+
+	broadcast_chat_msg(CHILD_AWAKENING_CHAT_MSG_ID, buf.data(), buf.size(), GMSV::CHAT_CHANNEL_SYSTEM, 0, 0, 0);
+}
+
+

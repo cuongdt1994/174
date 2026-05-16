@@ -293,7 +293,7 @@ void gplayer_kid_addons::SetRecvKidsAddons(int roleid, int pos, int addon_pos)
 	UpdateKidsAddonsProtocol(roleid);
 	ActivateKidsAddons(roleid);
 
-	pImp->RefreshEquipment();
+	pImp->OnRefreshEquipment();
 }
 
 void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)

@@ -1,9 +1,8 @@
-#define _DEFAULT_SOURCE
 
 #include "spinlock.h"
 #include "mtime.h"
 #include <stdio.h>
-#include <unistd.h>
+
 #define MUTEX_SPIN_COUNT                600
 #define MUTEX_SPINSLEEP_DURATION        1001				//���2.6���ϵ��ںˣ�1ms�ľ��ȿ���������ӳ���ӿ�
 

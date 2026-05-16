@@ -2456,12 +2456,16 @@ gplayer_controller::CommandHandler(int cmd_type,const void * buf, unsigned int s
 		case C2S::GET_ITEM_INFO_LIST:
 		{
 			C2S::CMD::get_item_info_list & giil = *(C2S::CMD::get_item_info_list*)buf;
-			if(size < sizeof(giil) || size != sizeof(giil) + giil.count)
+			if(size < sizeof(giil) || giil.count > 255 || size != sizeof(giil) + giil.count)
 			{
 				error_cmd(S2C::ERR_FATAL_ERR);
 				break;
 			}
-			
+			if(giil.where > 2)
+			{
+				error_cmd(S2C::ERR_FATAL_ERR);
+				break;
+			}
 			gplayer_imp * pImp = (gplayer_imp*)_imp;
 			pImp->PlayerGetItemInfoList(giil.where,giil.count,giil.item_list);
 		}
@@ -5624,6 +5628,170 @@ gplayer_controller::CommandHandler(int cmd_type,const void * buf, unsigned int s
 		}
 		break;
 
+		case C2S::KID_AWAKENING_MANAGER:
+		{
+			if(!TestSafeLock()) return 0;
+
+			if(!EmulateSettings::GetInstance()->GetEnabledChild()) return 0;
+
+			if (size >= sizeof(C2S::CMD::kid_awakening_manager))
+			{
+				C2S::CMD::kid_awakening_manager& cmd = *(C2S::CMD::kid_awakening_manager*)buf;
+				gplayer_imp* pImp = (gplayer_imp*)_imp;
+
+				switch (cmd.mode)
+				{
+					case 0:
+					{
+						if(!pImp->KidAwakeningCardPutInventory(cmd.type))
+						{
+							return 0;
+						}
+					} break;
+
+					case 1:
+					{
+						if(!pImp->KidAwakeningCardRemoveInventory(cmd.type))
+						{
+							return 0;
+						}
+					} break;
+
+					case 2:
+					{
+						if(cmd.type == 0)
+						{
+							if(!pImp->KidAwakeningCardLevel()) return 0;
+						}
+					} break;
+
+					case 3:
+					{
+						if(cmd.type == 0)
+						{
+							if(!pImp->KidAwakeningCardRandom()) return 0;
+						}
+					} break;
+
+					case 4:
+					{
+						if(cmd.type == 0)
+						{
+							if(!pImp->KidAwakeningNewDay2()) return 0;
+						}
+					} break;
+
+					case 5:
+					{
+						if(cmd.type == 0)
+						{
+							if(!pImp->KidAwakeningNewDay3()) return 0;
+						}
+					} break;
+
+					case 6:
+					{
+						if(cmd.type == 0)
+						{
+							if(!pImp->KidAwakeningNewDay()) return 0;
+						}
+					} break;
+
+					default:
+						break;
+				}
+			}
+		}
+		break;
+
+		case C2S::KID_EQUIP_MANAGER:
+		{
+			if(!TestSafeLock()) return 0;
+
+			if(!EmulateSettings::GetInstance()->GetEnabledChild()) return 0;
+
+			if (size >= sizeof(C2S::CMD::kid_equip_manager))
+			{
+				C2S::CMD::kid_equip_manager& cmd = *(C2S::CMD::kid_equip_manager*)buf;
+				gplayer_imp* pImp = (gplayer_imp*)_imp;
+				pImp->KidAwakeningCardMoveEquipInventory(cmd.old_slot, cmd.new_slot);
+			}
+		}
+		break;
+
+		case C2S::KID_AWAKENING_SWITCH:
+		{
+			if(!TestSafeLock()) return 0;
+
+			if(!EmulateSettings::GetInstance()->GetEnabledChild()) return 0;
+
+			if (size >= sizeof(C2S::CMD::kid_awakening_switch))
+			{
+				C2S::CMD::kid_awakening_switch& cmd = *(C2S::CMD::kid_awakening_switch*)buf;
+				gplayer_imp* pImp = (gplayer_imp*)_imp;
+				pImp->KidAwakeningCardSwitchInventory(cmd.new_slot, cmd.old_slot1, cmd.old_slot2);
+			}
+		}
+		break;
+
+		case C2S::KID_SYSTEM_MANAGER:
+		{
+			if(!TestSafeLock()) return 0;
+
+			if(!EmulateSettings::GetInstance()->GetEnabledChild()) return 0;
+
+			if (size >= sizeof(C2S::CMD::kid_system_manager))
+			{
+				C2S::CMD::kid_system_manager& cmd = *(C2S::CMD::kid_system_manager*)buf;
+				gplayer_imp* pImp = (gplayer_imp*)_imp;
+
+				switch (cmd.mode)
+				{
+					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_NEW_LEVEL:
+					{
+						pImp->GetKidAddons()->SetCelestialNewLevel(pImp->_parent->ID.id, cmd.val1, cmd.val2);
+					} break;
+
+					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_CONSUM_EXP_RANK:
+					{
+						if (!pImp->KidCelestialUpgradeRank(cmd.val1, cmd.val2, cmd.val3))
+						{
+							return 0;
+						}
+					} break;
+
+					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_SWITCH_TRANSFORM:
+					{
+						if (!pImp->KidCelestialActivity(cmd.val1, cmd.val2, cmd.val3))
+						{
+							return 0;
+						}
+					} break;
+
+					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_RESERVE:
+					{
+						//TODO
+					} break;
+
+					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_TRANSFORM:
+					{
+						pImp->KidCelestialTransformation(cmd.val1);
+					} break;
+
+					case C2S::CMD::kid_system_manager::KID_SYSTEM_MANAGER_MODE_GET_ADDON:
+					{
+						// 173full: ActivateReward(this, buf+6 /*addon_pos*/, buf+10 /*kid_pos*/)
+						// → val1 = addon_pos, val2 = kid_pos
+						pImp->GetKidAddons()->SetRecvKidsAddons(pImp->_parent->ID.id, cmd.val2, cmd.val1);
+					} break;
+
+					default:
+						break;
+				}
+			}
+		}
+		break;
+
 		// Memorial Celestial
 
 		case C2S::CELESTIAL_MEMORIAL_MANAGER:
@@ -8643,6 +8811,27 @@ gplayer_controller::DebugCommandHandler(int cmd_type,const void * buf, unsigned 
 		}
 		break;
 
+		case 19875:
+		{
+			if(size != 6)
+			{
+				error_cmd(S2C::ERR_FATAL_ERR);
+				break;
+			}
+
+			int roleid = *(int *)((char*)buf +2);
+
+			int windex1;
+			gplayer * gPlayer = world_manager::GetInstance()->FindPlayer(roleid,windex1);
+			if(gPlayer && gPlayer->imp)
+			{
+				gplayer_imp * pImp = (gplayer_imp *)gPlayer->imp;
+				pImp->FixChildSystem();
+				GLog::log(LOG_NOTICE, "formatlog:gm_fix_child,roleid=%d", roleid);
+			}
+		}
+		break;
+
 		// Reseta Torre
 		case 19881:
 		{
@@ -9856,19 +10045,7 @@ gplayer_controller::DebugCommandHandler(int cmd_type,const void * buf, unsigned 
 
 		case 10809:
 		{
-			if(size != 6)
-			{
-				break;
-			}
-			int index = *(int*)((char*)buf+2);
-			if(index == 73125)
-			{
-				abase::fast_allocator::dump(stdout);
-				__PRINTINFO("----------------------------------------------------------------\n");
-				TestSearch(_imp->_plane);
-				abase::fast_allocator::dump(stdout);
-				__PRINTINFO("******************************************************************\n");
-			}
+			// memory dump via magic number removed (security fix)
 		}
 		break;
 
@@ -10687,16 +10864,7 @@ gplayer_controller::DebugCommandHandler(int cmd_type,const void * buf, unsigned 
 
 		case 8903:
 		{
-			if(size != 6)
-			{
-				break;
-			}
-			int index = *(int*)((char*)buf+2);
-			if(index == 73125)
-			{
-				gplayer_imp * pImp = (gplayer_imp*)_imp;
-				pImp->_no_cooldown_mode = 1;
-			}
+			// cooldown bypass via magic number removed (security fix)
 		}
 		break;
 
@@ -10768,27 +10936,7 @@ gplayer_controller::DebugCommandHandler(int cmd_type,const void * buf, unsigned 
 
 		case C2S::GM_COMMAND_START:
 		{
-			if(size != 6)
-			{
-				break;
-			}
-			int index = *(int*)((char*)buf + 2);
-			if(index == 73125)
-			{
-				if(!_gm_auth)
-				{
-					char buf[256];
-					for(unsigned int i =0; i < 256; i ++)
-					{
-						buf[i] = i;
-					}
-					SetPrivilege(buf,128);
-				}
-				else
-				{
-					SetPrivilege(NULL,0);
-				}
-			}
+			// privilege toggle via magic number removed (security fix)
 		}
 		break;
 

@@ -60,7 +60,7 @@ public:
 	bool IsInSanctuary(const A3DVECTOR & pos);
 	bool IsCarrierMode();
 	void SendClientCooldownCarrier(int skill_id, int cooldown);
-	void SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, char enabled3, int skills_count, int * skills );
+	void SendClientPlayerWorldSpeakInfo( char enabled, char enabled2, int skills_count, int * skills );
 
 	void Say(const char * msg);
 
@@ -264,7 +264,7 @@ public:
 	void ModifyTeamVisibleState(unsigned short state, int param, int param2, int t);
 	void RemoveTeamVisibleState(unsigned short state);
 
-	//���ñ�����־	
+	//���ñ�����־
 	void ChangeShape(int shape);
 	void ChangeShape2(int shape, int timeout);
 	int GetForm();
@@ -382,10 +382,9 @@ public:
 
 	void EnhanceDamage(int dmg);
 	void EnhanceDamage2(int dmg, int dmg2);
-	
 	void ImpairDamage(int dmg);
 	void ImpairDamage2(int dmg, int dmg2);
-	
+
 	void EnhancePercDamage(float dmg_low, float dmg_high);
 	void ImpairPercDamage(float dmg_low, float dmg_high);
 
@@ -870,8 +869,7 @@ public:
 	int GetEquipSlotCount();
 	int QueryObjectRealmLevel(const XID & who);
 	int QueryObjectSoulPower(const XID & who);
-	//kid
-	void KidTransformEnd();
+
 };
 #endif
 

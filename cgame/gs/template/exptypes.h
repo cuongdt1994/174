@@ -9306,16 +9306,24 @@ struct KID_SYSTEM_CONFIG
 
 	unsigned int	id;							// ID
 	namechar		name[32];				// Name
-	int unk[19];
 
-	struct
+	int perception_use_update_course;
+	struct 
 	{
-		unsigned int		require_exp;
-		int				probability[5];
+		int price[3];
+	}
+	course_price[5];
 
-	}level[10];
+	int perception_use_upgrade_school;
+	int exp_get_upgrade_school;
+	int exp_get_daily_school;
 
-		
+	struct 
+	{
+		int school_upgrade_exp;
+		int school_course_quality_prob[5];
+	}
+	school_data[10];
 };
 
 
@@ -9332,12 +9340,12 @@ struct COURSE_ESSENCE
 	int		level;
 	char	file_icon[128];
 	int		unk3;
-	int		type;
+	int		course_mask;
 	int		score[3];
 	unsigned int		cost;
 	int		unk9;
 	int		unk10;
-	int		unk11;
+	int		pile_num_max;
 		
 };
 
@@ -9346,26 +9354,22 @@ struct COURSE_ESSENCE
 // NEW 162 > 171
 ///////////////////////////////////////////////////////////////////////////////////////
 
-struct COURSE_SUITE_ESSENCE
+struct COURSE_SUITE_ESSENCE 
 {
+	unsigned int id;
+	namechar name[32];
 
-	unsigned int	id;							// ID
-	namechar		name[32];				// Name
-	
-	unsigned int		type_mask;
-	int		max_count;
+	int suite_mask; // Mask de Courses somados dÃ£o esse valor e ativa
+	int suite_condition;
 
-
-	struct
+	struct 
 	{
+		int bonus_require_count; // Quantos Courses precisam ser aplicados para liberar o bonus
+		int bonus_area_type; //??
+		int bonus_trigger_probability; // Probabilidade de divisÃ£o do bonus
+		int bonus_percent_add; // Quantos porcento de bonus aumenta no exp final ( o valor vem em int, mas precisa ser transformador em float, exemplo 15000 (150%))
 
-		int		min_count;
-		unsigned int		type;
-		int		probability;
-		int		increase;
-
-	}bonus[3];
-		
+	}bonus_info[3];
 };
 
 
@@ -9380,7 +9384,7 @@ struct KID_PROPERTY_CONFIG
 	namechar		name[32];				// Name
 
 	char	file_model[128];
-	int		shape_type;
+	int		unk1; //shape
 	char	file_img_bar[128];
 	char	file_icon[128];
 	char	file_icon_bar[128];
@@ -9401,34 +9405,31 @@ struct KID_PROPERTY_CONFIG
 	unsigned int	magic_defence;
 
 	float	crit_hit_probability;
-	float	attack_speed;
-	float	attack_range;
-	float	run_speed;
-	float	walk_speed;
+	float	attack_interval; //attack_speed
+	float	attack_dist; //attack_range
+	float	walk_speed; //run_speed
+	float	fly_speed; //walk_speed
 	float	swim_speed;
 	
-	float	atack_degree_inherit_rate;
-	float	defend_degree_inherit_rate;
-
-	float	physical_penetration_inherit_rate;
-	float	magic_penetration_inherit_rate;
+	float attack_lvl_rank_param; //atack_degree_inherit_rate
+	float defence_lvl_rank_param; //defend_degree_inherit_rate
+	float anti_defence_param; //physical_penetration_inherit_rate
+	float anti_magic_param; //magic_penetration_inherit_rate
 
 	float	enchant_time_reduce;
 	
 	unsigned int	id_kid_skill;
 	int		kid_debri_type;
-	unsigned int	kid_debri_exp;
-	unsigned int	kid_debri_id;
-	unsigned int	require_exp;
+	unsigned int	kid_debri_exp; //decomp_exp
+	unsigned int	kid_debri_id; //fragment_id;
+	unsigned int	upgrade_exp;  //require_exp
 	unsigned int	id_kid_upgrade;
-	unsigned int	id_kid_upgrade_star;
+	unsigned int	kid_upgrade_star_config; //id_kid_upgrade_star
 
-	int		unk32;
-	int		unk36;
-
-	//176+
-	//int		star;
-	//int		level;
+	int		order;
+	int		broadcast;
+	int		star;
+	int		level;
 		
 };
 
@@ -9439,21 +9440,30 @@ struct KID_PROPERTY_CONFIG
 
 struct KID_QUALITY_CONFIG
 {
-    unsigned int   id;
-    namechar       name[32];
-    struct
-    {
-        int            level;
-        unsigned int   require_score_min;
-        unsigned int   require_score_max; 
-        struct
-        {
-            unsigned int   id;
-            float          probability; 
-        } kid[16];
-    } list[4];
-};
 
+	unsigned int	id;							// ID
+	namechar		name[32];				// Name
+
+	struct
+	{
+		int		level;
+		unsigned int		require_score_min;
+		unsigned int		require_score_max;
+
+		struct
+		{
+			struct {
+				unsigned int		id;
+				float		probability;
+			}kid[8];
+			
+		}gender_list[2];
+		
+		
+	}list[4];
+	
+		
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -9481,13 +9491,14 @@ struct KID_UPGRADE_STAR_CONFIG
 	unsigned int	id;							// ID
 	namechar		name[32];				// Name
 
-	unsigned int		unk1;
+	float zero_star_param;
 
 	struct
 	{
-		unsigned int		require_exp;
-		float		refine_ratio;
-	}list[6];
+		int start_exp;
+		float star_param;
+		
+	}upgrade_star_info[6];
 		
 };
 
@@ -9551,8 +9562,9 @@ struct KID_DEBRIS_ESSENCE
 	unsigned int		swallow_exp;
 
 	unsigned int		pile_num_max;
-	unsigned int		proc_type;
-	unsigned int		has_guid;
+
+	unsigned int proc_type;
+	int has_guid;
 	
 };
 
@@ -9587,8 +9599,9 @@ struct KID_DEBRIS_GENERATOR_ESSENCE
 
 	unsigned int	id;							// ID
 	namechar		name[32];				// Name
-	char	file_matter[128];
+
 	char	file_icon[128];
+	char	file_matter[128];
 
 	struct
 	{
@@ -9603,8 +9616,8 @@ struct KID_DEBRIS_GENERATOR_ESSENCE
 
 	unsigned int		pile_num_max;
 
-	unsigned int		has_guid;
 	unsigned int		proc_type;
+	unsigned int		has_guid;
 	
 };
 
@@ -9658,7 +9671,10 @@ struct BIS_SOI_USE_LIMIT_CONFIG
 	namechar		name[32];				// Name
 
 	unsigned int		area_id;
-	int		unk[4];
+	int		unk2;
+	int		unk3;
+	int		unk4;
+	int		unk5;
 
 
 	struct

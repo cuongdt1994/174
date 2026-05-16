@@ -1533,12 +1533,45 @@ void SkillWrapper::ActivateDynSkill(ID id, int counter)
 		data.level = 1;
 		data.overridden = 0;
 		dyn_map[id] = data;
-		//no notice
-		//Notify the client that a new skill has been added
 		return;
 	}
 
 	it->second.ability += counter;
+}
+
+void SkillWrapper::ActivateDynSkill(ID id, int counter, object_interface player, int level)
+{
+	SkillKeeper skill = Skill::Create(id);
+	if(!skill)
+		return;
+
+	skill->SetLevel(level);
+
+	const SkillStub *stub = SkillStub::GetStub(id);
+	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
+	{
+		PlayerWrapper w_player(player, this, skill, 0, 0);
+		w_player.SetSkill(skill);
+		skill->SetLevel(level);
+		skill->SetPlayer(&w_player);
+		skill->TakeEffect(&w_player, -1);
+	}
+	else
+	{
+		StorageMap::iterator it = dyn_map.find(id);
+		if(it == dyn_map.end())
+		{
+			PersistentData data;
+			data.ability = counter;
+			data.level = level; 
+			data.overridden = 0;
+			dyn_map[id] = data;
+		}
+		else
+		{
+			it->second.ability += counter;
+		}
+	}
 }
 
 void SkillWrapper::ResurrectByCashAddFilter(object_interface player, int buff_period, const float* buff_ratio, int buff_size)
@@ -1564,6 +1597,10 @@ void SkillWrapper::ResurrectByCashAddFilter(object_interface player, int buff_pe
 	}
 }
 
+void SkillWrapper::SetKidFilter(object_interface player, int* buf)
+{
+	player.AddFilter(new filter_Kidform(player, buf));
+}
 
 void SkillWrapper::MnFactionAddFilter(object_interface player, float ratio)
 {
@@ -1581,13 +1618,46 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter)
 		ASSERT(false);
 		return;
 	}
-	
+
 	it->second.ability -= counter;
 	ASSERT(it->second.ability >= 0);
 	if(it->second.ability == 0)
 	{
 		//no notice
 		//Notifies clients of reduced skills
+		dyn_map.erase(it);
+	}
+}
+
+// Mirror chuẩn 173full.txt:2738-2790 — GNET::SkillWrapper::DeactivateDynSkill (5 args)
+// Khác overload 2-arg ở chỗ:
+//   - Với passive skill có EventFlag == EVENT_CHANGE: NO-OP (UndoEffect do EventChange xử lý)
+//   - Với active skill: dec ability trong dyn_map, xóa nếu về 0
+void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface player, int level)
+{
+	SkillKeeper skill = Skill::Create(id);
+	if(!skill)
+		return;
+
+	const SkillStub *stub = SkillStub::GetStub(id);
+	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
+	{
+		// Passive EVENT_CHANGE: UndoEffect do EventChange(player, FORM_CLASS, 0) đảm nhận
+		// → no-op ở đây
+		return;
+	}
+
+	StorageMap::iterator it = dyn_map.find(id);
+	if(it == dyn_map.end())
+	{
+		ASSERT(false);
+		return;
+	}
+
+	it->second.ability -= counter;
+	ASSERT(it->second.ability >= 0);
+	if(it->second.ability == 0)
+	{
 		dyn_map.erase(it);
 	}
 }

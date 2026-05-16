@@ -6,316 +6,188 @@
 #include <gsp_if.h>
 #include <glog.h>
 #include <cstring>
+
 #include "luamanager.h"
 #include "item/item_addon.h"
 #include "vector.h"
 
-class gplayer_imp;
-class item_list;
-
-class player_kid
+class gplayer_kid 
 {
 public:
 	enum
 	{
-		MAX_RANDOM_COURSE          = 5,
-		MAX_EQUIPED_COURSE         = 6,
-		MAX_STORAGE_COURSE         = 8,
-		MAX_COURSE_INV             = MAX_EQUIPED_COURSE + MAX_STORAGE_COURSE,  // 14
-
-		MAX_NAME_LENGTH            = 16,
-		MAX_CELESTIAL              = 6,
-		MAX_KID_STAR               = 6,
-		MAX_RESISTANCE             = 5,
-		MAX_MAGIC_DEF              = 5,
-		MAX_SKILL                  = 32,
-		MAX_REWARD_BIT             = 64,
-		MAX_KID_LEVEL              = 105,
-
-		REQUIRED_DAYS_FOR_AWAKENING = 7,     // 15
-		ITEM_ID_REWARD             = 67725,
-
-		DB_DATA_SIZE               = 520,    // 0x208
-
-		// Config IDs
-		IDX_KID_QUALITY_CONFIG     = 6874,   // 0x1ADA
-		IDX_KID_STAR_CONFIG        = 6872,   // 0x1AD8
-
-		// KidModify command types
-		CMD_KID_BASIC              = 265,
-		CMD_MOVE_COURSE            = 266,
-		CMD_UP_COURSE              = 267,
-		CMD_KID_EXTEND             = 268,
+		MAX_RANDOM_COURSE = 5,
+		MAX_EQUIPED_COURSE = 6,
+		MAX_STORAGE_COURSE = 8,
+		MAX_NAME_LENGTH = 16,
+		REQUIRED_DAYS_FOR_AWAKENING = 7, //15
+		ITEM_ID_REWARD = 67725,
+		MAX_CELESTIAL = 6,
+		MAX_KID_STAR = 6,
+		IDX_KID_QUALITY_CONFIG = 6874,
+		IDX_KID_STAR_CONFIG = 6872,
+		MAX_KID_LEVEL = 105,
 	};
-
-	// ----------------------------------------------------------------
-	//  course_ess � packed, size 0x05
-	// ----------------------------------------------------------------
-#pragma pack(push, 1)
-	struct course_ess
-	{
-		int  _tid;                                  // 0x00
-		char _lvl;                                  // 0x04
-	};
-#pragma pack(pop)
-
-	// ----------------------------------------------------------------
-	//  kid_ess � size 0x38 (56)
-	// ----------------------------------------------------------------
-	struct kid_ess
-	{
-		int _lvl;                                   // 0x00
-		int _rahk_lvl;                              // 0x04
-		int _debris_exp;                            // 0x08
-		int _tid;                                   // 0x0C
-		int _physic_damage;                         // 0x10
-		int _magic_damage;                          // 0x14
-		int _defence;                               // 0x18
-		int _magic_defences[MAX_MAGIC_DEF];         // 0x1C
-		int _HP;                                    // 0x30
-		int _crit;                                  // 0x34
-	};                                              // 0x38
-
-	// ----------------------------------------------------------------
-	//  celestial_info - view of first 4 fields of kid_ess (same layout)
-	// ----------------------------------------------------------------
-	struct celestial_info
-	{
-		int level;   // overlays kid_ess._lvl
-		int rank;    // overlays kid_ess._rahk_lvl
-		int exp;     // overlays kid_ess._debris_exp
-		int idx;     // overlays kid_ess._tid
-	};
-
-	// ----------------------------------------------------------------
-	//  kid_data� packed, size 0x80 (128)
-	// ----------------------------------------------------------------
-#pragma pack(push, 1)
-	struct kid_data
-	{
-		int        _course_new[MAX_RANDOM_COURSE];  // 0x00
-		char       _pool_lvl;                       // 0x14
-		char       _free_times;                     // 0x15
-		int        _pool_exp;                       // 0x16
-		course_ess _course_inv[MAX_COURSE_INV];     // 0x1A
-		char       _name[MAX_NAME_LENGTH];          // 0x60
-		char       _gender;                         // 0x70
-		int        _exp;                            // 0x71
-		int        _growth_days;                    // 0x75
-		char       _new_day;                        // 0x79
-		int        _energy;                         // 0x7A
-		char       _type;                           // 0x7E
-		char       _status;                         // 0x7F
-	};                                              // 0x80
-#pragma pack(pop)
-
-	// ----------------------------------------------------------------
-	//  KidModify protocol structs
-	// ----------------------------------------------------------------
-	struct KidModify
-	{
-#pragma pack(push, 2)
-		struct mma                                  // CMD_KID_EXTEND (268), size 0x12
-		{
-			unsigned short cmd;
-			int            type;
-			int            num;
-			int            arg_1;
-			int            arg_2;
-		};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-		struct mma_0                                // CMD_UP_COURSE (267), size 0x05
-		{
-			unsigned short cmd;
-			char           type_1;
-			char           type_2;
-			char           type_3;
-		};
-#pragma pack(pop)
-
-		struct mma_1                                // CMD_KID_BASIC (265) / CMD_MOVE_COURSE (266), size 0x04
-		{
-			unsigned short cmd;
-			char           type_1;
-			char           type_2;
-		};
-	};
-
-private:
-	// ================================================================
-	//  Member data � total 0x2F0 (752) bytes
-	// ================================================================
-	gplayer_imp* const _owner;                      // 0x000
-
-	// --- DB-persisted block (DB_DATA_SIZE = 520 bytes) ---
-	kid_data   _kid_data;                           // 0x004
-	int        _select;                             // 0x084
-	kid_ess    _kid_ess[MAX_CELESTIAL];             // 0x088
-	int        _update_time;                        // 0x1D8
-	int64_t    _addon_mask[MAX_CELESTIAL];          // 0x1DC
-	// --- end DB block (0x20C) ---
-
-	int        _max_data;                           // 0x20C
-	int        _lock_data_map;                      // 0x210
-
-	struct                                          // 0x214 � 220 bytes
-	{
-		int   shape;
-		int   attack_type;
-		int   hp;
-		int   damage_low;
-		int   damage_high;
-		int   damage_magic_low;
-		int   damage_magic_high;
-		int   defence;
-		int   resistance[MAX_RESISTANCE];
-		int   crit_hit;
-		int   attack_speed;
-		float attack_range;
-		float speed;
-		int   attack_degree;
-		int   defend_degree;
-		int   phy_inherit;
-		int   mag_inherit;
-		int   time_reduce;
-		int   skill_count;
-		int   skill[MAX_SKILL];
-	} tmp_data;
-
-	// ================================================================
-	//  Static data tables
-	// ================================================================
-
-	// Pool level exp
-	static const int exp_required_next_level[10];
-	static const int exp_min_level[10];
-
-	// Course card pools per quality tier
-	static const int card_level_1[6];
-	static const int card_level_2[8];
-	static const int card_level_3[7];
-	static const int card_level_4[7];
-	static const int card_level_5[1];
-	static const int* card_pools[MAX_RANDOM_COURSE];
-	static const int  card_counts[MAX_RANDOM_COURSE];
-
-	// Suite combo (EndTeach)
-	static const int          suite_idx_course[12];
-	static const int          suite_idx_mask[12];
-
-	// Kid reward config IDs per celestial slot
-	static const unsigned int KID_REWARD_ID[MAX_CELESTIAL];
 
 public:
-	// ================================================================
-	//  Lifecycle
-	// ================================================================
-	player_kid(gplayer_imp* p)
-		: _owner(p)
-		, _select(-1)
-		, _lock_data_map(0)
-		, _max_data(0)
+
+	struct AWAKENING_COURSE_INFO
 	{
-		memset(&_kid_data, 0, DB_DATA_SIZE);
-		memset(&tmp_data, 0, sizeof(tmp_data));
+		int course_id;
+		char course_level; // 1 ~ 3
+	};	
+
+	struct AWAKENING_COURSE_INFO_2
+	{
+		int course_id;
+		char course_level; // 1 ~ 3
+	};
+
+	struct KID_STRUCT
+	{
+		int level;
+		int rank;
+		int exp;
+		int idx;		
+	};
+
+	struct KID_ACTIVITY
+	{
+		int active_slot;
+		int reserved;
+	};
+
+public:
+	char is_awakening;
+	char block_day;
+	char type;
+	int awakening_random_course[MAX_RANDOM_COURSE];
+	AWAKENING_COURSE_INFO awakening_equiped_course[MAX_EQUIPED_COURSE];
+	AWAKENING_COURSE_INFO_2 awakening_storage_course[MAX_STORAGE_COURSE];
+	short awakening_name_length;
+	char awakening_name[MAX_NAME_LENGTH];
+	char card_level;
+	int points_awakening;
+	int awakening_day_count;
+	int awakening_cash;
+	int awakening_potential;
+	char course_random_cost; 
+	int exp_course_required;
+	char check_day;
+
+	KID_STRUCT celestial[MAX_CELESTIAL];
+	KID_ACTIVITY activity;
+
+public:
+	gplayer_kid() 
+	{ 
+		memset(this, 0x00, sizeof(*this)); 
+	}
+	~gplayer_kid() {}
+
+	inline void Init()
+	{
 	}
 
-	~player_kid() {}
-
-	// ================================================================
-	//  Serialization
-	// ================================================================
-	bool        Save(archive& ar);
-	bool        Load(archive& ar);
-	void        Swap(player_kid& rhs);
-	const void* SaveToDB(size_t& size);
-	void        InitFromDB(const void* buf, size_t size);
-
-	// ================================================================
-	//  Celestial accessors (used by player_kid_addons)
-	// ================================================================
-	inline celestial_info* GetCelestial(int pos)
+	inline void Clear()
 	{
-		if ((unsigned int)pos >= MAX_CELESTIAL) return nullptr;
-		return reinterpret_cast<celestial_info*>(&_kid_ess[pos]);
-	}
-	inline void SetCelestial(int pos, int level, int rank, int exp, int idx)
-	{
-		if ((unsigned int)pos >= MAX_CELESTIAL) return;
-		_kid_ess[pos]._lvl         = level;
-		_kid_ess[pos]._rahk_lvl    = rank;
-		_kid_ess[pos]._debris_exp  = exp;
-		_kid_ess[pos]._tid         = idx;
-		UpdateKid(pos);
+		memset(this, 0x00, sizeof(*this));
 	}
 
-	// ================================================================
-	//  Core gameplay
-	// ================================================================
-	void        Heartbeat(int cur_time);
-	bool        CreateKid(const void* buf);
-	bool        StartDay();
-	bool        OnCreateKid();
+	inline void ClearAwakening()
+	{
+		is_awakening = false;
+		block_day = false;
+		type = -1;
+		memset(awakening_random_course, 0x00, sizeof(awakening_random_course));
+		memset(awakening_equiped_course, 0x00, sizeof(awakening_equiped_course));
+		memset(awakening_storage_course, 0x00, sizeof(awakening_storage_course));
+		memset(awakening_name, 0x00, sizeof(awakening_name));
+		awakening_name_length = 0;
+		card_level = 0;
+		points_awakening = 0;
+		awakening_day_count = 0;
+		awakening_cash = 0;
+		awakening_potential = 0;
+		course_random_cost = 0;
+		exp_course_required = 0;
+		check_day = false;
+	}
 
-	// ================================================================
-	//  Course (pool / shop / inventory)
-	// ================================================================
-	bool        UpPool();
-	bool        RePool();
-	char        BuyCourse(int num);
-	bool        SellCourse(int num);
-	bool        MoveCourse(int src_num, int dst_num);
-	bool        UpCourse(int num1, int num2, int num3);
-	int         EndTeach();
+	inline char IsAwakening() { return is_awakening; }
+	inline void SetAwakening(char b) { is_awakening = b; }
 
-	// ================================================================
-	//  Kid evolution / debris
-	// ================================================================
-	void        UpdateKid(int num);
-	bool        UpKidLvl(size_t num, int count);
-	bool        UseDebri(size_t num, int where, size_t inv_index);
-	void        AddDebri(size_t num, size_t& count);
+	inline char IsBlockDay() { return block_day; }
+	inline void SetBlockDay(char b) { block_day = b; }
 
-	// ================================================================
-	//  Addon / reward
-	// ================================================================
-	bool        ActivateReward(size_t num2, size_t num);
-	void        ActivateAllAddon();
-	void        Activate(int addon_id);
-	void        Deactivate(int addon_id);
+	inline char GetType() { return type; }
+	inline void SetType(char t) { type = t; }
 
-	// ================================================================
-	//  Transform
-	// ================================================================
-	void        ActivateTransform();
-	void        DeactivateTransform();
+	inline int GetRandomCourse(int idx) { return awakening_random_course[idx]; }
+	inline void SetRandomCourse(int idx, int course_id) { awakening_random_course[idx] = course_id; }
 
-	// ================================================================
-	//  Client protocol
-	// ================================================================
-	void        ClientSync(int type);
-	bool        KidModify(int cmd_type, const void* buf, size_t size);
+	inline AWAKENING_COURSE_INFO* GetEquipedCourse(int idx) { return &awakening_equiped_course[idx]; }
+	inline void SetEquipedCourse(int idx, int course_id, char course_level)
+	{
+		awakening_equiped_course[idx].course_id = course_id;
+		awakening_equiped_course[idx].course_level = course_level;
+	}
 
-	// ================================================================
-	//  Debug
-	// ================================================================
-	void        KidDeubug(int cmd_type);
+	inline AWAKENING_COURSE_INFO_2* GetStorageCourse(int idx) { return &awakening_storage_course[idx]; }
+	inline void SetStorageCourse(int idx, int course_id, char course_level)
+	{
+		awakening_storage_course[idx].course_id = course_id;
+		awakening_storage_course[idx].course_level = course_level;
+	}
 
-private:
-	int         NEXT_DAY_TIME();
+	inline short GetNameLength() { return awakening_name_length; }
+	inline void SetNameLength(short len) { awakening_name_length = len; }
+
+	inline char* GetName() { return awakening_name; }
+	inline void SetName(const char* name) { memcpy(awakening_name, name, awakening_name_length); }
+
+	inline char GetCardLevel() { return card_level; }
+	inline void SetCardLevel(char level) { card_level = level; }
+
+	inline int GetPointsAwakening() { return points_awakening; }
+	inline void SetPointsAwakening(int points) { points_awakening = points; }
+
+	inline int GetAwakeningDayCount() { return awakening_day_count; }
+	inline void SetAwakeningDayCount(int count) { awakening_day_count = count; }
+
+	inline int GetAwakeningCash() { return awakening_cash; }
+	inline void SetAwakeningCash(int cash) { awakening_cash = cash; }
+
+	inline int GetAwakeningPotential() { return awakening_potential; }
+	inline void SetAwakeningPotential(int potential) { awakening_potential = potential; }
+
+	inline char GetCourseRandomCost() { return course_random_cost; }
+	inline void SetCourseRandomCost(char cost) { course_random_cost = cost; }
+
+	inline int GetExpCourseRequired() { return exp_course_required; }
+	inline void SetExpCourseRequired(int required) { exp_course_required = required; }
+
+	inline char GetCheckDay() { return check_day; }
+	inline void SetCheckDay(char day) { check_day = day; }
+
+	inline KID_STRUCT* GetCelestial(int pos) { return &celestial[pos]; }
+	inline void SetCelestial(int pos, int level, int rank, unsigned int exp, unsigned int idx)
+	{
+		celestial[pos].level = level;
+		celestial[pos].rank = rank;
+		celestial[pos].exp = exp;
+		celestial[pos].idx = idx;
+	}
+
+	inline KID_ACTIVITY* GetActivity() { return &activity; }
+	inline void SetActivity(int active_slot, int reserved)
+	{
+		activity.active_slot = active_slot;
+		activity.reserved = reserved;
+	}
+	
+public:
+
 };
 
-// ====================================================================
-//  Compile-time size verification
-// ====================================================================
-static_assert(sizeof(player_kid::course_ess)       == 0x05,  "course_ess size mismatch");
-static_assert(sizeof(player_kid::kid_ess)          == 0x38,  "kid_ess size mismatch");
-static_assert(sizeof(player_kid::kid_data)         == 0x80,  "kid_data size mismatch");
-static_assert(sizeof(player_kid::KidModify::mma)   == 0x12,  "KidModify::mma size mismatch");
-static_assert(sizeof(player_kid::KidModify::mma_0) == 0x05,  "KidModify::mma_0 size mismatch");
-static_assert(sizeof(player_kid::KidModify::mma_1) == 0x04,  "KidModify::mma_1 size mismatch");
-static_assert(sizeof(player_kid)                   == 0x2F8, "player_kid size mismatch");
-
-#endif // __ONLINEGAME_GS_PLAYER_KID_H__
+#endif

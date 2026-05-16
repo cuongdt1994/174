@@ -35,6 +35,10 @@ void gplayer_lua::Init()
 	memset(&_lua_role._new_armor_spirit,0,sizeof(_lua_role._new_armor_spirit));
 	memset(&_lua_role._new_armor_cristal,0,sizeof(_lua_role._new_armor_cristal));
 	_lua_role._reset_tower_day = 0;
+	_lua_role._merge_zenith = false;
+	_lua_role._reset_celestial_memorial = false;
+	_lua_role._child_reset_day = -1;
+	_lua_role._reset_lottery = false;
 }
 
 void gplayer_lua::EnterRole(int rid)

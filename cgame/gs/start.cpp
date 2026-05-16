@@ -27,6 +27,7 @@
 #include "celestial_memorial_manager.h"
 #include "emulate_settings.h"
 #include "codex_manager.h"
+#include "kid_manager.h"
 
 using namespace GNET;
 
@@ -148,6 +149,8 @@ extern unsigned long long s2c_cmd_number_counter2[1024];
 }
 int main(int argn , char ** argv)
 {
+	static const char * m_service = "gs";
+	
 	SetupSignalHandler();
 
 	printf("Emulate by Newester Entertainment \n");
@@ -176,7 +179,12 @@ int main(int argn , char ** argv)
 	if(argn >3) gmconf_file = argv[3];
 	if(argn >4) alias_conf = argv[4];
 
-	LuaManager::GetInstance()->Init();
+	
+		LuaManager::GetInstance()->Init();
+	
+
+	EmulateSettings::GetInstance()->Init();
+	EmulateSettings * emulate = EmulateSettings::GetInstance();
 
 	//�ֻ��û��������̶�ǰ׺Ϊ"ms"
 	const char * mobile_prefix = "ms";
@@ -272,16 +280,19 @@ int main(int argn , char ** argv)
 	
 	setlinebuf(stdout);
 
-	LuaManager::GetInstance()->InitWorld();
-	LotteryConfig::GetInstance()->Init();
-	TreasureConfig::GetInstance()->Init();
-	ArenaConfig::GetInstance()->Init();
-	GlyphConfig::GetInstance()->Init();
-	WorldPointsConfig::GetInstance()->Init();
-	ActivityEventConfig::GetInstance()->Init();
-	CelestialMemorialConfig::GetInstance()->Init();
-	EmulateSettings::GetInstance()->Init();
-	CodexConfig::GetInstance()->Init();
+	
+		LuaManager::GetInstance()->InitWorld();
+		LotteryConfig::GetInstance()->Init();
+		TreasureConfig::GetInstance()->Init();
+		ArenaConfig::GetInstance()->Init();
+		GlyphConfig::GetInstance()->Init();
+		WorldPointsConfig::GetInstance()->Init();
+		ActivityEventConfig::GetInstance()->Init();
+		CelestialMemorialConfig::GetInstance()->Init();
+		EmulateSettings::GetInstance()->Init();
+		CodexConfig::GetInstance()->Init();
+	
+	KidManager::GetInstance()->Init();
 
 	while(1) 
 	{

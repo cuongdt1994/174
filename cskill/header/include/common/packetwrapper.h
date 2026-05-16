@@ -180,7 +180,7 @@ public:
 		}
 		else
 		{
-			ASSERT(false && "»º³åÇøÇ·ÔØ");
+			ASSERT(false && "buffer underrun");
 			memset(&t,0,sizeof(t));
 		}
 	}
@@ -219,7 +219,7 @@ public:
 		}
 		else
 		{
-			ASSERT(false && "»º³åÇøÇ·ÔØ");
+			ASSERT(false && "buffer underrun");
 			memset(__buf,0,__size);
 		}
 		return *this;
@@ -259,7 +259,7 @@ class raw_wrapper : public base_wrapper
 	}
 	void Failed()
 	{
-		throw "»º³åÇøÇ·ÔØ";
+		throw "buffer underrun";
 	}
 public:
 	enum

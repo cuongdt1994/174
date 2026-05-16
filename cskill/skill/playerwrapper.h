@@ -1194,7 +1194,7 @@ public:
 
 	// Passe de Batalha 
 	bool SetBattlePassEffect(bool);
-
+	bool InsertTeamVisibleState(int value, bool inc);
 };
 
 

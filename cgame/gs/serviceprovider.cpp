@@ -31,7 +31,9 @@
 #include "global_controller.h"
 #include "luamanager.h"
 #include "arenamanager.h"
+#include "kid_manager.h"
 #include <string>
+#include "emulate_settings.h"
 
 namespace NG_ELEMNET_SERVICE
 {
@@ -10012,44 +10014,60 @@ private:
 		{
 			return false;
 		}
-		
+
 		return true;
 	}
 };
 
-typedef feedback_provider create_kid_service_provider;
+typedef feedback_provider kid_generate_service_provider;
 
-class create_kid_service_executor : public service_executor
+class kid_generate_service_executor : public service_executor
 {
-	public:
-	#pragma pack(1)
-		struct player_request
-			{
-				char gender;
-				char count;
-				char name[16];
-			};
-	#pragma pack()
-	private:
+public:
+#pragma pack(1)
+	struct player_request
+	{
+		char type; //0 - male / 1 - female
+		char name_len; //10
+		char name[10];
+		short reserve;
+		int reserve1;
+	};
+#pragma pack()
+
+private:
 	virtual bool SendRequest(gplayer_imp * pImp, const XID & provider, const void * buf, unsigned int size)
 	{
-		if(size != sizeof(player_request)) return false;
+		if(size < sizeof(player_request)) return false;
 		player_request * req = (player_request*)buf;
+
 		if(pImp->OI_TestSafeLock())
 		{
 			pImp->_runner->error_message(S2C::ERR_FORBIDDED_OPERATION_IN_SAFE_LOCK);
 			return true;
 		}
+
 		pImp->SendTo<0>(GM_MSG_SERVICE_REQUEST, provider, _type, buf, size);
 		return true;
 	}
-	virtual bool OnServe(gplayer_imp *pImp, const XID & provider, const A3DVECTOR & pos, const void * buf, unsigned int size)
-		{
-			ASSERT(size == sizeof(player_request));
 
-			pImp->CreateKid(buf);
-			return true;
+	virtual bool OnServe(gplayer_imp * pImp, const XID & provider, const A3DVECTOR & pos, const void * buf, unsigned int size)
+	{
+		if(size < sizeof(player_request)) return false;
+		player_request * req = (player_request*)buf;
+
+		if(!EmulateSettings::GetInstance()->GetEnabledChild())
+		{
+			pImp->_runner->error_message(S2C::ERR_SERVICE_UNAVILABLE);
+			return false;
 		}
+
+		if(!pImp->KidAwakeningCreate(req->type, req->name_len, req->name))
+		{
+			return false;
+		}
+		return true;
+	}
 };
 
 }
@@ -10175,7 +10193,10 @@ static service_inserter si124 = SERVICE_INSERTER(produce_new_armor_provider,prod
 /*170+ Códice*/
 static service_inserter si129 = SERVICE_INSERTER(codex_dye_service_provider ,codex_dye_service_executor,129);
 static service_inserter si130 = SERVICE_INSERTER(codex_rename_service_provider ,codex_rename_service_executor,130);
-static service_inserter si131 = SERVICE_INSERTER(create_kid_service_provider ,create_kid_service_executor,131);
+
+/*170+ Bebê Celestial */
+static service_inserter si131 = SERVICE_INSERTER(kid_generate_service_provider ,kid_generate_service_executor,131);
+
 static service_inserter si133 = SERVICE_INSERTER(refine_material_service_provider, refine_material_service_executor ,133);
 static service_inserter si135 = SERVICE_INSERTER(battle_start_service_provider, battle_start_service_executor, 135);
 

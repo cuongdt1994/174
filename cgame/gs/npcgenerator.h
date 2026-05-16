@@ -398,6 +398,8 @@ struct npc_template
 			int service_material_refine:1;
 
 			int storage_999_recv:1;
+			/*170+ Bebê Celestial*/
+			int service_kid_create:1;
 			/*170+ Códice*/
 			int service_dye_codex:1;
 			int service_rename_codex:1;
