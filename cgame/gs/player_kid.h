@@ -20,7 +20,7 @@ public:
 		MAX_EQUIPED_COURSE = 6,
 		MAX_STORAGE_COURSE = 8,
 		MAX_NAME_LENGTH = 16,
-		REQUIRED_DAYS_FOR_AWAKENING = 7, //15
+		REQUIRED_DAYS_FOR_AWAKENING = 7,
 		ITEM_ID_REWARD = 67725,
 		MAX_CELESTIAL = 6,
 		MAX_KID_STAR = 6,
@@ -34,13 +34,13 @@ public:
 	struct AWAKENING_COURSE_INFO
 	{
 		int course_id;
-		char course_level; // 1 ~ 3
+		char course_level;
 	};	
 
 	struct AWAKENING_COURSE_INFO_2
 	{
 		int course_id;
-		char course_level; // 1 ~ 3
+		char course_level;
 	};
 
 	struct KID_STRUCT
