@@ -1,7 +1,7 @@
 #ifndef _ITEMDATAMAN_H_
 #define _ITEMDATAMAN_H_
 
-#include <vector.h>
+#include <vector>
 #include <unordered_map>
 
 #ifdef LINUX
