@@ -57,7 +57,7 @@ setup_skill_env() {
     popd > /dev/null
 
     pushd "$SKILL/skill" > /dev/null
-    rm -f obj_interface.h attack.h property.h filter.h substance.h sfilterdef.h statedef.h
+    rm -f obj_interface.h attack.h property.h filter.h substance.h sfilterdef.h statedef.h skillwrapper.h
     ln -sf ../../$GS/gs/obj_interface.h .
     ln -sf ../../$GS/gs/attack.h .
 	ln -sf ../../$GS/gs/property.h .
@@ -65,6 +65,7 @@ setup_skill_env() {
 	ln -sf ../../$GS/gs/substance.h .
 	ln -sf ../../$GS/gs/sfilterdef.h .
 	ln -sf ../../$GS/gs/statedef.h .
+	ln -sf ../../$GS/gs/skillwrapper.h .
     popd > /dev/null
 }
 
