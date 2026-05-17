@@ -686,7 +686,7 @@ gplayer_imp::KidAwakeningNewDay3()
 	else
 	{
 		if (config2->broadcast > 0)
-			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), (int)config2->rahk);
+			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), (int)config2->id);
 
 		DATA_TYPE data3;
 		const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)
