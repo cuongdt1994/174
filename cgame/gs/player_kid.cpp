@@ -887,6 +887,9 @@ gplayer_imp::KidCelestialTransformation(int mode)
 {
 	object_interface obj_if(this);
 
+	// -------------------------------------------------------------------------
+	// Deactivation
+	// -------------------------------------------------------------------------
 	if (!mode)
 	{
 		if (!_kid_transformation) return;
@@ -895,18 +898,13 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		_kid_transformation_time = 0;
 
 		const int saved_count = _kid_transform_skill_state.saved_count;
+		const int neg_count   = (saved_count > 16) ? 16 : saved_count;
 
-		int neg_skills[32];
-		int neg_count = 0;
-		if (saved_count > 0)
+		int neg_skills[32] = {};
+		for (int i = 0; i < neg_count; ++i)
 		{
-			neg_count = saved_count > 16 ? 16 : saved_count;
-			memset(neg_skills, 0, sizeof(neg_skills));
-			for (int i = 0; i < neg_count; ++i)
-			{
-				neg_skills[2 * i]     = _kid_transform_skill_state.saved_skill_id[i];
-				neg_skills[2 * i + 1] = -_kid_transform_skill_state.saved_kid_skill_level[i];
-			}
+			neg_skills[2 * i]     =  _kid_transform_skill_state.saved_skill_id[i];
+			neg_skills[2 * i + 1] = -_kid_transform_skill_state.saved_kid_skill_level[i];
 		}
 
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
@@ -919,9 +917,13 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		return;
 	}
 
+	// -------------------------------------------------------------------------
+	// Validation
+	// -------------------------------------------------------------------------
 	if (_kid_transformation) return;
 
-	if (obj_if.IsFilterExist(FILTER_BEASTIEFORM) ||
+	const bool has_conflicting_form =
+		obj_if.IsFilterExist(FILTER_BEASTIEFORM) ||
 		obj_if.IsFilterExist(FILTER_TIGERFORM)   ||
 		obj_if.IsFilterExist(FILTER_FOXFORM)      ||
 		obj_if.IsFilterExist(FILTER_SWIFTFORM)    ||
@@ -929,41 +931,29 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		obj_if.IsFilterExist(FILTER_THUNDERFORM)  ||
 		obj_if.IsFilterExist(FILTER_SHADOWFORM)   ||
 		obj_if.IsFilterExist(FILTER_FAIRYFORM)    ||
-		obj_if.IsFilterExist(FILTER_GIANTFORM))
-	{
-		_runner->error_message(627);
-		return;
-	}
+		obj_if.IsFilterExist(FILTER_GIANTFORM);
 
+	if (has_conflicting_form)           { _runner->error_message(627); return; }
 	if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
-	{
-		_runner->error_message(628);
-		return;
-	}
+	                                    { _runner->error_message(628); return; }
 
-	int slot = _kid.GetActivity()->active_slot;
+	const int slot = _kid.GetActivity()->active_slot;
 	if (slot < 0 || slot >= (int)gplayer_kid::MAX_CELESTIAL)
-	{
-		_runner->error_message(53);
-		return;
-	}
+	                                    { _runner->error_message(53);  return; }
 
 	const gplayer_kid::KID_STRUCT *celestial = _kid.GetCelestial(slot);
 	if (!celestial || celestial->idx <= 0 || celestial->level <= 0)
-	{
-		_runner->error_message(53);
-		return;
-	}
+	                                    { _runner->error_message(53);  return; }
 
 	DATA_TYPE dt;
 	const KID_PROPERTY_CONFIG *cfg = (const KID_PROPERTY_CONFIG *)
 		world_manager::GetDataMan().get_data_ptr(celestial->idx, ID_SPACE_CONFIG, dt);
 	if (!cfg || dt != DT_KID_PROPERTY_CONFIG)
-	{
-		_runner->error_message(53);
-		return;
-	}
+	                                    { _runner->error_message(53);  return; }
 
+	// -------------------------------------------------------------------------
+	// Star rank multiplier
+	// -------------------------------------------------------------------------
 	float star_param = 0.0f;
 	{
 		DATA_TYPE dt_star;
@@ -971,50 +961,64 @@ gplayer_imp::KidCelestialTransformation(int mode)
 			world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_STAR_CONFIG, ID_SPACE_CONFIG, dt_star);
 		if (cfg_star && dt_star == DT_KID_UPGRADE_STAR_CONFIG)
 		{
-			star_param = (celestial->rank > 0 && celestial->rank <= 6)
+			star_param = (celestial->rank >= 1 && celestial->rank <= 6)
 				? cfg_star->upgrade_star_info[celestial->rank - 1].star_param
 				: cfg_star->zero_star_param;
 		}
 	}
 
+	// -------------------------------------------------------------------------
+	// Essence stats: base config value scaled by celestial level and star rank
+	// -------------------------------------------------------------------------
 	const int kid_lvl     = celestial->level;
-	const int ess_hp      = (int)(cfg->hp            * kid_lvl * star_param);
-	const int ess_dmg     = (int)(cfg->damage        * kid_lvl * star_param);
-	const int ess_dmg_mag = (int)(cfg->magic_damage  * kid_lvl * star_param);
-	const int ess_def     = (int)(cfg->defence        * kid_lvl * star_param);
-	const int ess_resist  = (int)(cfg->magic_defence  * kid_lvl * star_param);
+	const int ess_hp      = (int)(cfg->hp                   * kid_lvl * star_param);
+	const int ess_dmg     = (int)(cfg->damage               * kid_lvl * star_param);
+	const int ess_dmg_mag = (int)(cfg->magic_damage         * kid_lvl * star_param);
+	const int ess_def     = (int)(cfg->defence              * kid_lvl * star_param);
+	const int ess_resist  = (int)(cfg->magic_defence        * kid_lvl * star_param);
 	const int ess_crit    = (int)(cfg->crit_hit_probability * 100.0f * kid_lvl * star_param);
 
-	#define KID_RESULT(b1, b2, p)  ((int)(((b1) + (b2)) * 0.01f * (100 + (p)) + 0.5f))
+	// Blend: (essence + player_base) scaled by enhancement percent
+	#define KID_STAT(essence, base, pct)  ((int)(((essence) + (base)) * 0.01f * (100 + (pct)) + 0.5f))
 
-	int enh_def = (int)((3 * _cur_prop.strength + 2 * _cur_prop.vitality) * 0.04f + 0.5f);
-	int enh_res = (int)((3 * _cur_prop.energy   + 2 * _cur_prop.vitality) * 0.04f + 0.5f);
+	const int enh_def     = (int)((3 * _cur_prop.strength + 2 * _cur_prop.vitality) * 0.04f + 0.5f);
+	const int enh_res     = (int)((3 * _cur_prop.energy   + 2 * _cur_prop.vitality) * 0.04f + 0.5f);
+	const int sum_atk_def = _attack_degree       + _defend_degree;
+	const int sum_anti    = _anti_defense_degree + _anti_resistance_degree;
 
-	int sum_atk_def = _attack_degree       + _defend_degree;
-	int sum_anti    = _anti_defense_degree + _anti_resistance_degree;
-
-	int buf[56];
-	memset(buf, 0, sizeof(buf));
+	// -------------------------------------------------------------------------
+	// Filter buffer layout (consumed by SetKidFilter):
+	//   [0]       unk1
+	//   [1]       attack_type
+	//   [2..12]   hp, dmg_lo, dmg_hi, mag_lo, mag_hi, def, resist[5]
+	//   [13]      crit delta
+	//   [14]      attack_speed delta
+	//   [15..16]  range delta, speed delta (stored as float bits)
+	//   [17..21]  degree/rank deltas
+	//   [22]      skill_count
+	//   [23+2*i]  skill_id[i],  [24+2*i] skill_level[i]
+	// -------------------------------------------------------------------------
+	int buf[56] = {};
 
 	buf[0]  = cfg->unk1;
 	buf[1]  = cfg->attack_type;
-	buf[2]  = KID_RESULT(ess_hp,      _cur_prop.max_hp,            _en_percent.max_hp);
-	buf[3]  = KID_RESULT(ess_dmg,     _cur_prop.damage_low,        _en_percent.damage + _en_percent.base_damage);
-	buf[4]  = KID_RESULT(ess_dmg,     _cur_prop.damage_high,       _en_percent.damage + _en_percent.base_damage);
-	buf[5]  = KID_RESULT(ess_dmg_mag, _cur_prop.damage_magic_low,  _en_percent.base_magic + _en_percent.magic_dmg);
-	buf[6]  = KID_RESULT(ess_dmg_mag, _cur_prop.damage_magic_high, _en_percent.base_magic + _en_percent.magic_dmg);
-	buf[7]  = KID_RESULT(ess_def,     _cur_prop.defense,           _en_percent.defense    + enh_def);
-	buf[8]  = KID_RESULT(ess_resist,  _cur_prop.resistance[0],     _en_percent.resistance[0] + enh_res);
-	buf[9]  = KID_RESULT(ess_resist,  _cur_prop.resistance[1],     _en_percent.resistance[1] + enh_res);
-	buf[10] = KID_RESULT(ess_resist,  _cur_prop.resistance[2],     _en_percent.resistance[2] + enh_res);
-	buf[11] = KID_RESULT(ess_resist,  _cur_prop.resistance[3],     _en_percent.resistance[3] + enh_res);
-	buf[12] = KID_RESULT(ess_resist,  _cur_prop.resistance[4],     _en_percent.resistance[4] + enh_res);
+	buf[2]  = KID_STAT(ess_hp,      _cur_prop.max_hp,            _en_percent.max_hp);
+	buf[3]  = KID_STAT(ess_dmg,     _cur_prop.damage_low,        _en_percent.damage + _en_percent.base_damage);
+	buf[4]  = KID_STAT(ess_dmg,     _cur_prop.damage_high,       _en_percent.damage + _en_percent.base_damage);
+	buf[5]  = KID_STAT(ess_dmg_mag, _cur_prop.damage_magic_low,  _en_percent.base_magic + _en_percent.magic_dmg);
+	buf[6]  = KID_STAT(ess_dmg_mag, _cur_prop.damage_magic_high, _en_percent.base_magic + _en_percent.magic_dmg);
+	buf[7]  = KID_STAT(ess_def,     _cur_prop.defense,           _en_percent.defense    + enh_def);
+	buf[8]  = KID_STAT(ess_resist,  _cur_prop.resistance[0],     _en_percent.resistance[0] + enh_res);
+	buf[9]  = KID_STAT(ess_resist,  _cur_prop.resistance[1],     _en_percent.resistance[1] + enh_res);
+	buf[10] = KID_STAT(ess_resist,  _cur_prop.resistance[2],     _en_percent.resistance[2] + enh_res);
+	buf[11] = KID_STAT(ess_resist,  _cur_prop.resistance[3],     _en_percent.resistance[3] + enh_res);
+	buf[12] = KID_STAT(ess_resist,  _cur_prop.resistance[4],     _en_percent.resistance[4] + enh_res);
 	buf[13] = ess_crit - _crit_rate - _base_crit_rate;
 	buf[14] = _cur_prop.attack_speed - (int)(cfg->attack_interval * 20.0f + 0.00001f);
 
 	{
-		float range_delta = cfg->attack_dist  - _cur_prop.attack_range;
-		float speed_delta = cfg->walk_speed   - _cur_prop.run_speed;
+		float range_delta = cfg->attack_dist - _cur_prop.attack_range;
+		float speed_delta = cfg->walk_speed  - _cur_prop.run_speed;
 		memcpy(&buf[15], &range_delta, sizeof(float));
 		memcpy(&buf[16], &speed_delta, sizeof(float));
 	}
@@ -1025,23 +1029,31 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	buf[20] = (int)(sum_anti    * cfg->anti_magic_param)        - _anti_resistance_degree;
 	buf[21] = (int)(cfg->enchant_time_reduce * 100.0f)          - _skill.GetPraySpeed();
 
+	#undef KID_STAT
+
+	// -------------------------------------------------------------------------
+	// Skills: for each slot, find the highest level unlocked by kid_lvl
+	// -------------------------------------------------------------------------
 	int skill_count = 0;
 	if (cfg->id_kid_skill)
 	{
 		DATA_TYPE dt_sk;
 		const KID_SKILL_CONFIG *cfg_sk = (const KID_SKILL_CONFIG *)
 			world_manager::GetDataMan().get_data_ptr(cfg->id_kid_skill, ID_SPACE_CONFIG, dt_sk);
+
 		if (cfg_sk && dt_sk == DT_KID_SKILL_CONFIG)
 		{
 			for (int i = 0; i < 16 && skill_count < 16; ++i)
 			{
 				if (cfg_sk->skill[i].id <= 0) continue;
+
 				for (int j = 9; j >= 0; --j)
 				{
 					if (cfg_sk->skill[i].level[j] > 0 && kid_lvl >= cfg_sk->skill[i].level[j])
 					{
-						buf[23 + 2 * skill_count]     = cfg_sk->skill[i].id;
-						buf[23 + 2 * skill_count + 1] = j + 1;
+						int *skill_entry = &buf[23 + 2 * skill_count];
+						skill_entry[0] = cfg_sk->skill[i].id;
+						skill_entry[1] = j + 1;
 						++skill_count;
 						break;
 					}
@@ -1051,10 +1063,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	}
 	buf[22] = skill_count;
 
-	#undef KID_RESULT
-
+	// -------------------------------------------------------------------------
+	// Activate transformation
+	// -------------------------------------------------------------------------
 	_kid_transformation      = 1;
 	_kid_transformation_time = 1800;
+
 	_kid_transform_skill_state.saved_count = skill_count;
 	_kid_transform_skill_state.saved_slot  = slot;
 	_kid_transform_skill_state.saved_idx   = celestial->idx;
@@ -1065,7 +1079,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	}
 
 	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
-
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 	_skill.SetKidFilter(obj_if, buf);
 
