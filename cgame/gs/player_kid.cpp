@@ -312,7 +312,7 @@ gplayer_imp::KidGetSuitePoints()
 		{
 			points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
 
-			for (unsigned int suite_id : {66226u, 66255u, 66256u, 66257u, 66258u, 66259u, 66260u, 66261u, 66262u, 66263u, 66264u, 66265u})
+			for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265})
 			{
 				DATA_TYPE dt2;
 				COURSE_SUITE_ESSENCE *suite_ess = (COURSE_SUITE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(
@@ -379,7 +379,7 @@ gplayer_imp::KidAwakeningNewDay2()
 		{
 			points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
 
-			for (unsigned int suite_id : {66226u, 66255u, 66256u, 66257u, 66258u, 66259u, 66260u, 66261u, 66262u, 66263u, 66264u, 66265u})
+			for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265})
 			{
 				DATA_TYPE dt2;
 				COURSE_SUITE_ESSENCE *suite_ess = (COURSE_SUITE_ESSENCE *)world_manager::GetDataMan().get_data_ptr(
@@ -686,7 +686,7 @@ gplayer_imp::KidAwakeningNewDay3()
 	else
 	{
 		if (config2->broadcast > 0)
-			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), idx_item);
+			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), (int)config2->rahk);
 
 		DATA_TYPE data3;
 		const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)
