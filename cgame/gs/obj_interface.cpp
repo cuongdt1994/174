@@ -2192,7 +2192,7 @@ object_interface::SetInvincibleFilter2(bool is_vin,int timeout,bool immune)
 	}
 }
 
-void 
+void
 object_interface::LockEquipment(bool is_lock)
 {
 	_imp->LockEquipment(is_lock);

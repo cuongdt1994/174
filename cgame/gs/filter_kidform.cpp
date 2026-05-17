@@ -157,7 +157,6 @@ void filter_Kidform::OnRelease()
 	else if (diff < 0)
 		_parent.Heal(-diff);
 
-	_parent.KidTransformEnd();
 }
 
 void filter_Kidform::TranslateSendAttack(const XID &target, attack_msg &msg)
