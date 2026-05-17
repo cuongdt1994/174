@@ -1602,6 +1602,16 @@ void SkillWrapper::SetKidFilter(object_interface player, int* buf)
 	player.AddFilter(new filter_Kidform(player, buf));
 }
 
+void SkillWrapper::KidTransformAddBuffs(object_interface player)
+{
+	player.AddFilter(new filter_Giant     (player, 30, 3600));
+	player.AddFilter(new filter_Blessmagic(player, 70, 3600));
+	player.AddFilter(new filter_Stoneskin (player, 60, 3600));
+	player.AddFilter(new filter_Incresist (player, 60, 3600));
+	player.AddFilter(new filter_Inchp     (player, 30, 3600));
+	player.AddFilter(new filter_Ironshield(player, 60, 3600));
+}
+
 void SkillWrapper::MnFactionAddFilter(object_interface player, float ratio)
 {
 	PlayerWrapper		w_player(player, 0, 0, 0, 0);

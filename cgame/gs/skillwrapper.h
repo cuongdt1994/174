@@ -640,6 +640,7 @@ public:
 	// Mirror cskill/skill/skillwrapper.cpp:1600-1612 — kid form helpers.
 	// SetKidFilter: gắn filter_Kidform mang stat-delta + skill list (layout 24+ ints).
 	void SetKidFilter(object_interface player, int* buf);
+	void KidTransformAddBuffs(object_interface player);
 	
 	
 	//glyph

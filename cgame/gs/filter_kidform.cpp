@@ -83,7 +83,7 @@ void filter_Kidform::OnAttach()
 	for (int i = 0; i < _skill_count; ++i)
 	{
 		sw = &_parent.GetSkillWrapper();
-		sw->ActivateDynSkill(_skill[2 * i], _skill[2 * i + 1]);
+		sw->ActivateDynSkill(_skill[2 * i], 1, _parent, _skill[2 * i + 1]);
 	}
 
 	_parent.SendClientAttackData();
@@ -136,7 +136,7 @@ void filter_Kidform::OnRelease()
 	for (int i = 0; i < _skill_count; ++i)
 	{
 		sw = &_parent.GetSkillWrapper();
-		sw->DeactivateDynSkill(_skill[2 * i], _skill[2 * i + 1]);
+		sw->DeactivateDynSkill(_skill[2 * i], 1, _parent, _skill[2 * i + 1]);
 	}
 
 	_parent.SendClientAttackData();
@@ -146,10 +146,8 @@ void filter_Kidform::OnRelease()
 	_parent.UpdateSpeedData();
 	_parent.SendClientCurSpeed();
 
-	// apply post-transform buff filters via existing cash-resurrect mechanism
-	static const float kid_buff_ratios[GNET::BUFF_COUNT] = { 30.f, 70.f, 60.f, 60.f, 30.f, 60.f };
 	sw = &_parent.GetSkillWrapper();
-	sw->ResurrectByCashAddFilter(_parent, 3600, kid_buff_ratios, GNET::BUFF_COUNT);
+	sw->KidTransformAddBuffs(_parent);
 
 	// restore HP proportionally to the new max_hp
 	float target_hp = (float)_parent.GetExtendProp().max_hp * hp_ratio;
