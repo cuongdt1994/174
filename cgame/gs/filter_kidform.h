@@ -45,6 +45,17 @@ protected:
 	virtual bool Save(archive &ar);
 	virtual bool Load(archive &ar);
 
+	// index 0           → skill_count
+	// index 1 + 2*i     → skill_id[i]
+	// index 2 + 2*i     → skill_level[i]
+	virtual int  OnQuery(int index)
+	{
+		if (index == 0) return _skill_count;
+		int i = index - 1;
+		if (i >= 0 && i < 2 * _skill_count) return _skill[i];
+		return 0;
+	}
+
 	filter_Kidform() {}
 };
 

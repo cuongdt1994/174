@@ -897,17 +897,15 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		_kid_transformation      = 0;
 		_kid_transformation_time = 0;
 
-		const int saved_count = _kid_transform_skill_state.saved_count;
-		const int neg_count   = (saved_count > 16) ? 16 : saved_count;
-
+		// read skill data from filter before removing it
+		const int neg_count = _filters.QueryFilter(FILTER_KIDFORM, 0);
 		int neg_skills[32] = {};
 		for (int i = 0; i < neg_count; ++i)
 		{
-			neg_skills[2 * i]     =  _kid_transform_skill_state.saved_skill_id[i];
-			neg_skills[2 * i + 1] = -_kid_transform_skill_state.saved_kid_skill_level[i];
+			neg_skills[2 * i]     =  _filters.QueryFilter(FILTER_KIDFORM, 1 + 2 * i);
+			neg_skills[2 * i + 1] = -_filters.QueryFilter(FILTER_KIDFORM, 2 + 2 * i);
 		}
 
-		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 		_filters.RemoveFilter(FILTER_KIDFORM);
 
 		if (neg_count > 0)
@@ -1068,15 +1066,6 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// -------------------------------------------------------------------------
 	_kid_transformation      = 1;
 	_kid_transformation_time = 1800;
-
-	_kid_transform_skill_state.saved_count = skill_count;
-	_kid_transform_skill_state.saved_slot  = slot;
-	_kid_transform_skill_state.saved_idx   = celestial->idx;
-	for (int i = 0; i < skill_count; ++i)
-	{
-		_kid_transform_skill_state.saved_skill_id[i]        = buf[23 + 2 * i];
-		_kid_transform_skill_state.saved_kid_skill_level[i] = buf[23 + 2 * i + 1];
-	}
 
 	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);

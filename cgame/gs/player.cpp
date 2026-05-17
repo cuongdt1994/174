@@ -288,7 +288,6 @@ gplayer_imp::gplayer_imp()
 
 	_kid_transformation = 0;
 	_kid_transformation_time = 0;
-	memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
 	_check_interface = 0;
 	_check_genesis_lvl = 0;
@@ -8496,7 +8495,6 @@ gplayer_imp::Swap(gplayer_imp * rhs)
 
 	Set(_kid_transformation, rhs);
 	Set(_kid_transformation_time, rhs);
-	memcpy(&_kid_transform_skill_state, &rhs->_kid_transform_skill_state, sizeof(_kid_transform_skill_state));
 
 	Set(_check_interface, rhs);
 	Set(_check_genesis_lvl, rhs);
@@ -9149,7 +9147,6 @@ gplayer_imp::PlayerEnterServer(int source_tag)
 		
 		_kid_transformation = 0;
 		_kid_transformation_time = 0;
-		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
 
 		obj_if_kid.ChangeShape2(0, 0);
 		property_policy::UpdatePlayer(GetPlayerClass(), this);
