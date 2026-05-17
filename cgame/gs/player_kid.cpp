@@ -14,6 +14,7 @@
 #include "luamanager.h"
 #include "emulate_settings.h"
 #include "player_kid.h"
+#include "cooldowncfg.h"
 
 static const int card_level_1[] = { 66225, 66227, 66228, 66229, 66230, 66231 };
 static const int card_level_2[] = { 66232, 66233, 66234, 66235, 66236, 66237, 66238, 66239 };
@@ -890,25 +891,30 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	{
 		if (!_kid_transformation) return;
 
+		_kid_transformation      = 0;
+		_kid_transformation_time = 0;
+
 		const int saved_count = _kid_transform_skill_state.saved_count;
+
+		int neg_skills[32];
+		int neg_count = 0;
 		if (saved_count > 0)
 		{
-			int neg_skills[32];
+			neg_count = saved_count > 16 ? 16 : saved_count;
 			memset(neg_skills, 0, sizeof(neg_skills));
-			int n = saved_count > 16 ? 16 : saved_count;
-			for (int i = 0; i < n; ++i)
+			for (int i = 0; i < neg_count; ++i)
 			{
 				neg_skills[2 * i]     = _kid_transform_skill_state.saved_skill_id[i];
 				neg_skills[2 * i + 1] = -_kid_transform_skill_state.saved_kid_skill_level[i];
 			}
-			_runner->player_world_speak_info(1, 1, 1, n, neg_skills);
 		}
 
-		_kid_transformation = 0;
-		_kid_transformation_time = 0;
 		memset(&_kid_transform_skill_state, 0, sizeof(_kid_transform_skill_state));
-
 		_filters.RemoveFilter(FILTER_KIDFORM);
+
+		if (neg_count > 0)
+			_runner->player_world_speak_info(1, 1, 1, neg_count, neg_skills);
+
 		PlayerGetProperty();
 		return;
 	}
@@ -916,6 +922,12 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	if (_kid_transformation) return;
 
 	if (GetForm())
+	{
+		_filters.RemoveFilter(FILTER_KIDFORM);
+		return;
+	}
+
+	if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
 	{
 		_runner->error_message(53);
 		return;
@@ -993,8 +1005,8 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	buf[14] = _cur_prop.attack_speed - (int)(cfg->attack_interval * 20.0f + 0.00001f);
 
 	{
-		float range_delta = cfg->attack_dist - _cur_prop.attack_range;
-		float speed_delta = cfg->fly_speed   - _cur_prop.run_speed;
+		float range_delta = cfg->attack_dist  - _cur_prop.attack_range;
+		float speed_delta = cfg->walk_speed   - _cur_prop.run_speed;
 		memcpy(&buf[15], &range_delta, sizeof(float));
 		memcpy(&buf[16], &speed_delta, sizeof(float));
 	}
@@ -1044,12 +1056,16 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		_kid_transform_skill_state.saved_kid_skill_level[i] = buf[23 + 2 * i + 1];
 	}
 
+	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
+
+	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
 	_skill.SetKidFilter(obj_if, buf);
+
+	_basic.hp = _cur_prop.max_hp;
 
 	if (skill_count > 0)
 		_runner->player_world_speak_info(1, 1, 1, skill_count, buf + 23);
 
-	_basic.hp = _cur_prop.max_hp;
 	PlayerGetProperty();
 }
 
