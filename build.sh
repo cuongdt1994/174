@@ -14,6 +14,17 @@ print_msg() {
     echo -e "\n=========================== $1 ===========================\n"
 }
 
+# Remove each argument whether it is a symlink, plain file, or actual directory.
+rm_links() {
+    for item in "$@"; do
+        if [ -d "$item" ] && [ ! -L "$item" ]; then
+            rm -rf "$item"
+        else
+            rm -f "$item"
+        fi
+    done
+}
+
 install_deps() {
     print_msg "Installing required dependencies"
 
@@ -26,7 +37,7 @@ install_deps() {
     apt-get install -y make gcc g++ libssl-dev:i386 libssl-dev libcrypto++-dev libpcre3 libpcre3-dev libpcre3:i386 libpcre3-dev:i386 libtesseract-dev libx11-dev:i386 libx11-dev gcc-multilib libc6-dev:i386 build-essential g++-multilib libtemplate-plugin-xml-perl libxml2-dev libxml2-dev:i386 libxml2:i386 libstdc++6:i386 libmariadb-dev-compat:i386 libmariadb-dev:i386
     apt-get install -y libdb++-dev:i386 libdb-dev:i386 libdb5.3:i386 libdb5.3++:i386 libdb5.3++-dev:i386 libdb5.3-dbg:i386 libdb5.3-dev:i386
     apt-get install -y libdb++-dev libdb-dev libdb5.3 libdb5.3++ libdb5.3++-dev libdb5.3-dbg libdb5.3-dev
-    apt-get install -y libmysqlcppconn-dev libjsoncpp-dev libmariadb-dev-compat curl libcurl4:i386 pkg-config libcurl4-openssl-dev
+    apt-get install -y libmysqlcppconn-dev libjsoncpp-dev libjsoncpp-dev:i386 libmariadb-dev-compat curl libcurl4:i386 libcurl4-openssl-dev libcurl4-openssl-dev:i386 pkg-config
 }
 
 # Generic: clean + parallel build of a directory.
@@ -49,7 +60,7 @@ build_dir() {
 setup_skill_env() {
     print_msg "Setting up $SKILL"
     pushd "$SKILL" > /dev/null
-    rm -f mk lua io common
+    rm_links mk lua io common
     ln -sf ~/share/mk/ .
     ln -sf ~/share/lua/ .
     ln -sf ~/share/io/ .
@@ -72,7 +83,7 @@ setup_skill_env() {
 setup_env() {
     print_msg "Setting up $NET"
     pushd "$NET" > /dev/null
-    rm -f common io mk storage rpc lua rpcgen
+    rm_links common io mk storage rpc lua rpcgen
     ln -sf ~/share/common/ .
     ln -sf ~/share/io/ .
     ln -sf ~/share/mk/ .
@@ -84,7 +95,7 @@ setup_env() {
 
     print_msg "Setting up $GS"
     pushd "$GS" > /dev/null
-    rm -f lua liblua.a
+    rm_links lua liblua.a
     ln -sf ~/share/lua/ .
     # Rules.make references $(BASEPATH)/liblua.a — create a direct symlink
     # so cgame/gs can find liblua.a without knowing the lua/src/ sub-path.
