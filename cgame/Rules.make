@@ -17,7 +17,7 @@ STD = -w -std=c++20 -mfpmath=387
 OPTIMIZE = -O0 -g -ggdb -mfpmath=387
 CC=gcc $(CSTD) $(DEF) $(THREAD) $(OPTIMIZE)
 CPP=g++ $(STD) $(DEF) $(THREAD) $(OPTIMIZE) 
-LD=g++ $(STD) -L/usr/local/ssl/lib $(OPTIMIZE) $(THREADLIB) 
+LD=g++ $(STD) -m32 -L/usr/local/ssl/lib $(OPTIMIZE) $(THREADLIB)
 AR=ar crs 
 ARX=ar x
 
