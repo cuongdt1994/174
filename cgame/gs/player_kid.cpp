@@ -911,6 +911,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 		if (neg_count > 0)
 			_runner->player_world_speak_info(1, 1, 1, neg_count, neg_skills);
 
+		_runner->get_skill_data();
 		PlayerGetProperty();
 		return;
 	}
