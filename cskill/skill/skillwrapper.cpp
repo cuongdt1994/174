@@ -1597,11 +1597,6 @@ void SkillWrapper::ResurrectByCashAddFilter(object_interface player, int buff_pe
 	}
 }
 
-void SkillWrapper::SetKidFilter(object_interface player, int* buf)
-{
-	player.AddFilter(new filter_Kidform(player, buf));
-}
-
 void SkillWrapper::KidTransformAddBuffs(object_interface player)
 {
 	player.AddFilter(new filter_Giant     (player, 30, 3600));
