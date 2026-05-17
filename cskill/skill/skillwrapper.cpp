@@ -1634,10 +1634,6 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter)
 	}
 }
 
-// Mirror chuẩn 173full.txt:2738-2790 — GNET::SkillWrapper::DeactivateDynSkill (5 args)
-// Khác overload 2-arg ở chỗ:
-//   - Với passive skill có EventFlag == EVENT_CHANGE: NO-OP (UndoEffect do EventChange xử lý)
-//   - Với active skill: dec ability trong dyn_map, xóa nếu về 0
 void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface player, int level)
 {
 	SkillKeeper skill = Skill::Create(id);
@@ -1647,8 +1643,14 @@ void SkillWrapper::DeactivateDynSkill(ID id, int counter, object_interface playe
 	const SkillStub *stub = SkillStub::GetStub(id);
 	if(stub && stub->IsPassive() && stub->GetEventFlag() == EVENT_CHANGE)
 	{
-		// Passive EVENT_CHANGE: UndoEffect do EventChange(player, FORM_CLASS, 0) đảm nhận
-		// → no-op ở đây
+		// Kid form passive skills are applied via TakeEffect in ActivateDynSkill (4-arg)
+		// but are NOT in map/dyn_map, so EventChange cannot find them to UndoEffect.
+		// Must undo directly here, mirroring the TakeEffect call on attach.
+		PlayerWrapper w_player(player, this, skill, 0, 0);
+		w_player.SetSkill(skill);
+		skill->SetLevel(level);
+		skill->SetPlayer(&w_player);
+		skill->UndoEffect(&w_player, -1);
 		return;
 	}
 
