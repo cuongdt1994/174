@@ -134,14 +134,14 @@ gplayer_imp::KidCelestialInfoProtocol(int type)
 		DATA_TYPE data;
 		const KID_PROPERTY_CONFIG *config = (const KID_PROPERTY_CONFIG *)
 			world_manager::GetDataMan().get_data_ptr(_kid_info[i].idx, ID_SPACE_CONFIG, data);
-		if (config || data == DT_KID_PROPERTY_CONFIG)
+		if (config && data == DT_KID_PROPERTY_CONFIG)
 		{
 			float mutiple_val = 0.0f;
 
 			DATA_TYPE data2;
 			const KID_UPGRADE_STAR_CONFIG *config2 = (const KID_UPGRADE_STAR_CONFIG *)
 				world_manager::GetDataMan().get_data_ptr(gplayer_kid::IDX_KID_STAR_CONFIG, ID_SPACE_CONFIG, data2);
-			if (config2 || data2 == DT_KID_UPGRADE_STAR_CONFIG)
+			if (config2 && data2 == DT_KID_UPGRADE_STAR_CONFIG)
 			{
 				if (rank > 0)
 					mutiple_val += config2->upgrade_star_info[rank - 1].star_param;
@@ -476,7 +476,7 @@ gplayer_imp::KidAwakeningCardRandom()
 	if (cash_cost > cash_awakening) return false;
 	_kid.SetAwakeningCash(cash_awakening - cash_cost);
 
-	unsigned int cards[5];
+	unsigned int cards[gplayer_kid::MAX_RANDOM_COURSE];
 	for (int i = 0; i < gplayer_kid::MAX_RANDOM_COURSE; ++i)
 	{
 		cards[i] = GetCardLevel(rng, dist, _kid.GetCardLevel());
@@ -491,6 +491,9 @@ gplayer_imp::KidAwakeningCardRandom()
 bool
 gplayer_imp::KidAwakeningCardPutInventory(char old_slot)
 {
+	if ((unsigned int)old_slot >= gplayer_kid::MAX_RANDOM_COURSE)
+		return false;
+
 	int cash_awakening = _kid.GetAwakeningCash();
 	int cash_cost      = 0;
 
@@ -526,10 +529,23 @@ gplayer_imp::KidAwakeningCardPutInventory(char old_slot)
 void
 gplayer_imp::KidAwakeningCardSwitchInventory(char new_slot, char old_slot1, char old_slot2)
 {
+	if (new_slot < 6 || (unsigned int)(new_slot  - 6) >= gplayer_kid::MAX_STORAGE_COURSE) return;
+	if (old_slot1 < 6 || (unsigned int)(old_slot1 - 6) >= gplayer_kid::MAX_STORAGE_COURSE) return;
+	if (old_slot2 < 6 || (unsigned int)(old_slot2 - 6) >= gplayer_kid::MAX_STORAGE_COURSE) return;
+	if (new_slot == old_slot1 || new_slot == old_slot2 || old_slot1 == old_slot2) return;
+
 	int get_level = _kid.GetStorageCourse(new_slot - 6)->course_level;
 	int get_id    = _kid.GetStorageCourse(new_slot - 6)->course_id;
 
 	if (get_level > 3 || get_id <= 0) return;
+
+	int mat1_id    = _kid.GetStorageCourse(old_slot1 - 6)->course_id;
+	int mat1_level = _kid.GetStorageCourse(old_slot1 - 6)->course_level;
+	int mat2_id    = _kid.GetStorageCourse(old_slot2 - 6)->course_id;
+	int mat2_level = _kid.GetStorageCourse(old_slot2 - 6)->course_level;
+
+	if (mat1_id != get_id || mat2_id != get_id) return;
+	if (mat1_level != get_level || mat2_level != get_level) return;
 
 	_kid.SetStorageCourse(new_slot  - 6, get_id, get_level + 1);
 	_kid.SetStorageCourse(old_slot1 - 6, 0, 0);
@@ -542,6 +558,9 @@ gplayer_imp::KidAwakeningCardSwitchInventory(char new_slot, char old_slot1, char
 bool
 gplayer_imp::KidAwakeningCardRemoveInventory(char old_slot)
 {
+	const int max_slot = gplayer_kid::MAX_EQUIPED_COURSE + gplayer_kid::MAX_STORAGE_COURSE;
+	if (old_slot < 0 || old_slot >= max_slot) return false;
+
 	int cash_awakening = _kid.GetAwakeningCash();
 	int cash_cost      = 0;
 	int course_id      = 0;
@@ -580,6 +599,11 @@ gplayer_imp::KidAwakeningCardRemoveInventory(char old_slot)
 void
 gplayer_imp::KidAwakeningCardMoveEquipInventory(char old_slot, char new_slot)
 {
+	const int max_slot = gplayer_kid::MAX_EQUIPED_COURSE + gplayer_kid::MAX_STORAGE_COURSE;
+	if (old_slot < 0 || old_slot >= max_slot) return;
+	if (new_slot < 0 || new_slot >= max_slot) return;
+	if (old_slot == new_slot) return;
+
 	if (old_slot < 6)
 	{
 		int  course_id    = _kid.GetEquipedCourse(old_slot)->course_id;
@@ -710,14 +734,14 @@ gplayer_imp::KidAwakeningNewDay3()
 void
 gplayer_imp::KidCelestialActivityProtocol()
 {
-	if (_kid.GetActivity()->reserved != -1) return;
+	if (_kid.GetActivity()->active_slot < 0) return;
 	_runner->kid_active_info(_kid.GetActivity()->active_slot, _kid.GetActivity()->reserved);
 }
 
 bool
 gplayer_imp::KidCelestialActivity(int val1, int val2, int val3)
 {
-	if (val1 < 0 && val2 > 5) return false;
+	if (val1 < 0 || val1 >= (int)gplayer_kid::MAX_CELESTIAL) return false;
 	_kid.SetActivity(val1, -1);
 	KidCelestialActivityProtocol();
 	return true;
@@ -726,6 +750,9 @@ gplayer_imp::KidCelestialActivity(int val1, int val2, int val3)
 bool
 gplayer_imp::KidCelestialUpgradeRank(int pos, int where, int inv_idx)
 {
+	if (pos < 0 || pos >= (int)gplayer_kid::MAX_CELESTIAL)
+		return false;
+
 	item_list &_trashbox = GetTrashInventory(IL_TRASH_BOX8);
 
 	if (inv_idx < 0 || (unsigned int)inv_idx >= _trashbox.Size())
