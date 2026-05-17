@@ -921,15 +921,23 @@ gplayer_imp::KidCelestialTransformation(int mode)
 
 	if (_kid_transformation) return;
 
-	if (GetForm())
+	if (obj_if.IsFilterExist(FILTER_BEASTIEFORM) ||
+		obj_if.IsFilterExist(FILTER_TIGERFORM)   ||
+		obj_if.IsFilterExist(FILTER_FOXFORM)      ||
+		obj_if.IsFilterExist(FILTER_SWIFTFORM)    ||
+		obj_if.IsFilterExist(FILTER_FISHFORM)     ||
+		obj_if.IsFilterExist(FILTER_THUNDERFORM)  ||
+		obj_if.IsFilterExist(FILTER_SHADOWFORM)   ||
+		obj_if.IsFilterExist(FILTER_FAIRYFORM)    ||
+		obj_if.IsFilterExist(FILTER_GIANTFORM))
 	{
-		_filters.RemoveFilter(FILTER_KIDFORM);
+		_runner->error_message(627);
 		return;
 	}
 
 	if (!CheckCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION))
 	{
-		_runner->error_message(53);
+		_runner->error_message(628);
 		return;
 	}
 
