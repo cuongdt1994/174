@@ -78,18 +78,16 @@ namespace GNET
             {
                 return false;
             }
-            void Calculate (Skill * skill) const
-            {
+            void Calculate(Skill* skill) const
+			{
 				skill->SetPlus(0);
 				skill->SetRatio(0);
-				if (skill->GetLevel <=1)
-				{
-					skill->SetDamage(0.9 * skill->GetAttack ());
-					else
+				if (skill->GetLevel() <= 1)
+					skill->SetDamage(0.9 * skill->GetAttack());
+				else
 					skill->SetDamage(1.2 * skill->GetAttack());
-				}
-                skill->GetPlayer ()->SetPerform (1);
-            }
+				skill->GetPlayer()->SetPerform(1);
+			}
             bool Interrupt (Skill * skill) const
             {
                 return false;

@@ -236,7 +236,7 @@ namespace GNET
 		skill->GetVictim()->SetTime(10500.0);
 		skill->GetVictim()->SetRatio(0.5);
 		skill->GetVictim()->SetAmount(1.0);
-		skill->GetVictim()->SetInccritdamage2(1);
+		//skill->GetVictim()->SetInccritdamage2(1);
 
 		float _float3;
 		if (skill->GetLevel() <= 3)
