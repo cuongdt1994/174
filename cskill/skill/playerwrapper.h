@@ -1218,6 +1218,7 @@ public:
 	bool SetRandCurse(int a1, int a2, int a3);
 	bool SetRandCurseRet1(int a1, int a2, int a3);
 	bool SetRandCurseRet2(int a1, int a2, int a3);
+	bool SetImmuneall2(bool);
 };
 
 
