@@ -2137,13 +2137,13 @@ public:
         if (pf->_stacks > 0)
         {
             int total_dmg = ++_stacks * pf->_dmg_per_stack;
-            _timeout = pf->GetTimeOut();
+            _timeout = GetTimeOut(pf);
             _damage = total_dmg / _timeout;
             if (_damage <= 0)
                 _damage = 1;
             if (_stacks > 4)
             {
-                _parent.BeHurt(&_performer, &_pinfo, _timeout * _damage, _invader, _mode);
+                _parent.BeHurt(_performer, _pinfo, _timeout * _damage, _invader, _mode);
                 _damage = 0;
                 _dmg_per_stack = 0;
                 _is_deleted = 1;
