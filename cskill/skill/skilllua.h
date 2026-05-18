@@ -489,6 +489,7 @@ public:
 	static double SetIncmagic2                   (long long skill, double value);
 	static double SetFastpray2                   (long long skill, double value);
 	static double SetSpeedup2                    (long long skill, double value);
+	static double SetSpeedup3                    (long long skill, double value);
 	static double SetSkillcooldown               (long long skill, double value);
 	static double SetCommoncooldown              (long long skill, double value);
 	static double SetAurafireattack              (long long skill, double value);
@@ -713,6 +714,8 @@ public:
 	static double SetAddPraga                    (long long skill, double value);
 	static double SetInsertvstate                (long long skill, double value);
 	static double SetRetort3                     (long long skill, double value);
+	static double SetQuefan                      (long long skill, double value);
+	static double ActiveQuefan                   (long long skill, double value);
 
 public:
 

@@ -558,6 +558,7 @@ public:
 	bool SetIncmagic3(bool);
 	bool SetFastpray2(bool);
 	bool SetSpeedup2(bool);
+	bool SetSpeedup3(bool);
 	bool SetSkillcooldown(bool);
 	bool SetSkillcooldownCount(bool);
 	bool SetSkillcooldownAtr(bool);
@@ -680,6 +681,7 @@ public:
 	bool SetApgen2(bool);
 	bool SetIncattackondamage(bool);
 	bool SetRebirth2(bool);
+	bool SetRebirth3(bool);
 	bool SetHealsteal(bool);
 	bool SetDropmoneyondeath(bool);
 	bool SetIncattackrange(bool);
@@ -1217,6 +1219,9 @@ public:
 	bool SetRandCurseRet1(int a1, int a2, int a3);
 	bool SetRandCurseRet2(int a1, int a2, int a3);
 	bool SetImmuneall2(bool);
+	bool SetAngry(bool);
+	bool SetQuefan(bool);
+	bool ActiveQuefan(bool);
 };
 
 

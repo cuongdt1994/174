@@ -164,6 +164,7 @@ DEFINE_SUBSTANCE(filter_Incmagic2 ,filter,CLASS_INCMAGIC2);
 DEFINE_SUBSTANCE(filter_Incmagic3 ,filter,CLASS_INCMAGIC3);
 DEFINE_SUBSTANCE(filter_Fastpray2 ,filter,CLASS_FASTPRAY2);
 DEFINE_SUBSTANCE(filter_Speedup2 ,filter,CLASS_SPEEDUP2);
+DEFINE_SUBSTANCE(filter_Speedup3 ,filter,CLASS_SPEEDUP3);
 DEFINE_SUBSTANCE(filter_Aurafireattack ,filter,CLASS_AURAFIREATTACK);
 DEFINE_SUBSTANCE(filter_Aurabless,filter,CLASS_AURABLESS);
 DEFINE_SUBSTANCE(filter_Auracurse,filter,CLASS_AURACURSE);
@@ -239,6 +240,7 @@ DEFINE_SUBSTANCE(filter_Apgen2,filter,CLASS_APGEN2);
 DEFINE_SUBSTANCE(filter_Incattack3,filter,CLASS_INCATTACK3);
 DEFINE_SUBSTANCE(filter_Incattackondamage,filter,CLASS_INCATTACKONDAMAGE);
 DEFINE_SUBSTANCE(filter_Rebirth2,filter,CLASS_REBIRTH2);
+DEFINE_SUBSTANCE(filter_Rebirth3,filter,CLASS_REBIRTH3);
 DEFINE_SUBSTANCE(filter_Healsteal,filter,CLASS_HEALSTEAL);
 DEFINE_SUBSTANCE(filter_Dropmoneyondeath,filter,CLASS_DROPMONEYONDEATH);
 DEFINE_SUBSTANCE(filter_Incattackrange,filter,CLASS_INCATTACKRANGE);
@@ -541,6 +543,8 @@ DEFINE_SUBSTANCE(filter_SetBattlePassEffect,filter,CLASS_SETBATTLEPASSFILTER);
 DEFINE_SUBSTANCE(filter_Wolf,filter,CLASS_ADDATTACKDEGREEATR);
 DEFINE_SUBSTANCE(filter_Randbless,filter,CLASS_RANDBLESS);
 DEFINE_SUBSTANCE(filter_Randcurse,filter,CLASS_RANDCURSE);
+DEFINE_SUBSTANCE(filter_Angry,filter,CLASS_ANGRY);
+DEFINE_SUBSTANCE(filter_Quefan,filter,CLASS_QUEFAN);
 
 void filter_Tigerform::OnAttach()
 {

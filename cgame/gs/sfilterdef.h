@@ -169,6 +169,7 @@ enum filter_class_id{
 	CLASS_INCMAGIC2        	= 4246,   	// ��ǿ������2, ���ӱ���
 	CLASS_FASTPRAY2       	= 4247,    	// ��������2
 	CLASS_SPEEDUP2         	= 4248,   	// ����2�� ���ӱ���
+	CLASS_SPEEDUP3         	= 4732,   	// speedup3
 	CLASS_AURAFIREATTACK   	= 4249,		//�𹥻��⻷
 	CLASS_AURABLESS			= 4250,		//ף���⻷
 	CLASS_AURACURSE			= 4251,		//����⻷
@@ -571,6 +572,9 @@ enum filter_class_id{
 	CLASS_RANDBLESS  = 4727,
 	CLASS_RANDCURSE  = 4728,
 	CLASS_DEBITHURT7 = 4729,
+	CLASS_ANGRY      = 4733,
+	CLASS_REBIRTH3   = 4734,
+	CLASS_QUEFAN     = 4735,
 
 };
 
@@ -751,6 +755,7 @@ enum filter_id{
 	FILTER_INCMAGIC2        = 4251,   	// ��ǿ������2, ���ӱ���
 	FILTER_FASTPRAY2       	= 4252,    	// ��������2
 	FILTER_SPEEDUP2         = 4253,   	// ����2�� ���ӱ���
+	FILTER_SPEEDUP3         = 4732,   	// speedup3
 	FILTER_AURAFIREATTACK   = 4254,		//�𹥻��⻷
 	FILTER_AURABLESS		= 4255,		//ף���⻷
 	FILTER_AURACURSE		= 4256,		//����⻷
@@ -1163,6 +1168,9 @@ enum filter_id{
 	FILTER_RANDBLESS = 4729,
 	FILTER_RANDCURSE = 4730,
 	FILTER_DEBITHURT7 = 4731,
+	FILTER_ANGRY      = 4733,
+	FILTER_REBIRTH3   = 4734,
+	FILTER_QUEFAN     = 4735,
 
 };
 

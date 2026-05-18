@@ -8669,6 +8669,76 @@ public:
 	}
 };
 
+class filter_Speedup3 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_TRANSLATE_SEND_MSG | FILTER_MASK_HEARTBEAT | FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH
+	};
+
+	int _ratio;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _ratio;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _ratio;
+		return true;
+	}
+	filter_Speedup3() {}
+public:
+	DECLARE_SUBSTANCE(filter_Speedup3);
+	filter_Speedup3(object_interface object, int r)
+		: timeout_filter(object, 31536000, FILTER_MASK), _ratio(r)
+	{
+		_filter_id = FILTER_SPEEDUP3;
+	}
+
+	void TranslateSendAttack(const XID& target, attack_msg& msg)
+	{
+		if (msg.skill_id == 6075)
+		{
+			const basic_prop& prop = _parent.GetBasicProp();
+			_parent.DecHP(prop.hp / 10);
+		}
+	}
+
+	void OnAttach()
+	{
+		_parent.IncVisibleState(VSTATE_NEWBUFF73);
+		_parent.InsertTeamVisibleState(HSTATE_525, _timeout);
+		_parent.EnhanceSpeed(_ratio);
+		_parent.SetNoAmulet(1);
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+	}
+
+	void OnRelease()
+	{
+		_parent.DecVisibleState(VSTATE_NEWBUFF73);
+		_parent.RemoveTeamVisibleState(HSTATE_525);
+		_parent.ImpairSpeed(_ratio);
+		_parent.SetNoAmulet(0);
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+	}
+
+	void Heartbeat(int tick)
+	{
+		timeout_filter::Heartbeat(tick);
+		_parent.ResetCoolDown(0x1BBB, 1);
+		if (!_parent.IsFilterExist(4550))
+			_is_deleted = 1;
+	}
+};
+
 class filter_Aurabase : public timeout_filter //Attacks or buffs around every three seconds
 {
 protected:
@@ -13603,6 +13673,104 @@ public:
 		_parent.ModifyAP(_ap);
 		//_parent.SendClientEnchantResult(_parent.GetSelfID(), 1085, 1, false, 0);
 		_is_deleted = true;
+	}
+};
+
+class filter_Rebirth3 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_HEARTBEAT | FILTER_MASK_BEFORE_DEATH
+	};
+
+	int _v;
+	int _rebirth_cd;
+	int _rebirth_cd_max;
+	int _rebirth_time;
+	int _rebirth_time_max;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _rebirth_cd << _rebirth_cd_max << _rebirth_time << _rebirth_time_max << _v;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _rebirth_cd >> _rebirth_cd_max >> _rebirth_time >> _rebirth_time_max >> _v;
+		return true;
+	}
+
+	filter_Rebirth3() {}
+public:
+	DECLARE_SUBSTANCE(filter_Rebirth3);
+	filter_Rebirth3(object_interface parent, int v)
+		: timeout_filter(parent, 31536000, FILTER_MASK), _v(v), _rebirth_cd(0), _rebirth_cd_max(600), _rebirth_time(0)
+	{
+		_filter_id = FILTER_REBIRTH3;
+		if (v <= 1)
+			_rebirth_time_max = 5;
+		else if (v <= 2)
+			_rebirth_time_max = 6;
+		else
+			_rebirth_time_max = 7;
+	}
+
+	virtual void OnAttach() {}
+
+	virtual void OnRelease()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_REBIRTH3);
+		_parent.RemoveTeamVisibleState(HSTATE_REBIRTH3_CD);
+	}
+
+	virtual int OnQuery(int index)
+	{
+		if (index == _filter_id)
+			_is_deleted = 1;
+		return 0;
+	}
+
+	virtual void Heartbeat(int tick)
+	{
+		if (!_parent.IsFilterExist(FILTER_ADDDEFENCEDEGREEATR))
+			_is_deleted = 1;
+		timeout_filter::Heartbeat(tick);
+		if (_rebirth_time)
+		{
+			if (!--_rebirth_time)
+			{
+				if (_v > 3)
+					_parent.DecImmuneMask(0x40000);
+				_parent.RemoveTeamVisibleState(HSTATE_REBIRTH3);
+				_parent.InsertTeamVisibleState(HSTATE_REBIRTH3_CD, _rebirth_cd);
+			}
+		}
+		if (_rebirth_cd)
+		{
+			if (!--_rebirth_cd)
+				_parent.RemoveTeamVisibleState(HSTATE_REBIRTH3_CD);
+		}
+	}
+
+	virtual void BeforeDeath(const XID & attacker, char attacker_mode)
+	{
+		if (_rebirth_time)
+		{
+			_parent.Heal(1);
+		}
+		else if (!_rebirth_cd)
+		{
+			_rebirth_cd = _rebirth_cd_max;
+			_rebirth_time = _rebirth_time_max;
+			_parent.Heal(1);
+			_parent.InsertTeamVisibleState(HSTATE_REBIRTH3, _rebirth_time);
+			if (_v > 3)
+				_parent.IncImmuneMask(0x40000);
+		}
 	}
 };
 
@@ -31761,6 +31929,152 @@ public:
 			_parent.Enchant(_target, msg);
 			_is_deleted = 1;
 		}
+	}
+};
+
+class filter_Angry : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_HEARTBEAT
+	};
+
+	int _inc;
+	int _inc2;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _inc;
+		ar << _inc2;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _inc;
+		ar >> _inc2;
+		return true;
+	}
+
+	filter_Angry() {}
+
+public:
+	DECLARE_SUBSTANCE(filter_Angry);
+	filter_Angry(object_interface object)
+		: timeout_filter(object, 31536000, FILTER_MASK)
+	{
+		_filter_id = FILTER_ANGRY;
+		_inc = 0;
+		_inc2 = 0;
+	}
+
+	void OnAttach()
+	{
+		_parent.InsertTeamVisibleState(HSTATE_530, _timeout);
+	}
+
+	void OnRelease()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_530);
+		if (_inc2)
+		{
+			_parent.ImpairDamage2(_inc2, _inc2);
+			_parent.UpdateAttackData();
+		}
+	}
+
+	int OnQuery(int index)
+	{
+		if (index == _filter_id)
+			_is_deleted = 1;
+		return 0;
+	}
+
+	void Heartbeat(int tick)
+	{
+		if (!_parent.IsFilterExist(FILTER_ADDDEFENCEDEGREEATR))
+			_is_deleted = 1;
+		timeout_filter::Heartbeat(tick);
+		const extend_prop &ep = _parent.GetExtendProp();
+		int tmp = 4 * ((ep.max_hp - _parent.GetBasicProp().hp) >> 2);
+		if (tmp != _inc)
+		{
+			int rst = 100 * tmp;
+			const scale_enhanced_param &sep = _parent.GetScaleEnhanecdParam();
+			if (sep.damage + sep.base_damage != -100 && rst > 0)
+			{
+				int rsta = (rst + 50) / (sep.damage + sep.base_damage + 100);
+				if (_inc2)
+					_parent.ImpairDamage2(_inc2, _inc2);
+				if (rsta)
+					_parent.EnhanceDamage2(rsta, rsta);
+				_inc2 = rsta;
+				_inc = tmp;
+				_parent.UpdateAttackData();
+			}
+		}
+	}
+};
+
+class filter_Quefan : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_WEAK | FILTER_MASK_HEARTBEAT | FILTER_MASK_NOSAVE
+	};
+
+	int _distance;
+	A3DVECTOR _pos;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _distance << _pos;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _distance >> _pos;
+		return true;
+	}
+
+	filter_Quefan() {}
+
+public:
+	DECLARE_SUBSTANCE(filter_Quefan);
+	filter_Quefan(object_interface object, int period, int distance)
+		: timeout_filter(object, period, FILTER_MASK)
+	{
+		_filter_id = FILTER_QUEFAN;
+		_distance = distance * distance;
+	}
+
+	void OnAttach()
+	{
+		_parent.InsertTeamVisibleState(0x191, _timeout);
+		_pos = *_parent.GetPos();
+	}
+
+	void OnRelease()
+	{
+		_parent.RemoveTeamVisibleState(0x191);
+	}
+
+	int OnQuery(int index)
+	{
+		const A3DVECTOR& cur = *_parent.GetPos();
+		float dx = _pos.x - cur.x, dy = _pos.y - cur.y, dz = _pos.z - cur.z;
+		if (dx*dx + dy*dy + dz*dz > (float)_distance)
+			return 0;
+		_parent.LongJump(_pos, _parent.GetWorldTag());
+		_is_deleted = 1;
+		return 1;
 	}
 };
 

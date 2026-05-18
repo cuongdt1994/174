@@ -891,6 +891,8 @@ enum hidden_state{
 	HSTATE_NEWSTUN 							= 581, // "Î¨Selo Incapaz de mover ou usar ataques e habilidades, reduz o dano recebido"
 	HSTATE_RECVDAMAGESHIELD 			= 582, // "Dano Consistente Recebe dano consistente"
 	HSTATE_583 							= 583, // "Esmagamento Reduz a Defesa FÃ­sica"
+	HSTATE_REBIRTH3						= 584,
+	HSTATE_REBIRTH3_CD					= 585,
 
 //----------------------------------------------------------------------------------------------------------------
 //---[172+ NEW FILTER 10k+]--

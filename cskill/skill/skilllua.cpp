@@ -914,6 +914,7 @@ void LuaSkill::SetFuncALLData()
 	REG_FUNC(SetIncmagic2                   );
 	REG_FUNC(SetFastpray2                   );
 	REG_FUNC(SetSpeedup2                    );
+	REG_FUNC(SetSpeedup3                    );
 	REG_FUNC(SetSkillcooldown               );
 	REG_FUNC(SetCommoncooldown              );
 	REG_FUNC(SetAurafireattack              );
@@ -1137,6 +1138,8 @@ void LuaSkill::SetFuncALLData()
 	REG_FUNC(SetAttackplusAtr               );
 	REG_FUNC(SetAddPraga                    );
 	REG_FUNC(SetRetort3                     );
+	REG_FUNC(SetQuefan                      );
+	REG_FUNC(ActiveQuefan                   );
 }
 #undef REG_FUNC
 
@@ -1417,6 +1420,7 @@ double LuaSkill::SetIncattack2                  	(long long skill, double value)
 double LuaSkill::SetIncmagic2                   	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetIncmagic2                    (value) : -0; }
 double LuaSkill::SetFastpray2                   	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetFastpray2                    (value) : -0; }
 double LuaSkill::SetSpeedup2                    	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetSpeedup2                     (value) : -0; }
+double LuaSkill::SetSpeedup3                    	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetSpeedup3                     (value) : -0; }
 double LuaSkill::SetSkillcooldown               	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetSkillcooldown                (value) : -0; }
 double LuaSkill::SetCommoncooldown              	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetCommoncooldown               (value) : -0; }
 double LuaSkill::SetAurafireattack              	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetAurafireattack               (value) : -0; }
@@ -1640,4 +1644,6 @@ double LuaSkill::SetUltimatePaladin             	(long long skill, double value)
 double LuaSkill::SetAttackplusAtr               	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetAttackplusAtr                (value) : -0; }
 double LuaSkill::SetAddPraga                    	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetAddPraga                     (value) : -0; }
 double LuaSkill::SetRetort3                     	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetRetort3                      (value) : -0; }
+double LuaSkill::SetQuefan                      	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetQuefan                       (value) : -0; }
+double LuaSkill::ActiveQuefan                   	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->ActiveQuefan                    (value) : -0; }
 

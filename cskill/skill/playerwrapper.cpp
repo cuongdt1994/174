@@ -4033,6 +4033,14 @@ namespace GNET
 			object.AddFilter(new filter_Speedup2(object, (int)(ratio * 100), time, showicon));
 		return true;
 	}
+	bool PlayerWrapper::SetSpeedup3(bool)
+	{
+		if (object.IsFilterExist(FILTER_SPEEDUP3))
+			object.RemoveFilter(FILTER_SPEEDUP3);
+		else
+			object.AddFilter(new filter_Speedup3(object, (int)(ratio * 100)));
+		return true;
+	}
 	bool PlayerWrapper::SetSkillcooldown(bool)
 	{
 		if (ThrowDice())
@@ -5360,6 +5368,14 @@ namespace GNET
 	bool PlayerWrapper::SetRebirth2(bool)
 	{
 		object.AddFilter(new filter_Rebirth2(object, time, ratio, (int)value));
+		return true;
+	}
+	bool PlayerWrapper::SetRebirth3(bool enable)
+	{
+		if (enable)
+			object.AddFilter(new filter_Rebirth3(object, (int)value));
+		else
+			object.QueryFilter(FILTER_REBIRTH3, FILTER_REBIRTH3);
 		return true;
 	}
 	bool PlayerWrapper::SetHealsteal(bool)
@@ -10238,6 +10254,27 @@ namespace GNET
 		if (!object.IsFilterExist(FILTER_RANDCURSE))
 			return false;
 		object.QueryFilter(FILTER_RANDCURSE, skill->GetPerformerid().id);
+		return true;
+	}
+
+	bool PlayerWrapper::SetQuefan(bool)
+	{
+		object.AddFilter(new filter_Quefan(object, time, GetRatioInt()));
+		return true;
+	}
+
+	bool PlayerWrapper::ActiveQuefan(bool)
+	{
+		object.QueryFilter(FILTER_QUEFAN, 0);
+		return true;
+	}
+
+	bool PlayerWrapper::SetAngry(bool b)
+	{
+		if (enable)
+			object.AddFilter(new filter_Angry(object));
+		else
+			object.QueryFilter(FILTER_ANGRY, FILTER_ANGRY);
 		return true;
 	}
 };

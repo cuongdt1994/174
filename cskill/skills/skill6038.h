@@ -189,7 +189,7 @@ namespace GNET
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    bool TakeEffect(Skill* skill) const
+    bool StateAttack(Skill* skill) const
 	{
 		float _a3 = skill->GetLevel() <= 1 ? 0.4 : 0.5;
 		float _a1 = skill->GetLevel() <= 3 ? 15.0 : 10.0;
