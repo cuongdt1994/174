@@ -31351,14 +31351,16 @@ protected:
 
 	float _amount;
 	float _maxamount;
-	int _value;
+	int   _ratio;
+	char  _counter;
 
 	virtual bool Save(archive & ar)
 	{
 		timeout_filter::Save(ar);
 		ar << _amount;
 		ar << _maxamount;
-		ar << _value;
+		ar << _ratio;
+		ar << _counter;
 		return true;
 	}
 
@@ -31367,7 +31369,8 @@ protected:
 		timeout_filter::Load(ar);
 		ar >> _amount;
 		ar >> _maxamount;
-		ar >> _value;
+		ar >> _ratio;
+		ar >> _counter;
 		return true;
 	}
 
@@ -31397,18 +31400,49 @@ protected:
 			dmg.magic_damage[3] = 0.0f;
 			dmg.magic_damage[4] = 0.0f;
 		}
+		_parent.ModifyTeamVisibleState(HSTATE_523, (int)_amount, (int)_maxamount, _timeout);
 	}
 
-	filter_Debithurt6() {}
+	void Heartbeat(int tick)
+	{
+		_counter += tick;
+		if (_counter >= 3 || tick >= _timeout)
+		{
+			if (_ratio)
+				_parent.Heal(_ratio);
+			_counter -= 3;
+		}
+		timeout_filter::Heartbeat(tick);
+	}
+
+	filter_Debithurt6() : _counter(0) {}
 public:
 	DECLARE_SUBSTANCE(filter_Debithurt6);
-	filter_Debithurt6(object_interface object, int period, float amount, int value)
-			: timeout_filter(object, period, FILTER_MASK), _amount(amount), _value(value)
+	filter_Debithurt6(object_interface object, int period, float amount, int ratio)
+			: timeout_filter(object, period, FILTER_MASK), _amount(amount), _ratio(ratio), _counter(0)
 	{
 		_filter_id = FILTER_DEBITHURT6;
 		if (_amount > 500000.0f) _amount = 500000.0f;
 		if (_amount < 0.0f) _amount = 1.0f;
 		_maxamount = _amount;
+	}
+
+	void OnAttach()
+	{
+		_parent.IncVisibleState(VSTATE_NEWBUFF71);
+		_parent.InsertTeamVisibleState(HSTATE_523, (int)_amount, (int)_maxamount, _timeout);
+	}
+
+	void OnRelease()
+	{
+		_parent.DecVisibleState(VSTATE_NEWBUFF71);
+		_parent.RemoveTeamVisibleState(HSTATE_523);
+	}
+
+	void OnReTeamVisibleState()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_523);
+		_parent.InsertTeamVisibleState(HSTATE_523, (int)_amount, (int)_maxamount, _timeout);
 	}
 };
 
