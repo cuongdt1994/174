@@ -10130,6 +10130,31 @@ namespace GNET
 		return true;
 	}
 
+	bool PlayerWrapper::SetWolf(float r, int count, float inc)
+	{
+		if (ThrowDice())
+			object.AddFilter(new filter_Wolf(object, r, count, inc));
+		else
+			object.QueryFilter(FILTER_ADDATTACKDEGREEATR, FILTER_ADDATTACKDEGREEATR);
+		return true;
+	}
+
+	bool PlayerWrapper::ClearDebithurt(bool b)
+	{
+		if (ThrowDice())
+		{
+			if (object.GetImmuneMask() & IMMUNEALL)
+				immune |= 0x80;
+			else
+			{
+				object.RemoveFilter(FILTER_DEBITHURT5);
+				object.RemoveFilter(FILTER_DEBITHURT6);
+				object.RemoveFilter(FILTER_DEBITHURT7);
+			}
+		}
+		return true;
+	}
+
 	bool PlayerWrapper::SetSlow3(bool b)
 	{
 		if (ThrowDice())

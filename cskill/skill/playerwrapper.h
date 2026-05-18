@@ -1205,6 +1205,8 @@ public:
 	bool SetDebithurt5(bool);
 	bool SetDebithurt6(bool);
 	bool SetDebithurt7(bool);
+	bool ClearDebithurt(bool);
+	bool SetWolf(float, int, float);
 	bool SetSlow3(bool);
 
 	bool SetRandBless(int a1, int a2, int a3);
