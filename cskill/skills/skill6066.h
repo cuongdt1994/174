@@ -26,7 +26,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 100;
             }
             bool Quit (Skill * skill) const
             {
@@ -50,7 +50,7 @@ namespace GNET
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -64,7 +64,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 700;
             }
             bool Quit (Skill * skill) const
             {
@@ -78,17 +78,23 @@ namespace GNET
             {
                 return false;
             }
-            void Calculate (Skill * skill) const
-            {
-                skill->GetPlayer ()->SetPerform (1);
-            }
+            void Calculate(Skill* skill) const
+			{
+				skill->SetPlus(0.0);
+				skill->SetRatio(0.0);
+				float _tmp = skill->GetLevel() == 2 ? 1.1  :
+							 skill->GetLevel() == 3 ? 1.25 :
+							 skill->GetLevel() == 4 ? 1.5  : 1.0;
+				skill->SetDamage(skill->GetAttack() * _tmp);
+				skill->GetPlayer()->SetPerform(1);
+			}
             bool Interrupt (Skill * skill) const
             {
                 return false;
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -234,7 +240,7 @@ namespace GNET
     } 
     float GetAngle (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (1); 
     } 
     float GetPraydistance (Skill * skill) const 
     { 
@@ -259,7 +265,11 @@ namespace GNET
     { 
         static int aarray[10] = { 0,0,0,0,0,0,0,0,0,0 }; 
         return aarray[skill->GetLevel () - 1]; 
-    } 
+    }
+	bool CheckHpCondition (int hp, int max_hp) const
+    {
+		return 1;
+	}	
 #ifdef _SKILL_CLIENT 
     int GetIntroduction (Skill * skill, const wchar_t * buffer, int length, const wchar_t * format) const 
     { 
@@ -279,10 +289,16 @@ namespace GNET
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    bool StateAttack (Skill * skill) const 
-    { 
-        return 1; 
-    } 
+    bool StateAttack(Skill* skill) const
+	{
+		skill->GetVictim()->SetProbability(1.0 * 100);
+		skill->GetVictim()->SetTime(15000);
+		skill->GetVictim()->SetAmount(skill->GetT0() *
+			(1 + 0.01 * (skill->GetT1() - skill->GetPlayer()->GetDefenddegree() > 0 ?
+						 skill->GetT1() - skill->GetPlayer()->GetDefenddegree() : 0)));
+		skill->GetVictim()->SetBleeding2(1);
+		return true;
+	}
 #endif 
 #ifdef _SKILL_SERVER 
     bool BlessMe (Skill * skill) const 
@@ -293,7 +309,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetEffectdistance (Skill * skill) const 
     { 
-        return 5; 
+        return 35; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
@@ -305,13 +321,13 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetTalent1 (PlayerWrapper * player) 
     { 
-        return 0; 
+        return (float) (player->GetAttackdegree());
     } 
 #endif 
 #ifdef _SKILL_SERVER 
     float GetTalent2 (PlayerWrapper * player) 
     { 
-        return 0; 
+        return (float) (player->GetAttack() * 0.4);
     } 
 #endif 
 #ifdef _SKILL_SERVER 
@@ -341,7 +357,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetHitrate (Skill * skill) const 
     { 
-        return 1; 
+        return 3; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 

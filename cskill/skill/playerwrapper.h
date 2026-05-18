@@ -376,6 +376,7 @@ public:
 	bool SetSealed(bool);
 	bool SetSlow(bool);
 	bool SetBleeding(bool);
+	bool SetBleeding2(bool);
 	bool SetThunder(bool);
 	bool SetToxic(bool);
 	bool SetBurning(bool);

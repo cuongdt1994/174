@@ -23,6 +23,7 @@ DEFINE_SUBSTANCE(filter_Decmagic ,filter,CLASS_DECMAGIC);
 DEFINE_SUBSTANCE(filter_Slow ,filter,CLASS_SLOW);
 DEFINE_SUBSTANCE(filter_Burning,filter,CLASS_BURNING);
 DEFINE_SUBSTANCE(filter_Bleeding,filter,CLASS_BLEEDING);
+DEFINE_SUBSTANCE(filter_Bleeding2,filter,CLASS_BLEEDING);
 DEFINE_SUBSTANCE(filter_Thunder,filter,CLASS_THUNDER);
 DEFINE_SUBSTANCE(filter_Fallen,filter,CLASS_FALLEN);
 DEFINE_SUBSTANCE(filter_Toxic,filter,CLASS_TOXIC);

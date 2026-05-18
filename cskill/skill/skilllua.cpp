@@ -837,6 +837,7 @@ void LuaSkill::SetFuncALLData()
 	REG_FUNC(SetSealed                      );
 	REG_FUNC(SetSlow                        );
 	REG_FUNC(SetBleeding                    );
+	REG_FUNC(SetBleeding2                    );
 	REG_FUNC(SetThunder                     );
 	REG_FUNC(SetToxic                       );
 	REG_FUNC(SetBurning                     );
@@ -1338,6 +1339,7 @@ double LuaSkill::SetFix                         	(long long skill, double value)
 double LuaSkill::SetSealed                      	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetSealed                       (value) : -0; }
 double LuaSkill::SetSlow                        	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetSlow                         (value) : -0; }
 double LuaSkill::SetBleeding                    	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetBleeding                     (value) : -0; }
+double LuaSkill::SetBleeding2                    	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetBleeding2                     (value) : -0; }
 double LuaSkill::SetThunder                     	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetThunder                      (value) : -0; }
 double LuaSkill::SetToxic                       	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetToxic                        (value) : -0; }
 double LuaSkill::SetBurning                     	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetBurning                      (value) : -0; }

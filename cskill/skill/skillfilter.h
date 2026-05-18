@@ -2092,6 +2092,87 @@ public:
 	}
 };
 
+class filter_Bleeding2 : public filter_Wounded
+{
+protected:
+    enum
+    {
+        FILTER_MASK = FILTER_MASK_DEBUFF | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_HEARTBEAT
+            | FILTER_MASK_TRANSFERABLE_DEBUFF | FILTER_MASK_MERGE
+    };
+    int _stacks;
+    int _dmg_per_stack;
+    filter_Bleeding2() {}
+public:
+    DECLARE_SUBSTANCE(filter_Bleeding2);
+    filter_Bleeding2(object_interface object, int period, int damage)
+        : filter_Wounded(object, period, damage, FILTER_MASK)
+    {
+        _filter_id = FILTER_BLEEDING2;
+        _icon = HSTATE_526;
+        _stacks = 1;
+        _dmg_per_stack = damage;
+    }
+
+    void OnAttach()
+    {
+        _parent.InsertTeamVisibleState(HSTATE_526, _timeout, _stacks);
+    }
+
+    void OnRelease()
+    {
+        _parent.RemoveTeamVisibleState(HSTATE_526);
+    }
+
+    void OnReTeamVisibleState()
+    {
+        _parent.RemoveTeamVisibleState(HSTATE_526);
+        _parent.InsertTeamVisibleState(HSTATE_526, _timeout, _stacks);
+    }
+
+    void Merge(filter* f)
+    {
+        filter_Bleeding2* pf = dynamic_cast<filter_Bleeding2*>(f);
+        ASSERT(pf);
+        if (pf->_stacks > 0)
+        {
+            int total_dmg = ++_stacks * pf->_dmg_per_stack;
+            _timeout = pf->GetTimeOut();
+            _damage = total_dmg / _timeout;
+            if (_damage <= 0)
+                _damage = 1;
+            if (_stacks > 4)
+            {
+                _parent.BeHurt(&_performer, &_pinfo, _timeout * _damage, _invader, _mode);
+                _damage = 0;
+                _dmg_per_stack = 0;
+                _is_deleted = 1;
+            }
+        }
+    }
+
+    int OnQuery(int index)
+    {
+        if (!index) return _stacks;
+        if (index == 1) return _timeout * _damage;
+        return 0;
+    }
+
+    bool Save(archive& ar)
+    {
+        filter_Wounded::Save(ar);
+        ar << _stacks << _dmg_per_stack;
+        return true;
+    }
+
+    bool Load(archive& ar)
+    {
+        filter_Wounded::Load(ar);
+        ar >> _stacks >> _dmg_per_stack;
+        return true;
+    }
+};
+
 class filter_Frozen : public filter_Wounded
 {
 protected:

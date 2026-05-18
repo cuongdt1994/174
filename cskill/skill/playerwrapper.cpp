@@ -1610,6 +1610,46 @@ namespace GNET
 #endif
 		return true;
 	}
+	
+	bool PlayerWrapper::SetBleeding2(bool)
+	{
+	#ifndef _SKILL_TEST
+		if (!ThrowDice())
+			return false;
+		if (object.GetImmuneMask() & (IMMUNEBLOODING | IMMUNEALL))
+		{
+			immune |= 0x80;
+			return false;
+		}
+		int damage = (int)GetAmount();
+		damage = object.CalcPhysicDamage(damage, skill->GetPlayerlevel());
+		if (!object.IsPlayerClass())
+			damage = object.CalcPenetrationEnhanceDamage(skill->GetPenetration(), damage);
+
+		if (damage > 3)
+		{
+			filter_Bleeding2 *pfilter;
+			if (object.IsPlayerClass())
+			{
+				if (skill->GetPerformerid().IsPlayerClass())
+				{
+					damage = (int)(0.25 * damage);
+					pfilter = new filter_Bleeding2(object, time, damage);
+				}
+				else
+					pfilter = new filter_Bleeding2(object, time, damage);
+			}
+			else
+			{
+				damage = (int)(object.CalcLevelDamagePunish(skill->GetPlayerlevel(), object.GetBasicProp().level) * damage);
+				pfilter = new filter_Bleeding2(object, time, damage);
+			}
+			pfilter->SetUp(skill->GetPerformerid(), skill->GetPerformerinfo(), skill->GetAttackerMode(), invader);
+			object.AddFilter(pfilter);
+		}
+	#endif
+		return true;
+	}
 
 	bool PlayerWrapper::SetFeathershield(bool b)
 	{

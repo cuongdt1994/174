@@ -412,6 +412,7 @@ public:
 	static double SetSealed                      (long long skill, double value);
 	static double SetSlow                        (long long skill, double value);
 	static double SetBleeding                    (long long skill, double value);
+	static double SetBleeding2                    (long long skill, double value);
 	static double SetThunder                     (long long skill, double value);
 	static double SetToxic                       (long long skill, double value);
 	static double SetBurning                     (long long skill, double value);
