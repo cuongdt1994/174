@@ -1204,6 +1204,7 @@ public:
 	bool SetDecCoolDown2(bool);
 	bool SetDebithurt5(bool);
 	bool SetDebithurt6(bool);
+	bool SetDebithurt7(bool);
 	bool SetSlow3(bool);
 
 	bool SetRandBless(int a1, int a2, int a3);

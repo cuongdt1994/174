@@ -10123,6 +10123,13 @@ namespace GNET
 		return true;
 	}
 
+	bool PlayerWrapper::SetDebithurt7(bool)
+	{
+		if (ThrowDice())
+			object.AddFilter(new filter_Debithurt7(object, time, amount));
+		return true;
+	}
+
 	bool PlayerWrapper::SetSlow3(bool b)
 	{
 		if (ThrowDice())

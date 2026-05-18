@@ -31446,6 +31446,105 @@ public:
 	}
 };
 
+class filter_Debithurt7 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_HEARTBEAT | FILTER_MASK_ADJUST_DAMAGE | FILTER_MASK_BUFF
+				| FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH
+	};
+
+	float _amount;
+	float _maxamount;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _amount;
+		ar << _maxamount;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _amount;
+		ar >> _maxamount;
+		return true;
+	}
+
+	void AdjustDamage(damage_entry & dmg, const XID & attacker, const attack_msg & msg, float damage_adjust)
+	{
+		float d = dmg.physic_damage + dmg.magic_damage[0] + dmg.magic_damage[1]
+				+ dmg.magic_damage[2] + dmg.magic_damage[3] + dmg.magic_damage[4] + 0.5f;
+		if (_amount <= d)
+		{
+			float da = (d - _amount) / d;
+			dmg.physic_damage *= da;
+			dmg.magic_damage[0] *= da;
+			dmg.magic_damage[1] *= da;
+			dmg.magic_damage[2] *= da;
+			dmg.magic_damage[3] *= da;
+			dmg.magic_damage[4] *= da;
+			_amount = 0.0f;
+			_is_deleted = 1;
+		}
+		else
+		{
+			_amount -= d;
+			dmg.physic_damage = 0.0f;
+			dmg.magic_damage[0] = 0.0f;
+			dmg.magic_damage[1] = 0.0f;
+			dmg.magic_damage[2] = 0.0f;
+			dmg.magic_damage[3] = 0.0f;
+			dmg.magic_damage[4] = 0.0f;
+		}
+		_parent.ModifyTeamVisibleState(HSTATE_SHIELDDAMAGEREDUCE, (int)_amount, (int)_maxamount, _timeout);
+		if ((msg._attack_state & AT_STATE_AURA_AND_RETORT) == 0)
+		{
+			enchant_msg ret;
+			memset(&ret, 0, sizeof(ret));
+			ret.attack_range = 200.0f;
+			ret.skill = 6098;
+			ret.skill_level = 1;
+			ret.force_attack = _parent.GetForceAttack();
+			_parent.SetAuraAttackState();
+			_parent.Enchant(attacker, ret);
+		}
+	}
+
+	filter_Debithurt7() {}
+public:
+	DECLARE_SUBSTANCE(filter_Debithurt7);
+	filter_Debithurt7(object_interface object, int period, float amount)
+			: timeout_filter(object, period, FILTER_MASK), _amount(amount)
+	{
+		_filter_id = FILTER_DEBITHURT7;
+		if (_amount > 500000.0f) _amount = 500000.0f;
+		if (_amount < 0.0f) _amount = 1.0f;
+		_maxamount = _amount;
+	}
+
+	void OnAttach()
+	{
+		_parent.IncVisibleState(VSTATE_NEWBUFF74);
+		_parent.InsertTeamVisibleState(HSTATE_SHIELDDAMAGEREDUCE, (int)_amount, (int)_maxamount, _timeout);
+	}
+
+	void OnRelease()
+	{
+		_parent.DecVisibleState(VSTATE_NEWBUFF74);
+		_parent.RemoveTeamVisibleState(HSTATE_SHIELDDAMAGEREDUCE);
+	}
+
+	void OnReTeamVisibleState()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_SHIELDDAMAGEREDUCE);
+		_parent.InsertTeamVisibleState(HSTATE_SHIELDDAMAGEREDUCE, (int)_amount, (int)_maxamount, _timeout);
+	}
+};
+
 class filter_Randbless : public timeout_filter
 {
 protected:
