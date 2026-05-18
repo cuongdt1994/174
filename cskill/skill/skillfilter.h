@@ -31501,7 +31501,7 @@ protected:
 			dmg.magic_damage[4] = 0.0f;
 		}
 		_parent.ModifyTeamVisibleState(HSTATE_SHIELDDAMAGEREDUCE, (int)_amount, (int)_maxamount, _timeout);
-		if ((msg._attack_state & AT_STATE_AURA_AND_RETORT) == 0)
+		if ((msg._attack_state & AT_STATE_ALL_RETORT) == 0)
 		{
 			enchant_msg ret;
 			memset(&ret, 0, sizeof(ret));
