@@ -26,7 +26,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 1000;
             }
             bool Quit (Skill * skill) const
             {
@@ -50,7 +50,7 @@ namespace GNET
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -64,7 +64,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 1000;
             }
             bool Quit (Skill * skill) const
             {
@@ -88,7 +88,7 @@ namespace GNET
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -235,7 +235,7 @@ namespace GNET
     } 
     float GetAngle (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (1); 
     } 
     float GetPraydistance (Skill * skill) const 
     { 
@@ -260,7 +260,11 @@ namespace GNET
     { 
         static int aarray[10] = { 0,0,0,0,0,0,0,0,0,0 }; 
         return aarray[skill->GetLevel () - 1]; 
-    } 
+    }
+	bool CheckHpCondition (int hp, int max_hp) const
+    {
+		return 1;
+	}
 #ifdef _SKILL_CLIENT 
     int GetIntroduction (Skill * skill, const wchar_t * buffer, int length, const wchar_t * format) const 
     { 
@@ -280,10 +284,22 @@ namespace GNET
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    bool StateAttack (Skill * skill) const 
-    { 
-        return 1; 
-    } 
+    bool StateAttack(Skill* skill) const
+	{
+		skill->GetVictim()->SetProbability(1.0);
+		skill->GetVictim()->SetTime(skill->GetLevel() <= 1 ? 5000.0 : 10000.0);
+		skill->GetVictim()->SetRatio(skill->GetLevel() <= 3 ? 5.0 : 12.0);
+		skill->GetVictim()->SetAmount(1.0);
+		skill->GetVictim()->SetValue(6094.0);
+		skill->GetVictim()->SetAurabless2(1);
+
+		skill->GetVictim()->SetTime(skill->GetLevel() <= 1 ? 5000.0 : 10000.0);
+		skill->GetVictim()->SetRatio(529.0);
+		skill->GetVictim()->SetAmount(218.0);
+		skill->GetVictim()->SetValue(2.0);
+		skill->GetVictim()->SetInsertvstate(1);
+		return 1;
+	}
 #endif 
 #ifdef _SKILL_SERVER 
     bool BlessMe (Skill * skill) const 
@@ -330,7 +346,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     int GetAttackspeed (Skill * skill) const 
     { 
-        return 0; 
+        return 9; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
@@ -342,7 +358,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetHitrate (Skill * skill) const 
     { 
-        return 1; 
+        return 3; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 

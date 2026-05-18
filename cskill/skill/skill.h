@@ -458,6 +458,7 @@ public:
 	virtual int GetChargeMerc (Skill * skill) const { return 0; }
 	virtual int GetCoolDownLimit (Skill * skill) const { return 0; }
 	virtual int GetCostShieldEnergy (Skill * skill) const { return 0; }
+	virtual int GetChargesMax (Skill * skill) const { return 0; }
 #else
 	virtual int GetExecutetime(Skill *skill) const = 0;
 	virtual int GetCoolingtime(Skill *skill) const = 0;
@@ -493,6 +494,7 @@ public:
 	virtual int GetChargeMerc (Skill * skill) const { return 0; }
 	virtual int GetCoolDownLimit (Skill * skill) const { return 0; }
 	virtual int GetCostShieldEnergy (Skill * skill) const { return 0; }
+	virtual int GetChargesMax (Skill * skill) const { return 0; }
 #endif
 
 };
@@ -715,6 +717,7 @@ public:
 	int GetChargeMerc () { return stub->GetChargeMerc(this); }
 	int GetCoolDownLimit () { return stub->GetCoolDownLimit(this); }
 	int GetCostShieldEnergy () { return stub->GetCostShieldEnergy(this); }
+	int GetChargesMax () { return stub->GetChargesMax(this); }
 	//void SkillEdit(int type, double value) { SkillEdit(type, value); }
 	int GetGlyphFeature(){ return stub->feature; }
 

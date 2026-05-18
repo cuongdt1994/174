@@ -26,7 +26,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 1000;
             }
             bool Quit (Skill * skill) const
             {
@@ -50,7 +50,7 @@ namespace GNET
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -64,7 +64,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 1000;
             }
             bool Quit (Skill * skill) const
             {
@@ -88,7 +88,7 @@ namespace GNET
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -234,7 +234,7 @@ namespace GNET
     } 
     float GetAngle (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (1); 
     } 
     float GetPraydistance (Skill * skill) const 
     { 
@@ -259,7 +259,11 @@ namespace GNET
     { 
         static int aarray[10] = { 0,0,0,0,0,0,0,0,0,0 }; 
         return aarray[skill->GetLevel () - 1]; 
-    } 
+    }
+	bool CheckHpCondition (int hp, int max_hp) const
+    {
+		return 1;
+	}
 #ifdef _SKILL_CLIENT 
     int GetIntroduction (Skill * skill, const wchar_t * buffer, int length, const wchar_t * format) const 
     { 
@@ -279,10 +283,21 @@ namespace GNET
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    bool StateAttack (Skill * skill) const 
-    { 
-        return 1; 
-    } 
+    bool StateAttack(Skill* skill) const
+	{
+		skill->GetVictim()->SetTime(4000.0);
+		skill->GetVictim()->SetFreemove(1);
+
+		int _v = skill->GetLevel() <= 1 ? skill->GetT0() / 10 : 3 * skill->GetT0() / 10;
+		skill->GetVictim()->SetProbability(100.0);
+		skill->GetVictim()->SetValue((float)_v);
+		skill->GetVictim()->SetHeal(1);
+
+		int _range = skill->GetLevel() <= 2 ? 5 : 10;
+		int _a2 = skill->GetLevel() | (_range << 16);
+		skill->GetVictim()->SetRandBless(skill->GetT0(), _a2, skill->GetT2());
+		return 1;
+	} 
 #endif 
 #ifdef _SKILL_SERVER 
     bool BlessMe (Skill * skill) const 
@@ -293,26 +308,26 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetEffectdistance (Skill * skill) const 
     { 
-        return 5; 
+        return 35; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    float GetTalent0 (PlayerWrapper * player) 
-    { 
-        return 0; 
-    } 
+    float GetTalent0(PlayerWrapper* player) const
+	{
+		return player->GetMagicattack();
+	} 
 #endif 
 #ifdef _SKILL_SERVER 
-    float GetTalent1 (PlayerWrapper * player) 
-    { 
-        return 0; 
-    } 
+    float GetTalent1(PlayerWrapper* player) const
+	{
+		return player->GetAttackdegree();
+	}
 #endif 
 #ifdef _SKILL_SERVER 
-    float GetTalent2 (PlayerWrapper * player) 
-    { 
-        return 0; 
-    } 
+    float GetTalent2(PlayerWrapper* player) const
+	{
+		return player->GetId() + 0.001;
+	}
 #endif 
 #ifdef _SKILL_SERVER 
     float GetTalent3 (PlayerWrapper * player) 
@@ -341,7 +356,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetHitrate (Skill * skill) const 
     { 
-        return 1; 
+        return 3; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 

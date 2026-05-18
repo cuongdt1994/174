@@ -26,7 +26,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 500;
             }
             bool Quit (Skill * skill) const
             {
@@ -40,17 +40,18 @@ namespace GNET
             {
                 return false;
             }
-            void Calculate (Skill * skill) const
-            {
-                skill->GetPlayer ()->SetPray (1);
-            }
+            void Calculate(Skill* skill) const
+			{
+				skill->GetPlayer()->SetDecmp(0.0);
+				skill->GetPlayer()->SetPray(1);
+			}
             bool Interrupt (Skill * skill) const
             {
                 return false;
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -64,7 +65,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 800;
             }
             bool Quit (Skill * skill) const
             {
@@ -78,17 +79,18 @@ namespace GNET
             {
                 return false;
             }
-            void Calculate (Skill * skill) const
-            {
-                skill->GetPlayer ()->SetPerform (1);
-            }
+            void Calculate(Skill* skill) const
+			{
+				skill->GetPlayer()->SetDecmp(0.0);
+				skill->GetPlayer()->SetPerform(1);
+			}
             bool Interrupt (Skill * skill) const
             {
                 return false;
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 1;
             }
             bool Skip (Skill * skill) const
             {
@@ -226,7 +228,7 @@ namespace GNET
     } 
     float GetRadius (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (15); 
     } 
     float GetAttackdistance (Skill * skill) const 
     { 
@@ -234,7 +236,7 @@ namespace GNET
     } 
     float GetAngle (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (1); 
     } 
     float GetPraydistance (Skill * skill) const 
     { 
@@ -293,7 +295,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetEffectdistance (Skill * skill) const 
     { 
-        return 5; 
+        return 40; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
@@ -341,7 +343,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetHitrate (Skill * skill) const 
     { 
-        return 1; 
+        return 3; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
