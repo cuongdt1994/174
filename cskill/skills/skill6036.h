@@ -30,7 +30,7 @@ namespace GNET
         bool Bypass (Skill * skill) const { return false; } 
         void Calculate (Skill * skill) const
         {
-            skill->GetPlayer ()->SetPray (1);
+            skill->GetPlayer ()->SetPerform (1);
         } 
         bool Interrupt (Skill * skill) const { return false; } 
         bool Cancel (Skill * skill) const { return 1; } 
