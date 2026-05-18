@@ -5551,6 +5551,25 @@ public:
 	}
 	
 };
+
+class filter_Immuneall2 : public filter_Baseimmune
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_BUFF | FILTER_MASK_TRANSFERABLE_BUFF
+	};
+
+	filter_Immuneall2() {}
+public:
+	DECLARE_SUBSTANCE(filter_Immuneall2);
+	filter_Immuneall2(object_interface object, int period)
+		: filter_Baseimmune(object, period, IMMUNEALL, -1, HSTATE_IMMUNEALL, FILTER_MASK)
+	{
+		_filter_id = FILTER_IMMUNEALL;
+	}
+};
+
 class filter_Immunephysical : public filter_Baseimmune
 {
 protected:
@@ -31050,6 +31069,384 @@ public:
 	virtual void Heartbeat(int tick)
 	{
 		timeout_filter::Heartbeat(tick);
+	}
+};
+
+class filter_DecCoolDown2 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_BUFF | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_HEARTBEAT
+	};
+
+	int _amount;
+	int _skillid;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _amount;
+		ar << _skillid;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _amount;
+		ar >> _skillid;
+		return true;
+	}
+
+	filter_DecCoolDown2() {}
+public:
+	DECLARE_SUBSTANCE(filter_DecCoolDown2);
+	filter_DecCoolDown2(object_interface object, int period, int amount, int skillid)
+		: timeout_filter(object, period, FILTER_MASK), _amount(amount), _skillid(skillid)
+	{
+		_filter_id = FILTER_DECCOOLDOWN2;
+	}
+	void OnAttach()
+	{
+	}
+	void OnRelease()
+	{
+		if (_skillid)
+			_parent.CoolDownReduceAtr((unsigned short)(_skillid & 0xFFFF) + 1024, _amount);
+	}
+};
+
+class filter_Wolf : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_HEARTBEAT | FILTER_MASK_TRANSLATE_SEND_MSG
+	};
+
+	float _radius;
+	int   _count;
+	float _inc;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _radius << _count << _inc;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _radius >> _count >> _inc;
+		return true;
+	}
+
+	filter_Wolf() {}
+public:
+	DECLARE_SUBSTANCE(filter_Wolf);
+	filter_Wolf(object_interface object, float r, int count, float inc)
+		: timeout_filter(object, 31536000, FILTER_MASK), _radius(r), _count(count), _inc(inc + 1.0f)
+	{
+		_filter_id = FILTER_ADDATTACKDEGREEATR;
+	}
+
+	void TranslateSendAttack(const XID & target, attack_msg & msg)
+	{
+		if (msg.physic_damage > 9)
+		{
+			const A3DVECTOR * pos = _parent.GetPos();
+			if (_parent.GetSpherePlayerListSize(pos, _radius) <= _count)
+				msg.physic_damage = (int)((long double)msg.physic_damage * _inc);
+		}
+	}
+
+	int OnQuery(int index)
+	{
+		if (index == _filter_id)
+			_is_deleted = 1;
+		return 0;
+	}
+
+	void OnAttach()
+	{
+		_parent.InsertTeamVisibleState(HSTATE_522, 31536000);
+	}
+
+	void OnRelease()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_522);
+	}
+
+	virtual void Heartbeat(int tick)
+	{
+		if (!_parent.IsFilterExist(FILTER_ADDDEFENCEDEGREEATR))
+			_is_deleted = 1;
+	}
+};
+
+class filter_Slow3 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_HEARTBEAT | FILTER_MASK_ADJUST_DAMAGE | FILTER_MASK_DEBUFF
+				| FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_TRANSFERABLE_DEBUFF
+	};
+
+	int _ratio;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _ratio;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _ratio;
+		return true;
+	}
+
+	void AdjustDamage(damage_entry & dmg, const XID & attacker, const attack_msg & msg, float damage_adjust)
+	{
+		if (msg.skill_id == 6074)
+		{
+			dmg.physic_damage *= 3.0f;
+			dmg.magic_damage[0] *= 3.0f;
+			dmg.magic_damage[1] *= 3.0f;
+			dmg.magic_damage[2] *= 3.0f;
+			dmg.magic_damage[3] *= 3.0f;
+			dmg.magic_damage[4] *= 3.0f;
+		}
+	}
+
+	filter_Slow3() {}
+public:
+	DECLARE_SUBSTANCE(filter_Slow3);
+	filter_Slow3(object_interface object, int r, int period)
+			: timeout_filter(object, period, FILTER_MASK), _ratio(r)
+	{
+		_filter_id = FILTER_SLOW3;
+	}
+
+	void OnAttach()
+	{
+		_parent.IncVisibleState(VSTATE_SLOW);
+		_parent.InsertTeamVisibleState(HSTATE_527, _timeout);
+		_parent.ImpairSpeed(_ratio);
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+	}
+
+	void OnRelease()
+	{
+		_parent.DecVisibleState(VSTATE_SLOW);
+		_parent.RemoveTeamVisibleState(HSTATE_527);
+		_parent.EnhanceSpeed(_ratio);
+		_parent.UpdateSpeedData();
+		_parent.SendClientCurSpeed();
+	}
+};
+
+class filter_Debithurt5 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_HEARTBEAT | FILTER_MASK_ADJUST_DAMAGE | FILTER_MASK_BUFF
+				| FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH
+	};
+
+	float _amount;
+	float _maxamount;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _amount;
+		ar << _maxamount;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _amount;
+		ar >> _maxamount;
+		return true;
+	}
+
+	void AdjustDamage(damage_entry & dmg, const XID & attacker, const attack_msg & msg, float damage_adjust)
+	{
+		float d = dmg.physic_damage + dmg.magic_damage[0] + dmg.magic_damage[1]
+				+ dmg.magic_damage[2] + dmg.magic_damage[3] + dmg.magic_damage[4] + 0.5f;
+		if (_amount <= d)
+		{
+			float da = (d - _amount) / d;
+			dmg.physic_damage *= da;
+			dmg.magic_damage[0] *= da;
+			dmg.magic_damage[1] *= da;
+			dmg.magic_damage[2] *= da;
+			dmg.magic_damage[3] *= da;
+			dmg.magic_damage[4] *= da;
+			_amount = 0.0f;
+			_is_deleted = 1;
+		}
+		else
+		{
+			_amount -= d;
+			dmg.physic_damage = 0.0f;
+			dmg.magic_damage[0] = 0.0f;
+			dmg.magic_damage[1] = 0.0f;
+			dmg.magic_damage[2] = 0.0f;
+			dmg.magic_damage[3] = 0.0f;
+			dmg.magic_damage[4] = 0.0f;
+		}
+		_parent.ModifyTeamVisibleState(HSTATE_524, (int)_amount, (int)_maxamount, _timeout);
+	}
+
+	filter_Debithurt5() {}
+public:
+	DECLARE_SUBSTANCE(filter_Debithurt5);
+	filter_Debithurt5(object_interface object, int period, float amount)
+			: timeout_filter(object, period, FILTER_MASK), _amount(amount)
+	{
+		_filter_id = FILTER_DEBITHURT5;
+		if (_amount > 500000.0f) _amount = 500000.0f;
+		if (_amount < 0.0f) _amount = 1.0f;
+		_maxamount = _amount;
+	}
+
+	void OnAttach()
+	{
+		_parent.IncVisibleState(VSTATE_NEWBUFF72);
+		_parent.InsertTeamVisibleState(HSTATE_524, (int)_amount, (int)_maxamount, _timeout);
+	}
+
+	void OnRelease()
+	{
+		_parent.DecVisibleState(VSTATE_NEWBUFF72);
+		_parent.RemoveTeamVisibleState(HSTATE_524);
+	}
+
+	void OnReTeamVisibleState()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_524);
+		_parent.InsertTeamVisibleState(HSTATE_524, (int)_amount, (int)_maxamount, _timeout);
+	}
+};
+
+class filter_Randbless : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_HEARTBEAT
+	};
+
+	XID            _target;
+	int            _ratio;
+	int            _tid;
+	enchant_msg    tmsg;
+	unsigned short _lv;
+	int            _value;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _target << _ratio << _lv << _value << _tid;
+		ar.push_back(&tmsg, sizeof(tmsg));
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _target >> _ratio >> _lv >> _value >> _tid;
+		ar.pop_back(&tmsg, sizeof(tmsg));
+		return true;
+	}
+
+	filter_Randbless() {}
+
+public:
+	DECLARE_SUBSTANCE(filter_Randbless);
+
+	filter_Randbless(object_interface object, int period, int ratio, int lv_value, int tid)
+		: timeout_filter(object, period, FILTER_MASK), _ratio(ratio), _tid(tid)
+	{
+		_filter_id = FILTER_RANDBLESS;
+		_target    = XID(-1, -1);
+		memset(&tmsg, 0, sizeof(tmsg));
+		_lv    = (unsigned short)lv_value;
+		_value = lv_value >> 16;
+	}
+
+	void SetUp(const enchant_msg *msg)
+	{
+		memcpy(&tmsg, msg, sizeof(tmsg));
+	}
+
+	virtual int OnQuery(int index)
+	{
+		if (index <= 0)
+			return 0;
+		if (index == _tid)
+			return 0;
+		if (_target.id > 0)
+		{
+			if (rand() % 100 <= 49)
+				return 0;
+		}
+		_target.type = 2;
+		_target.id   = index;
+		return 1;
+	}
+
+	virtual void OnAttach()
+	{
+		if (_value > 0)
+		{
+			_tid = _parent.GetSelfID().id;
+			float range = (_lv <= 3) ? 5.0f : 10.0f;
+			enchant_msg amsg;
+			memset(&amsg, 0, sizeof(amsg));
+			amsg.attack_range    = range;
+			amsg.skill           = 6087;
+			amsg.skill_level     = 1;
+			amsg.helpful         = 1;
+			amsg.skill_modify[0] = _ratio;
+			amsg.skill_modify[1] = _value;
+			amsg.skill_modify[2] = _tid;
+			_parent.SetAuraAttackState();
+			_parent.RegionEnchant1(_parent.GetPos(), range, amsg, XID(-1, -1));
+		}
+	}
+
+	virtual void OnRelease()
+	{
+	}
+
+	virtual void Heartbeat(int tick)
+	{
+		timeout_filter::Heartbeat(tick);
+		if (_value > 0 && _target.id > 0)
+		{
+			enchant_msg msg;
+			memcpy(&msg, &tmsg, sizeof(msg));
+			msg.attack_range    = 200.0f;
+			msg.skill           = 6087;
+			msg.skill_level     = 3;
+			msg.skill_modify[0] = _ratio;
+			msg.skill_modify[1] = _lv | ((_value - 1) << 16);
+			msg.skill_modify[2] = _tid;
+			_parent.Enchant(_target, msg);
+			_is_deleted = 1;
+		}
 	}
 };
 

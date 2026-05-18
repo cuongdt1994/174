@@ -2224,6 +2224,12 @@ object_interface::ClearSpecFilter(int mask)
 	_imp->_filters.ClearSpecFilter(mask);
 }
 
+void
+object_interface::ClearSpecFilter(int mask, int maxnum)
+{
+	_imp->_filters.ClearSpecFilter(mask, maxnum);
+}
+
 void 
 object_interface::ClearRandomSpecFilter(int mask)
 {

@@ -104,6 +104,7 @@ DEFINE_SUBSTANCE(filter_Immunesleep ,filter,CLASS_IMMUNESLEEP);
 DEFINE_SUBSTANCE(filter_Immuneslowdizzy ,filter,CLASS_IMMUNESLOWDIZZY);
 DEFINE_SUBSTANCE(filter_Immunewound ,filter,CLASS_IMMUNEWOUND);
 DEFINE_SUBSTANCE(filter_Immuneall ,filter,CLASS_IMMUNEALL);
+DEFINE_SUBSTANCE(filter_Immuneall2 ,filter,CLASS_IMMUNEALL2);
 DEFINE_SUBSTANCE(filter_Immunephysical ,filter,CLASS_IMMUNEPHYSICAL);
 DEFINE_SUBSTANCE(filter_Immunefire ,filter,CLASS_IMMUNEFIRE);
 DEFINE_SUBSTANCE(filter_Immunewater ,filter,CLASS_IMMUNEWATER);
@@ -366,6 +367,9 @@ DEFINE_SUBSTANCE(filter_Fastpray3,filter,CLASS_FASTPRAY3);
 DEFINE_SUBSTANCE(filter_Incdebuffdodge2,filter,CLASS_INCDEBUFFDODGE2);
 DEFINE_SUBSTANCE(filter_Incdamagedodge2,filter,CLASS_INCDAMAGEDODGE2);
 DEFINE_SUBSTANCE(filter_Debithurt,filter,CLASS_DEBITHURT);
+DEFINE_SUBSTANCE(filter_Debithurt5,filter,CLASS_DEBITHURT5);
+DEFINE_SUBSTANCE(filter_Debithurt6,filter,CLASS_DEBITHURT6);
+DEFINE_SUBSTANCE(filter_Slow3,filter,CLASS_SLOW3);
 DEFINE_SUBSTANCE(filter_Healnurse,filter,CLASS_HEALNURSE);
 
 DEFINE_SUBSTANCE(filter_Activateskill2 ,filter,CLASS_ACTIVATESKILL2);
@@ -405,6 +409,7 @@ DEFINE_SUBSTANCE(filter_Marcadovento,filter,CLASS_MARCADOVENTO); // Marca 01
 DEFINE_SUBSTANCE(filter_Marcadafloresta,filter,CLASS_MARCADAFLORESTA); // Marca 02
 DEFINE_SUBSTANCE(filter_Marcadofogo,filter,CLASS_MARCADOFOGO); // Marca 03
 DEFINE_SUBSTANCE(filter_Marcadamontanha,filter,CLASS_MARCADAMONTANHA); // Marca 04
+DEFINE_SUBSTANCE(filter_DecCoolDown2,filter,CLASS_DECCOOLDOWN2);
 
 DEFINE_SUBSTANCE(filter_MarcaYin,filter,CLASS_MARCAYIN); // Marca Yin
 DEFINE_SUBSTANCE(filter_MarcaYang,filter,CLASS_MARCAYANG); // Marca Yin
@@ -532,6 +537,7 @@ DEFINE_SUBSTANCE(filter_SetPlusDamageFromHP,filter,CLASS_SETPLUSDAAMAGEFROMHP);
 
 // Passe de Batalha
 DEFINE_SUBSTANCE(filter_SetBattlePassEffect,filter,CLASS_SETBATTLEPASSFILTER);
+DEFINE_SUBSTANCE(filter_Wolf,filter,CLASS_ADDATTACKDEGREEATR);
 
 void filter_Tigerform::OnAttach()
 {

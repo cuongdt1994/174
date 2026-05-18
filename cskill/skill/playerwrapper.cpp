@@ -3294,6 +3294,16 @@ namespace GNET
 		}
 		return true;
 	}
+	bool PlayerWrapper::SetImmuneall2(bool b)
+	{
+		if (ThrowDice())
+		{
+			object.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
+			object.AddFilter(new filter_Immuneall2(object, time));
+		}
+		return true;
+	}
+
 	bool PlayerWrapper::SetImmunephysical(bool b)
 	{
 		if (ThrowDice())
@@ -10049,7 +10059,7 @@ namespace GNET
 		return true;
 	}
 	bool PlayerWrapper::InsertTeamVisibleState(int value, bool inc)
-	{	
+	{
 		if (inc)
 		{
 			object.InsertTeamVisibleState(value, -1);
@@ -10057,6 +10067,69 @@ namespace GNET
 		else
 		{
 			object.RemoveTeamVisibleState(value);
+		}
+		return true;
+	}
+
+	bool PlayerWrapper::SetDecCoolDown(bool)
+	{
+		if (ThrowDice())
+		{
+			if (value > 0.0f)
+			{
+				int amount = GetAmountInt();
+				unsigned int skillid = GetRuneSkillIDa(GetValueInt());
+				object.CoolDownReduceAtr((unsigned short)skillid + COOLINGID_BEGIN, amount);
+			}
+			if (ratio > 0.0f)
+			{
+				int amount = GetAmountInt();
+				unsigned int skillid = GetRuneSkillIDa(GetRatioInt());
+				object.CoolDownReduceAtr((unsigned short)skillid + COOLINGID_BEGIN, amount);
+			}
+		}
+		return true;
+	}
+
+	bool PlayerWrapper::SetDecCoolDown2(bool)
+	{
+#ifndef _SKILL_TEST
+		if (ThrowDice())
+		{
+			int skillid = GetRatioInt();
+			int amount = GetAmountInt();
+			object.AddFilter(new filter_DecCoolDown2(object, time, amount, skillid));
+		}
+#endif
+		return true;
+	}
+
+	bool PlayerWrapper::SetDebithurt5(bool)
+	{
+#ifndef _SKILL_TEST
+		if (ThrowDice())
+			object.AddFilter(new filter_Debithurt5(object, time, amount));
+#endif
+		return true;
+	}
+
+	bool PlayerWrapper::SetDebithurt6(bool)
+	{
+#ifndef _SKILL_TEST
+		if (ThrowDice())
+			object.AddFilter(new filter_Debithurt6(object, time, amount, GetValueInt()));
+#endif
+		return true;
+	}
+
+	bool PlayerWrapper::SetSlow3(bool b)
+	{
+		if (ThrowDice())
+		{
+			if (object.GetImmuneMask() & (IMMUNESLOW | IMMUNEWATER | IMMUNEALL))
+				immune |= 0x80;
+			else
+				object.AddFilter(new filter_Slow3(object, (int)(ratio * 100), time));
 		}
 		return true;
 	}

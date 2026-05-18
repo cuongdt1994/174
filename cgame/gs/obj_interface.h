@@ -91,6 +91,7 @@ public:
 	void AddFilter(filter*);
 	void RemoveFilter(int filter_id);
 	void ClearSpecFilter(int mask);
+	void ClearSpecFilter(int mask, int maxnum);
 	void ClearRandomSpecFilter(int mask);
 	bool IsFilterExist(int id);
 	int  QueryFilter(int filterid,int index);

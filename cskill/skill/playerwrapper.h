@@ -1195,9 +1195,21 @@ public:
 	bool SetIncAttackLevel(int inc);
 	bool SetPlusDamageFromHP(bool);
 
-	// Passe de Batalha 
+	// Passe de Batalha
 	bool SetBattlePassEffect(bool);
 	bool InsertTeamVisibleState(int value, bool inc);
+	unsigned int GetRuneSkillIDa(unsigned int id)
+	{
+		if (skillwrapper)
+			return skillwrapper->GetRuneSkillID(id);
+		return 0;
+	}
+
+	bool SetDecCoolDown(bool);
+	bool SetDecCoolDown2(bool);
+	bool SetDebithurt5(bool);
+	bool SetDebithurt6(bool);
+	bool SetSlow3(bool);
 };
 
 

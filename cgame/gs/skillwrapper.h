@@ -119,6 +119,12 @@ protected:
 	StorageMap	   dyn_map;		//��̬����
 	StorageMap	glyph_map;
 
+	struct RuneSkillEntry
+	{
+		unsigned int id;
+		unsigned int base_id;
+	} map2[9];
+
 	DynPrayMap	dynpray_map; //��̬��������	
 
 	int prayspeed;  
@@ -643,6 +649,16 @@ public:
 	void KidTransformAddBuffs(object_interface player);
 	
 	
+	unsigned int GetRuneSkillID(unsigned int id)
+	{
+		for (int i = 0; i <= 8; ++i)
+		{
+			if (map2[i].id && map2[i].base_id == id)
+				return map2[i].id;
+		}
+		return id;
+	}
+
 	//glyph
 	int GetSkillRuneAttr(ID id);
 	void ActivateGlyphSkill(ID id, ID pre_id, int level);

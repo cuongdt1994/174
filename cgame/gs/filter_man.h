@@ -299,10 +299,31 @@ public:
 			++it;
 		}
 
-		if(_call_mask == 0) 
+		if(_call_mask == 0)
 		{
 			RemoveDeletedFilter();
 		}
+		return rst;
+	}
+
+	bool ClearSpecFilter(int mask, int maxnum)
+	{
+		bool rst = false;
+		int tmp = 0;
+		FILTER_MAP::iterator it = _filter_map.begin();
+		for(; it != _filter_map.end(); ++it)
+		{
+			filter * old = it->second;
+			if(old->GetMask() & mask)
+			{
+				old->_is_deleted = true;
+				_has_wait_delete = true;
+				rst = true;
+				if(++tmp >= maxnum) break;
+			}
+		}
+		if(_call_mask == 0)
+			RemoveDeletedFilter();
 		return rst;
 	}
 
