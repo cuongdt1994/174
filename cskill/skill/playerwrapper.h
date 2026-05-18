@@ -1210,6 +1210,10 @@ public:
 	bool SetDebithurt5(bool);
 	bool SetDebithurt6(bool);
 	bool SetSlow3(bool);
+
+	bool SetRandBless(int a1, int a2, int a3);
+	bool SetRandBlessRet1(int a1, int a2, int a3);
+	bool SetRandBlessRet2(int a1, int a2, int a3);
 };
 
 

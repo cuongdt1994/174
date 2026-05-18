@@ -731,6 +731,7 @@ public:
 
 	void SetPerformerid(const XID& p) { performerid = p; }
 	const XID& GetPerformerid() const { return performerid; }
+	const enchant_msg* GetEnchantMsg() const { return enchantmsg; }
 	void SetPerformerpos(const A3DVECTOR& p) { performerpos = p; }
 	const A3DVECTOR& GetPerformerpos() const { return performerpos; }
 
