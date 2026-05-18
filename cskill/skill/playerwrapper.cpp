@@ -916,7 +916,7 @@ namespace GNET
 
 	int PlayerWrapper::GetRegionplayernum()
 	{
-		A3DVECTOR tpos = *object.GetPos();
+		A3DVECTOR tpos = object.GetPos();
 		float radius = skill->GetRadius();
 		int num = object.GetSpherePlayerListSize(tpos, radius);
 		return num > 0 ? num : 1;
