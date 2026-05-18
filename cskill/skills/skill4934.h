@@ -94,13 +94,15 @@ namespace GNET
             void Calculate (Skill * skill) const
             {
                 skill->GetPlayer ()->SetDecmp (0.8 * (8.26 * skill->GetLevel () - 3.4));
-                skill->SetPlus (skill->GetLevel () < 3 ? 103.6 * skill->GetLevel () - 6.3 : 0
-								|| skill->GetLevel () < 5 ? 103.6 * skill->GetLevel () + 12.6 * skill->GetLevel() - 18.9 : 0
-								|| skill->GetLevel () < 6 ? 103.6 * skill->GetLevel () + 12.6 * skill->GetLevel() + 6.3 : 0
-								|| skill->GetLevel () < 7 ? 103.6 * skill->GetLevel () + 12.6 * skill->GetLevel() + 44.7 : 0
-								|| skill->GetLevel () < 8 ? 103.6 * skill->GetLevel () + 12.6 * skill->GetLevel() + 93.7 : 0
-								|| skill->GetLevel () < 9 ? 103.6 * skill->GetLevel () + 12.6 * skill->GetLevel() + 157.5 : 0
-								|| skill->GetLevel () > 8 ? 148.3 * skill->GetLevel () : 0);
+                skill->SetPlus(
+					skill->GetLevel() < 3 ? 103.6 * skill->GetLevel() - 6.3 :
+					skill->GetLevel() < 5 ? 103.6 * skill->GetLevel() + 12.6 * skill->GetLevel() - 18.9 :
+					skill->GetLevel() < 6 ? 103.6 * skill->GetLevel() + 12.6 * skill->GetLevel() + 6.3 :
+					skill->GetLevel() < 7 ? 103.6 * skill->GetLevel() + 12.6 * skill->GetLevel() + 44.7 :
+					skill->GetLevel() < 8 ? 103.6 * skill->GetLevel() + 12.6 * skill->GetLevel() + 93.7 :
+					skill->GetLevel() < 9 ? 103.6 * skill->GetLevel() + 12.6 * skill->GetLevel() + 157.5 :
+											148.3 * skill->GetLevel()
+				);
                 skill->SetRatio (0);
                 skill->SetDamage (skill->GetAttack ());
                 skill->GetPlayer ()->SetPerform (1);
