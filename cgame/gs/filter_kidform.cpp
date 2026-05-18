@@ -78,7 +78,7 @@ void filter_Kidform::OnAttach()
 	sw = &_parent.GetSkillWrapper();
 	sw->DecPrayTime(_time_reduce);
 
-	_parent.IncImmuneMask(50339840);
+	//_parent.IncImmuneMask(50339840);
 
 	for (int i = 0; i < _skill_count; ++i)
 	{
@@ -131,7 +131,7 @@ void filter_Kidform::OnRelease()
 	sw = &_parent.GetSkillWrapper();
 	sw->IncPrayTime(_time_reduce);
 
-	_parent.DecImmuneMask(50339840);
+	//_parent.DecImmuneMask(50339840);
 
 	for (int i = 0; i < _skill_count; ++i)
 	{
@@ -148,6 +148,8 @@ void filter_Kidform::OnRelease()
 
 	sw = &_parent.GetSkillWrapper();
 	sw->KidTransformAddBuffs(_parent);
+
+	_parent.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
 
 	// restore HP proportionally to the new max_hp
 	float target_hp = (float)_parent.GetExtendProp().max_hp * hp_ratio;

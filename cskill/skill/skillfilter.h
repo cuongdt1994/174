@@ -31181,7 +31181,7 @@ public:
 
 	virtual void Heartbeat(int tick)
 	{
-		if (!_parent.IsFilterExist(FILTER_ADDDEFENCEDEGREEATR))
+		if (!_parent.IsFilterExist(filter_Kidform))
 			_is_deleted = 1;
 	}
 };
