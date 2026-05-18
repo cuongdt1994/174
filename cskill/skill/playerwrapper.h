@@ -278,6 +278,7 @@ public:
 	int GetElfeng();
 	int GetElflevel();
 	int GetTargetregionplayernum();
+	int GetRegionplayernum();
 	unsigned int GetCharging();
 public:
 	bool SetHp(float hp) 

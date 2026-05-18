@@ -26,7 +26,7 @@ namespace GNET
           public:
             int GetTime (Skill * skill) const
             {
-                return 50;
+                return 100;
             }
             bool Quit (Skill * skill) const
             {
@@ -50,7 +50,7 @@ namespace GNET
             }
             bool Cancel (Skill * skill) const
             {
-                return 0;
+                return 2;
             }
             bool Skip (Skill * skill) const
             {
@@ -80,7 +80,7 @@ namespace GNET
             }
             void Calculate (Skill * skill) const
             {
-                skill->GetPlayer ()->SetPerform (1);
+                skill->GetPlayer ()->SetPerform (2);
             }
             bool Interrupt (Skill * skill) const
             {
@@ -100,13 +100,118 @@ namespace GNET
     class State3:public SkillStub::State 
     { 
     public: 
+        int GetTime (Skill * skill) const { return 850; } 
+        bool Quit (Skill * skill) const { return false; } 
+        bool Loop (Skill * skill) const { return false; } 
+        bool Bypass (Skill * skill) const { return false; } 
+        void Calculate(Skill* skill) const
+		{
+			skill->SetSection(1);
+			skill->SetPlus(0.0);
+			skill->SetRatio(0.0);
+			skill->SetDamage(skill->GetAttack() * (skill->GetLevel() * 0.1 + 0.6));
+			skill->GetPlayer()->SetPerform(0);
+		}
+        bool Interrupt (Skill * skill) const { return false; } 
+        bool Cancel (Skill * skill) const { return 1; } 
+        bool Skip (Skill * skill) const { return 0; } 
+    }; 
+#endif
+#ifdef _SKILL_SERVER 
+    class State4:public SkillStub::State 
+    { 
+    public: 
+        int GetTime (Skill * skill) const { return 700; } 
+        bool Quit (Skill * skill) const { return false; } 
+        bool Loop (Skill * skill) const { return false; } 
+        bool Bypass (Skill * skill) const { return false; } 
+        void Calculate(Skill* skill) const
+		{
+			skill->SetSection(2);
+			skill->SetPlus(0.0);
+			skill->SetRatio(0.0);
+			skill->SetDamage(skill->GetAttack() * (skill->GetLevel() * 0.1 + 0.6));
+			skill->GetPlayer()->SetPerform(0);
+		}
+        bool Interrupt (Skill * skill) const { return false; } 
+        bool Cancel (Skill * skill) const { return 1; } 
+        bool Skip (Skill * skill) const { return 0; } 
+    }; 
+#endif
+#ifdef _SKILL_SERVER 
+    class State5:public SkillStub::State 
+    { 
+    public: 
+        int GetTime (Skill * skill) const { return 700; } 
+        bool Quit (Skill * skill) const { return false; } 
+        bool Loop (Skill * skill) const { return false; } 
+        bool Bypass (Skill * skill) const { return false; } 
+        void Calculate(Skill* skill) const
+		{
+			skill->SetSection(3);
+			skill->SetPlus(0.0);
+			skill->SetRatio(0.0);
+			skill->SetDamage(skill->GetAttack() * (skill->GetLevel() * 0.1 + 0.6));
+			skill->GetPlayer()->SetPerform(0);
+		}
+        bool Interrupt (Skill * skill) const { return false; } 
+        bool Cancel (Skill * skill) const { return 1; } 
+        bool Skip (Skill * skill) const { return 0; } 
+    }; 
+#endif
+#ifdef _SKILL_SERVER 
+    class State6:public SkillStub::State 
+    { 
+    public: 
+        int GetTime (Skill * skill) const { return 700; } 
+        bool Quit (Skill * skill) const { return false; } 
+        bool Loop (Skill * skill) const { return false; } 
+        bool Bypass (Skill * skill) const { return false; } 
+        void Calculate(Skill* skill) const
+		{
+			skill->SetSection(4);
+			skill->SetPlus(0.0);
+			skill->SetRatio(0.0);
+			skill->SetDamage(skill->GetAttack() * (skill->GetLevel() * 0.1 + 0.6));
+			skill->GetPlayer()->SetPerform(0);
+		}
+        bool Interrupt (Skill * skill) const { return false; } 
+        bool Cancel (Skill * skill) const { return 1; } 
+        bool Skip (Skill * skill) const { return 0; } 
+    }; 
+#endif
+#ifdef _SKILL_SERVER 
+    class State7:public SkillStub::State 
+    { 
+    public: 
+        int GetTime (Skill * skill) const { return 700; } 
+        bool Quit (Skill * skill) const { return false; } 
+        bool Loop (Skill * skill) const { return false; } 
+        bool Bypass (Skill * skill) const { return false; } 
+        void Calculate(Skill* skill) const
+		{
+			skill->SetSection(5);
+			skill->SetPlus(0.0);
+			skill->SetRatio(0.0);
+			skill->SetDamage(skill->GetAttack() * (skill->GetLevel() * 0.1 + 0.6));
+			skill->GetPlayer()->SetPerform(0);
+		}
+        bool Interrupt (Skill * skill) const { return false; } 
+        bool Cancel (Skill * skill) const { return 1; } 
+        bool Skip (Skill * skill) const { return 0; } 
+    }; 
+#endif
+#ifdef _SKILL_SERVER 
+    class State8:public SkillStub::State 
+    { 
+    public: 
         int GetTime (Skill * skill) const { return 0; } 
         bool Quit (Skill * skill) const { return false; } 
         bool Loop (Skill * skill) const { return false; } 
         bool Bypass (Skill * skill) const { return false; } 
         void Calculate (Skill * skill) const { } 
         bool Interrupt (Skill * skill) const { return false; } 
-        bool Cancel (Skill * skill) const { return 1; } 
+        bool Cancel (Skill * skill) const { return 0; } 
         bool Skip (Skill * skill) const { return 0; } 
     }; 
 #endif 
@@ -188,6 +293,11 @@ namespace GNET
         statestub.push_back (new State1 ()); 
         statestub.push_back (new State2 ()); 
         statestub.push_back (new State3 ()); 
+		statestub.push_back (new State4 ()); 
+		statestub.push_back (new State5 ()); 
+		statestub.push_back (new State6 ()); 
+		statestub.push_back (new State7 ()); 
+		statestub.push_back (new State8 ()); 
 #endif 
     } 
     int GetExecutetime (Skill * skill) const 
@@ -234,7 +344,7 @@ namespace GNET
     } 
     float GetAngle (Skill * skill) const 
     { 
-        return (float) (0); 
+        return (float) (1); 
     } 
     float GetPraydistance (Skill * skill) const 
     { 
@@ -259,7 +369,11 @@ namespace GNET
     { 
         static int aarray[10] = { 0,0,0,0,0,0,0,0,0,0 }; 
         return aarray[skill->GetLevel () - 1]; 
-    } 
+    }
+	bool CheckHpCondition (int hp, int max_hp) const
+    {
+		return 1;
+	}
 #ifdef _SKILL_CLIENT 
     int GetIntroduction (Skill * skill, const wchar_t * buffer, int length, const wchar_t * format) const 
     { 
@@ -279,34 +393,46 @@ namespace GNET
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    bool StateAttack (Skill * skill) const 
-    { 
-        return 1; 
-    } 
+    bool StateAttack(Skill* skill) const
+	{
+		if (skill->GetSection() != 1)
+			return 0;
+		skill->GetVictim()->SetProbability(1.0 * 100);
+		skill->GetVictim()->SetTime(15000);
+		skill->GetVictim()->SetAmount(skill->GetT0() *
+			(1 + 0.01 * (skill->GetT1() - skill->GetPlayer()->GetDefenddegree() > 0 ?
+						 skill->GetT1() - skill->GetPlayer()->GetDefenddegree() : 0)));
+		skill->GetVictim()->SetBleeding2(1);
+		return 1;
+	}
 #endif 
 #ifdef _SKILL_SERVER 
-    bool BlessMe (Skill * skill) const 
-    { 
-        return 1; 
-    } 
+    bool BlessMe(Skill* skill) const
+	{
+		skill->GetVictim()->SetProbability(100.0);
+		skill->GetVictim()->SetTime(4000.0);
+		skill->GetVictim()->SetShowicon(1);
+		skill->GetVictim()->SetInvincible2(1);
+		return 1;
+	}
 #endif 
 #ifdef _SKILL_SERVER 
     float GetEffectdistance (Skill * skill) const 
     { 
-        return 5; 
+        return 35; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 
     float GetTalent0 (PlayerWrapper * player) 
     { 
-        return 0; 
+        return (float) (player->GetAttack () * 0.4 );
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    float GetTalent1 (PlayerWrapper * player) 
-    { 
-        return 0; 
-    } 
+    float GetTalent1(PlayerWrapper* player) const
+	{
+		return (float) (player->GetAttackdegree ());
+	}
 #endif 
 #ifdef _SKILL_SERVER 
     float GetTalent2 (PlayerWrapper * player) 
@@ -341,7 +467,7 @@ namespace GNET
 #ifdef _SKILL_SERVER 
     float GetHitrate (Skill * skill) const 
     { 
-        return 1; 
+        return 3; 
     } 
 #endif 
 #ifdef _SKILL_SERVER 

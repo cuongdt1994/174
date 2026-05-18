@@ -914,6 +914,14 @@ namespace GNET
 		return num > 0 ? num : 1;
 	}
 
+	int PlayerWrapper::GetRegionplayernum()
+	{
+		A3DVECTOR tpos = *object.GetPos();
+		float radius = skill->GetRadius();
+		int num = object.GetSpherePlayerListSize(tpos, radius);
+		return num > 0 ? num : 1;
+	}
+
 	unsigned int PlayerWrapper::GetCharging()
 	{
 		return skill ? skill->GetCharging() : 0;
