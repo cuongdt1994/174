@@ -711,7 +711,7 @@ gplayer_imp::KidAwakeningNewDay3()
 	else
 	{
 		if (config2->broadcast > 0)
-			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), (int)config2->id);
+			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), config2->name);
 
 		DATA_TYPE data3;
 		const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)
@@ -1113,13 +1113,13 @@ gplayer_imp::FixChildSystem()
 }
 
 void
-gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, int type)
+gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, const namechar *name)
 {
 	struct
 	{
 		char player_name[MAX_USERNAME_LENGTH];
 		char child_name[MAX_USERNAME_LENGTH_NOTIFY];
-		int  type;
+		namechar name[32];
 	} data;
 	memset(&data, 0, sizeof(data));
 
@@ -1131,7 +1131,7 @@ gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, int type)
 	if (len2 > MAX_USERNAME_LENGTH_NOTIFY) len2 = MAX_USERNAME_LENGTH_NOTIFY;
 	memcpy(data.child_name, child_name, len2);
 
-	data.type = type;
+	memcpy(data.name, name, sizeof(data.name));
 
 	packet_wrapper buf(sizeof(data));
 	buf.push_back(&data, sizeof(data));
