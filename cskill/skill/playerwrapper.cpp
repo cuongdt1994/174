@@ -10093,32 +10093,26 @@ namespace GNET
 
 	bool PlayerWrapper::SetDecCoolDown2(bool)
 	{
-#ifndef _SKILL_TEST
 		if (ThrowDice())
 		{
 			int skillid = GetRatioInt();
 			int amount = GetAmountInt();
 			object.AddFilter(new filter_DecCoolDown2(object, time, amount, skillid));
 		}
-#endif
 		return true;
 	}
 
 	bool PlayerWrapper::SetDebithurt5(bool)
 	{
-#ifndef _SKILL_TEST
 		if (ThrowDice())
 			object.AddFilter(new filter_Debithurt5(object, time, amount));
-#endif
 		return true;
 	}
 
 	bool PlayerWrapper::SetDebithurt6(bool)
 	{
-#ifndef _SKILL_TEST
 		if (ThrowDice())
 			object.AddFilter(new filter_Debithurt6(object, time, amount, GetValueInt()));
-#endif
 		return true;
 	}
 
