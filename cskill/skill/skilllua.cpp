@@ -926,6 +926,7 @@ void LuaSkill::SetFuncALLData()
 	REG_FUNC(SetIncantiinvisibleactive      );
 	REG_FUNC(SetInchpsteal                  );
 	REG_FUNC(SetInccritdamage               );
+	REG_FUNC(SetInccritdamage2              );
 	REG_FUNC(SetIncdamagedodge              );
 	REG_FUNC(SetIncdebuffdodge              );
 	REG_FUNC(SetRebirth                     );
@@ -1428,6 +1429,7 @@ double LuaSkill::SetInvisible                   	(long long skill, double value)
 double LuaSkill::SetIncantiinvisibleactive      	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetIncantiinvisibleactive       (value) : -0; }
 double LuaSkill::SetInchpsteal                  	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetInchpsteal                   (value) : -0; }
 double LuaSkill::SetInccritdamage               	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetInccritdamage                (value) : -0; }
+double LuaSkill::SetInccritdamage2              	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetInccritdamage2               (value) : -0; }
 double LuaSkill::SetIncdamagedodge              	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetIncdamagedodge               (value) : -0; }
 double LuaSkill::SetIncdebuffdodge              	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetIncdebuffdodge               (value) : -0; }
 double LuaSkill::SetRebirth                     	(long long skill, double value) { return skill ? ((Skill *)skill)->GetVictim()->SetRebirth                      (value) : -0; }

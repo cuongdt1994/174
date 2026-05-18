@@ -501,6 +501,7 @@ public:
 	static double SetIncantiinvisibleactive      (long long skill, double value);
 	static double SetInchpsteal                  (long long skill, double value);
 	static double SetInccritdamage               (long long skill, double value);
+	static double SetInccritdamage2              (long long skill, double value);
 	static double SetIncdamagedodge              (long long skill, double value);
 	static double SetIncdebuffdodge              (long long skill, double value);
 	static double SetRebirth                     (long long skill, double value);

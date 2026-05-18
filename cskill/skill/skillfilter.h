@@ -9069,6 +9069,66 @@ public:
 	}
 };
 
+class filter_Inccritdamage2 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_TRANSLATE_SEND_MSG | FILTER_MASK_HEARTBEAT
+			| FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_TRANSFERABLE_BUFF
+	};
+
+	int _inc;
+	int _count;
+	int _num;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _inc << _count << _num;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _inc >> _count >> _num;
+		return true;
+	}
+
+	filter_Inccritdamage2() {}
+public:
+	DECLARE_SUBSTANCE(filter_Inccritdamage2);
+	filter_Inccritdamage2(object_interface object, int period, int inc, int count)
+		: timeout_filter(object, period, FILTER_MASK), _inc(inc), _num(0)
+	{
+		_filter_id = FILTER_INCCRITDAMAGE2;
+		_count = count < 1 ? 1 : count;
+	}
+
+	void OnAttach()
+	{
+		_parent.InsertTeamVisibleState(HSTATE_521, _timeout);
+		_parent.EnhanceCritDamage(_inc);
+	}
+
+	void OnRelease()
+	{
+		_parent.RemoveTeamVisibleState(HSTATE_521);
+		_parent.ImpairCritDamage(_inc);
+	}
+
+	virtual void TranslateSendAttack(const XID & target, attack_msg & msg)
+	{
+		if (msg.magic_damage[0] + msg.magic_damage[1] + msg.magic_damage[2]
+			+ msg.magic_damage[3] + msg.magic_damage[4] + msg.physic_damage > 10)
+		{
+			if (--_count <= 0)
+				_is_deleted = 1;
+		}
+	}
+};
+
 class filter_Incdamagedodge : public timeout_filter
 {
 protected:

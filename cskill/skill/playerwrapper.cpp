@@ -4182,6 +4182,15 @@ namespace GNET
 		return true;
 	}
 
+	bool PlayerWrapper::SetInccritdamage2(bool)
+	{
+		if (ThrowDice())
+		{
+			object.AddFilter(new filter_Inccritdamage2(object, time, (int)(ratio * 100), GetAmountInt()));
+		}
+		return true;
+	}
+
 	bool PlayerWrapper::SetIncdamagedodge(bool)
 	{
 		if (ThrowDice())

@@ -573,6 +573,7 @@ public:
 	bool SetIncantiinvisibleactive(bool);
 	bool SetInchpsteal(bool);
 	bool SetInccritdamage(bool);
+	bool SetInccritdamage2(bool);
 	bool SetIncdamagedodge(bool);
 	bool SetIncdebuffdodge(bool);
 	bool SetRebirth(bool);

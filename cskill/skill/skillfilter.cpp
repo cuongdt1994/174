@@ -169,6 +169,7 @@ DEFINE_SUBSTANCE(filter_Auracurse,filter,CLASS_AURACURSE);
 DEFINE_SUBSTANCE(filter_Incantiinvisibleactive,filter,CLASS_INCANTIINVISIBLEACTIVE);
 DEFINE_SUBSTANCE(filter_Inchpsteal,filter,CLASS_INCHPSTEAL);
 DEFINE_SUBSTANCE(filter_Inccritdamage,filter,CLASS_INCCRITDAMAGE);
+DEFINE_SUBSTANCE(filter_Inccritdamage2,filter,CLASS_INCCRITDAMAGE2);
 DEFINE_SUBSTANCE(filter_Incdamagedodge,filter,CLASS_INCDAMAGEDODGE);
 DEFINE_SUBSTANCE(filter_Incdebuffdodge,filter,CLASS_INCDEBUFFDODGE);
 DEFINE_SUBSTANCE(filter_Rebirth,filter,CLASS_REBIRTH);

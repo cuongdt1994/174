@@ -1145,6 +1145,8 @@ enum filter_id{
 	FILTER_SETBATTLEPASSFILTER = 4721,
 	FILTER_KIDFORM = 4722,
 	FILTER_BLEEDING2 = 4723,
+	CLASS_INCCRITDAMAGE2 = 4724,	//���ӱ����˺�2
+	FILTER_INCCRITDAMAGE2 = 4724,	//���ӱ����˺�2
 
 };
 
