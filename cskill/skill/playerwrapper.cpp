@@ -10170,5 +10170,42 @@ namespace GNET
 		object.QueryFilter(FILTER_RANDBLESS, skill->GetPerformerid().id);
 		return true;
 	}
+
+	bool PlayerWrapper::SetRandCurse(int a1, int a2, int a3)
+	{
+		if (!object.IsPlayerClass())
+			return false;
+		const enchant_msg *msg = skill->GetEnchantMsg();
+		if (!msg)
+			return false;
+		filter_Randcurse *pfilter = new filter_Randcurse(object, 2, a1, a2, a3);
+		pfilter->SetUp(msg);
+		object.AddFilter(pfilter);
+		return true;
+	}
+
+	bool PlayerWrapper::SetRandCurseRet1(int a1, int a2, int a3)
+	{
+		if (!object.IsPlayerClass())
+			return false;
+		enchant_msg msg;
+		memset(&msg, 0, sizeof(msg));
+		msg.attack_range = 200.0f;
+		msg.skill        = 6086;
+		msg.skill_level  = 2;
+		msg.helpful      = 1;
+		object.Enchant(XID(2, a3), msg);
+		return true;
+	}
+
+	bool PlayerWrapper::SetRandCurseRet2(int a1, int a2, int a3)
+	{
+		if (!object.IsPlayerClass())
+			return false;
+		if (!object.IsFilterExist(FILTER_RANDCURSE))
+			return false;
+		object.QueryFilter(FILTER_RANDCURSE, skill->GetPerformerid().id);
+		return true;
+	}
 };
 

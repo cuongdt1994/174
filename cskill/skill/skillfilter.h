@@ -31450,5 +31450,114 @@ public:
 	}
 };
 
+class filter_Randcurse : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH | FILTER_MASK_HEARTBEAT
+	};
+
+	XID            _target;
+	int            _ratio;
+	int            _tid;
+	enchant_msg    tmsg;
+	unsigned short _lv;
+	int            _value;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _target << _ratio << _lv << _value << _tid;
+		ar.push_back(&tmsg, sizeof(tmsg));
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _target >> _ratio >> _lv >> _value >> _tid;
+		ar.pop_back(&tmsg, sizeof(tmsg));
+		return true;
+	}
+
+	filter_Randcurse() {}
+
+public:
+	DECLARE_SUBSTANCE(filter_Randcurse);
+
+	filter_Randcurse(object_interface object, int period, int ratio, int lv_value, int tid)
+		: timeout_filter(object, period, FILTER_MASK), _ratio(ratio), _tid(tid)
+	{
+		_filter_id = FILTER_RANDCURSE;
+		_target    = XID(-1, -1);
+		memset(&tmsg, 0, sizeof(tmsg));
+		_lv    = (unsigned short)lv_value;
+		_value = lv_value >> 16;
+	}
+
+	void SetUp(const enchant_msg *msg)
+	{
+		memcpy(&tmsg, msg, sizeof(tmsg));
+	}
+
+	virtual int OnQuery(int index)
+	{
+		if (index <= 0)
+			return 0;
+		if (index == _tid || index == tmsg.ainfo.attacker.id)
+			return 0;
+		if (_target.id > 0)
+		{
+			if (rand() % 100 <= 49)
+				return 0;
+		}
+		_target.type = 2;
+		_target.id   = index;
+		return 1;
+	}
+
+	virtual void OnAttach()
+	{
+		if (_value > 0)
+		{
+			float range = (_lv <= 3) ? 5.0f : 10.0f;
+			enchant_msg amsg;
+			memset(&amsg, 0, sizeof(amsg));
+			amsg.attack_range    = range;
+			amsg.skill           = 6086;
+			amsg.skill_level     = 1;
+			amsg.helpful         = 1;
+			amsg.skill_modify[0] = _ratio;
+			amsg.skill_modify[1] = _value;
+			amsg.skill_modify[2] = _parent.GetSelfID().id;
+			_parent.SetAuraAttackState();
+			_parent.RegionEnchant1(_parent.GetPos(), range, amsg, XID(-1, -1));
+		}
+	}
+
+	virtual void OnRelease()
+	{
+	}
+
+	virtual void Heartbeat(int tick)
+	{
+		timeout_filter::Heartbeat(tick);
+		if (_value > 0 && _target.id > 0)
+		{
+			enchant_msg msg;
+			memcpy(&msg, &tmsg, sizeof(msg));
+			msg.attack_range    = 200.0f;
+			msg.skill           = 6086;
+			msg.skill_level     = 3;
+			msg.skill_modify[0] = _ratio;
+			msg.skill_modify[1] = _lv | ((_value - 1) << 16);
+			msg.skill_modify[2] = _tid;
+			_parent.Enchant(_target, msg);
+			_is_deleted = 1;
+		}
+	}
+};
+
 #undef IS_PHYSIC_ATTACK
 #endif

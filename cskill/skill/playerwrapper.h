@@ -1214,6 +1214,10 @@ public:
 	bool SetRandBless(int a1, int a2, int a3);
 	bool SetRandBlessRet1(int a1, int a2, int a3);
 	bool SetRandBlessRet2(int a1, int a2, int a3);
+
+	bool SetRandCurse(int a1, int a2, int a3);
+	bool SetRandCurseRet1(int a1, int a2, int a3);
+	bool SetRandCurseRet2(int a1, int a2, int a3);
 };
 
 

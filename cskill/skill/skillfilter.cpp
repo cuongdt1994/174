@@ -539,6 +539,7 @@ DEFINE_SUBSTANCE(filter_SetPlusDamageFromHP,filter,CLASS_SETPLUSDAAMAGEFROMHP);
 DEFINE_SUBSTANCE(filter_SetBattlePassEffect,filter,CLASS_SETBATTLEPASSFILTER);
 DEFINE_SUBSTANCE(filter_Wolf,filter,CLASS_ADDATTACKDEGREEATR);
 DEFINE_SUBSTANCE(filter_Randbless,filter,CLASS_RANDBLESS);
+DEFINE_SUBSTANCE(filter_Randcurse,filter,CLASS_RANDCURSE);
 
 void filter_Tigerform::OnAttach()
 {
