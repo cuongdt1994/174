@@ -32058,7 +32058,7 @@ public:
 	void OnAttach()
 	{
 		_parent.InsertTeamVisibleState(0x191, _timeout);
-		_pos = *_parent.GetPos();
+		_pos = _parent.GetPos();
 	}
 
 	void OnRelease()
@@ -32068,7 +32068,7 @@ public:
 
 	int OnQuery(int index)
 	{
-		const A3DVECTOR& cur = *_parent.GetPos();
+		A3DVECTOR cur = _parent.GetPos();
 		float dx = _pos.x - cur.x, dy = _pos.y - cur.y, dz = _pos.z - cur.z;
 		if (dx*dx + dy*dy + dz*dz > (float)_distance)
 			return 0;
