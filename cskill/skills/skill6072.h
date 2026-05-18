@@ -284,12 +284,6 @@ namespace GNET
     } 
 #endif 
 #ifdef _SKILL_SERVER 
-    bool StateAttack (Skill * skill) const 
-    { 
-        return 1; 
-    } 
-#endif 
-#ifdef _SKILL_SERVER 
     bool StateAttack(Skill* skill) const
 	{
 		int _maxhp = skill->GetPlayer()->GetMaxhp();
@@ -301,6 +295,12 @@ namespace GNET
 		skill->GetVictim()->SetTime(skill->GetLevel() <= 2 ? 5500.0 : 8500.0);
 		skill->GetVictim()->SetAmount((float)_amount);
 		skill->GetVictim()->SetDebithurt7(1);
+		return 1;
+	}
+#endif 
+#ifdef _SKILL_SERVER 
+    bool BlessMe(Skill* skill) const
+	{
 		return 1;
 	}
 #endif 
