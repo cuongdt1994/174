@@ -711,7 +711,10 @@ gplayer_imp::KidAwakeningNewDay3()
 	else
 	{
 		if (config2->broadcast > 0)
+		{
+			__PRINTF("KID name[0]=%d name=%ls\n", (int)config2->name[0], config2->name);
 			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), config2->name);
+		}
 
 		DATA_TYPE data3;
 		const KID_LEVEL_MAX_CONFIG *config3 = (const KID_LEVEL_MAX_CONFIG *)
