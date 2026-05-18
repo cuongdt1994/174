@@ -10102,6 +10102,13 @@ namespace GNET
 		return true;
 	}
 
+	unsigned int PlayerWrapper::GetRuneSkillIDa(unsigned int id)
+	{
+		if (skillwrapper)
+			return skillwrapper->GetRuneSkillID(id);
+		return 0;
+	}
+
 	bool PlayerWrapper::SetDebithurt5(bool)
 	{
 		if (ThrowDice())

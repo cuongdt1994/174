@@ -31156,7 +31156,7 @@ public:
 	{
 		if (msg.physic_damage > 9)
 		{
-			const A3DVECTOR * pos = _parent.GetPos();
+			const A3DVECTOR pos = _parent.GetPos();
 			if (_parent.GetSpherePlayerListSize(pos, _radius) <= _count)
 				msg.physic_damage = (int)((long double)msg.physic_damage * _inc);
 		}
@@ -31181,7 +31181,7 @@ public:
 
 	virtual void Heartbeat(int tick)
 	{
-		if (!_parent.IsFilterExist(filter_Kidform))
+		if (!_parent.IsFilterExist(FILTER_KIDFORM))
 			_is_deleted = 1;
 	}
 };
@@ -31337,6 +31337,78 @@ public:
 	{
 		_parent.RemoveTeamVisibleState(HSTATE_524);
 		_parent.InsertTeamVisibleState(HSTATE_524, (int)_amount, (int)_maxamount, _timeout);
+	}
+};
+
+class filter_Debithurt6 : public timeout_filter
+{
+protected:
+	enum
+	{
+		FILTER_MASK = FILTER_MASK_HEARTBEAT | FILTER_MASK_ADJUST_DAMAGE | FILTER_MASK_BUFF
+				| FILTER_MASK_UNIQUE | FILTER_MASK_REMOVE_ON_DEATH
+	};
+
+	float _amount;
+	float _maxamount;
+	int _value;
+
+	virtual bool Save(archive & ar)
+	{
+		timeout_filter::Save(ar);
+		ar << _amount;
+		ar << _maxamount;
+		ar << _value;
+		return true;
+	}
+
+	virtual bool Load(archive & ar)
+	{
+		timeout_filter::Load(ar);
+		ar >> _amount;
+		ar >> _maxamount;
+		ar >> _value;
+		return true;
+	}
+
+	void AdjustDamage(damage_entry & dmg, const XID & attacker, const attack_msg & msg, float damage_adjust)
+	{
+		float d = dmg.physic_damage + dmg.magic_damage[0] + dmg.magic_damage[1]
+				+ dmg.magic_damage[2] + dmg.magic_damage[3] + dmg.magic_damage[4] + 0.5f;
+		if (_amount <= d)
+		{
+			float da = (d - _amount) / d;
+			dmg.physic_damage *= da;
+			dmg.magic_damage[0] *= da;
+			dmg.magic_damage[1] *= da;
+			dmg.magic_damage[2] *= da;
+			dmg.magic_damage[3] *= da;
+			dmg.magic_damage[4] *= da;
+			_amount = 0.0f;
+			_is_deleted = 1;
+		}
+		else
+		{
+			_amount -= d;
+			dmg.physic_damage = 0.0f;
+			dmg.magic_damage[0] = 0.0f;
+			dmg.magic_damage[1] = 0.0f;
+			dmg.magic_damage[2] = 0.0f;
+			dmg.magic_damage[3] = 0.0f;
+			dmg.magic_damage[4] = 0.0f;
+		}
+	}
+
+	filter_Debithurt6() {}
+public:
+	DECLARE_SUBSTANCE(filter_Debithurt6);
+	filter_Debithurt6(object_interface object, int period, float amount, int value)
+			: timeout_filter(object, period, FILTER_MASK), _amount(amount), _value(value)
+	{
+		_filter_id = FILTER_DEBITHURT6;
+		if (_amount > 500000.0f) _amount = 500000.0f;
+		if (_amount < 0.0f) _amount = 1.0f;
+		_maxamount = _amount;
 	}
 };
 
