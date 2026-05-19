@@ -1179,4 +1179,3 @@ gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, int kid_id
 
 	broadcast_chat_msg(CHILD_AWAKENING_CHAT_MSG_ID, buf.data(), buf.size(), GMSV::CHAT_CHANNEL_SYSTEM, 0, 0, 0);
 }
-}
