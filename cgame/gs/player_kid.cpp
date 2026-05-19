@@ -250,7 +250,7 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 		time_t nnow;
 		time(&nnow);
 		struct tm tm_buf = {};
-		localtime_s(&tm_buf, &nnow);
+		localtime_r(&nnow, &tm_buf);
 		GetLua()->SetChildResetDay((char)tm_buf.tm_mday);
 	}
 
