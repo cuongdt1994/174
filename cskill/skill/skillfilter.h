@@ -31317,7 +31317,7 @@ public:
 	filter_Wolf(object_interface object, float r, int count, float inc)
 		: timeout_filter(object, 31536000, FILTER_MASK), _radius(r), _count(count), _inc(inc + 1.0f)
 	{
-		_filter_id = FILTER_ADDATTACKDEGREEATR;
+		_filter_id = FILTER_WOLF;
 	}
 
 	void TranslateSendAttack(const XID & target, attack_msg & msg)

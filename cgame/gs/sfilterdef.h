@@ -1171,6 +1171,7 @@ enum filter_id{
 	FILTER_ANGRY      = 4733,
 	FILTER_REBIRTH3   = 4734,
 	FILTER_QUEFAN     = 4735,
+	FILTER_WOLF       = 4736,
 
 };
 
