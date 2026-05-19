@@ -1969,6 +1969,11 @@ int object_interface::GetForm()
 	return _imp->GetForm();
 }
 
+void object_interface::KidTransformEnd(int skill_count, int *skills)
+{
+	static_cast<gplayer_imp *>(_imp)->KidTransformEnd(skill_count, skills);
+}
+
 void object_interface::SetFormCls(int form)
 {
 	_imp->SetFormCls(form);

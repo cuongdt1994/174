@@ -100,14 +100,14 @@ void gplayer_kid_addons::ActivateKidsAddons(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::ActivateKidsAddons: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::ActivateKidsAddons: failed to get player imp");
 		return;
 	}
 
@@ -135,19 +135,21 @@ void gplayer_kid_addons::DeactivateKidsAddons(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::DeactivateKidsAddons: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::DeactivateKidsAddons: failed to get player imp");
 		return;
 	}
 
-	GenerateKidsAddons(roleid);
-
+	// Bug fix: removed GenerateKidsAddons() here. Deactivate must operate on the
+	// same addon set that was previously activated; rebuilding it first would
+	// deactivate a freshly generated (potentially different) set and leave the
+	// real active addons permanently stuck on the character.
 	gactive_imp *imp = (gactive_imp *)pImp->_commander->_imp;
 	if (!imp)
 		return;
@@ -170,14 +172,14 @@ void gplayer_kid_addons::UpdateKidsAddonsProtocol(int roleid)
 	gplayer *gPlayer = world_manager::GetInstance()->FindPlayer(roleid, windex1);
 	if (!gPlayer || !gPlayer->imp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::UpdateKidsAddonsProtocol: failed to get player");
 		return;
 	}
 
 	gplayer_imp *pImp = (gplayer_imp *)gPlayer->imp;
 	if (!pImp)
 	{
-		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: failed to get player imp");
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::UpdateKidsAddonsProtocol: failed to get player imp");
 		return;
 	}
 
@@ -185,12 +187,15 @@ void gplayer_kid_addons::UpdateKidsAddonsProtocol(int roleid)
 	h1 << (int)0;
 	h1 << addons_count;
 
-	for (int i = 0; i < addons_count; i++)
+	for (int i = 0; i < (int)addons_count; i++)
 	{
 		h1 << addons[i].pos;
-		h1 << addons[i].addons_count;
+		int inner_cnt = addons[i].addons_count;
+		if (inner_cnt < 0) inner_cnt = 0;
+		if (inner_cnt > 8) inner_cnt = 8;
+		h1 << inner_cnt;
 
-		for (int j = 0; j < addons[i].addons_count; j++)
+		for (int j = 0; j < inner_cnt; j++)
 		{
 			h1 << addons[i].addons_pos[j];
 		}
@@ -313,6 +318,13 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 		return;
 	}
 
+	// Bug fix: validate pos before dereferencing GetCelestial(pos).
+	if (pos < 0 || pos >= (int)gplayer_kid::MAX_CELESTIAL)
+	{
+		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: invalid pos %d", pos);
+		return;
+	}
+
 	DATA_TYPE dt;
 	KID_EXP_CONFIG *pCfg = (KID_EXP_CONFIG *)world_manager::GetDataMan().get_data_ptr(IDX_MAX_LEVEL_MONEY_COST, ID_SPACE_CONFIG, dt);
 	if (dt != DT_KID_EXP_CONFIG || !pCfg)
@@ -322,18 +334,24 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 	}
 
 	int currentl = pImp->GetKid()->GetCelestial(pos)->level;
-	int newl = currentl + level;
 
-	if (currentl < 0 || newl >= 150)
+	// Bug fix: cap the target level at MAX_KID_LEVEL *before* calculating money so
+	// the player is never charged for levels that will not actually be applied.
+	// Old code used newl >= 150 (the raw array bound) which allowed requesting up to
+	// level 149 while SetCelestial later silently capped to MAX_KID_LEVEL=105 — the
+	// player was overcharged for the uncapped levels.
+	int set_new_level = currentl + level;
+	if (set_new_level > gplayer_kid::MAX_KID_LEVEL)
+		set_new_level = gplayer_kid::MAX_KID_LEVEL;
+
+	if (currentl < 0 || set_new_level <= currentl)
 	{
 		GLog::log(GLOG_ERR, "gplayer_kid_addons::SetCelestialNewLevel: invalid level");
 		return;
 	}
 
-
-
 	int totalmoneycost = 0;
-	for (int i = currentl; i < newl; ++i)
+	for (int i = currentl; i < set_new_level; ++i)
 	{
 		totalmoneycost += pCfg->exp[i];
 	}
@@ -349,12 +367,6 @@ void gplayer_kid_addons::SetCelestialNewLevel(int roleid, int pos, int level)
 		pImp->SpendAllMoney(totalmoneycost, true);
 		pImp->SelfPlayerMoney();
 	}
-
-	int set_new_level = pImp->GetKid()->GetCelestial(pos)->level + level;	
-	if(set_new_level > gplayer_kid::MAX_KID_LEVEL)
-	{
-		set_new_level = gplayer_kid::MAX_KID_LEVEL;
-	}	
 
 	pImp->GetKid()->SetCelestial(pos, set_new_level, pImp->GetKid()->GetCelestial(pos)->rank, pImp->GetKid()->GetCelestial(pos)->exp, pImp->GetKid()->GetCelestial(pos)->idx);
 	pImp->KidCelestialInfoProtocol(0);
@@ -379,14 +391,12 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 	
 	if (kids_wipe == 0)
 	{
-		if(kids_wipe != 0)
+		// Bug fix 1: removed dead code `if (kids_wipe != 0) return;` — always false here.
+		// Bug fix 2: do NOT set kids_wipe=1 when rejecting due to insufficient reincarnations.
+		// Old code permanently consumed the one-time wipe token even though nothing was wiped,
+		// so the player could never wipe after they did reincarnate.
+		if (pImp->GetReincarnationTimes() < 1)
 			return;
-		
-		if(pImp->GetReincarnationTimes () < 1)
-		{
-			kids_wipe = 1;			
-			return;
-		}
 
 		for (unsigned int i = 0; i < gplayer_kid::MAX_CELESTIAL; i++)
 		{
@@ -425,10 +435,13 @@ void gplayer_kid_addons::SetKidsWipe(int roleid)
 						pImp->GetKid()->SetCelestial(i, newlevel < 1 ? 1 : newlevel, config2->rahk >= 3 ? 1 : 0, newexp, idx);
 						pImp->KidCelestialInfoProtocol(0);
 
-						if(count_itens > 0)
+						// Bug fix: guard against out-of-bounds index before accessing item_id[].
+						// kid_debri_type comes from config data; array has exactly 6 entries.
+						if (count_itens > 0 && config2->kid_debri_type >= 0 &&
+						    config2->kid_debri_type < (int)(sizeof(item_id) / sizeof(item_id[0])))
 						{
 							pImp->InvPlayerGiveItem(item_id[config2->kid_debri_type], count_itens);
-						}						
+						}
 					}
 				}
 			}

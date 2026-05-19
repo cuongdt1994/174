@@ -5340,6 +5340,7 @@ public:	//lgc
 	bool KidCelestialUpgradeRank(int celestial_idx, int where, int inv_idx);
 	int KidCelestialDebrisLevelUp(int idx, int exp);
 	void KidCelestialTransformation(int mode);
+	void KidTransformEnd(int skill_count, int *skills);
 
 	void KidUnlockNewDay ();
 

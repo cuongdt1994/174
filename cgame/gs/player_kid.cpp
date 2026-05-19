@@ -182,18 +182,22 @@ gplayer_imp::KidAwakeningPercProtocol()
 int
 gplayer_imp::GetCardLevel(std::mt19937& rng, std::uniform_real_distribution<double>& dist, int level)
 {
+	std::uniform_int_distribution<int> d6(0, 5);
+	std::uniform_int_distribution<int> d8(0, 7);
+	std::uniform_int_distribution<int> d7(0, 6);
+
 	double r = dist(rng) * 100.0;
 
-	if (level == 1)  return (r <= 70) ? card_level_1[rand() % 6] : card_level_2[rand() % 8];
-	if (level == 2)  return (r <= 60) ? card_level_1[rand() % 6] : ((r <= 95) ? card_level_2[rand() % 8] : card_level_3[rand() % 7]);
-	if (level == 3)  return (r <= 50) ? card_level_1[rand() % 6] : ((r <= 90) ? card_level_2[rand() % 8] : card_level_3[rand() % 7]);
-	if (level == 4)  return (r <= 40) ? card_level_1[rand() % 6] : ((r <= 80) ? card_level_2[rand() % 8] : card_level_3[rand() % 7]);
-	if (level == 5)  return (r <= 30) ? card_level_1[rand() % 6] : ((r <= 65) ? card_level_2[rand() % 8] : ((r <= 95) ? card_level_3[rand() % 7] : card_level_4[rand() % 7]));
-	if (level == 6)  return (r <= 30) ? card_level_1[rand() % 6] : ((r <= 60) ? card_level_2[rand() % 8] : ((r <= 90) ? card_level_3[rand() % 7] : card_level_4[rand() % 7]));
-	if (level == 7)  return (r <= 24) ? card_level_1[rand() % 6] : ((r <= 54) ? card_level_2[rand() % 8] : ((r <= 84) ? card_level_3[rand() % 7] : ((r <= 99) ? card_level_4[rand() % 7] : card_level_5[0])));
-	if (level == 8)  return (r <= 17) ? card_level_1[rand() % 6] : ((r <= 47) ? card_level_2[rand() % 8] : ((r <= 77) ? card_level_3[rand() % 7] : ((r <= 97) ? card_level_4[rand() % 7] : card_level_5[0])));
-	if (level == 9)  return (r <= 15) ? card_level_1[rand() % 6] : ((r <= 40) ? card_level_2[rand() % 8] : ((r <= 70) ? card_level_3[rand() % 7] : ((r <= 95) ? card_level_4[rand() % 7] : card_level_5[0])));
-	if (level == 10) return (r <= 10) ? card_level_1[rand() % 6] : ((r <= 35) ? card_level_2[rand() % 8] : ((r <= 60) ? card_level_3[rand() % 7] : ((r <= 90) ? card_level_4[rand() % 7] : card_level_5[0])));
+	if (level == 1)  return (r <= 70) ? card_level_1[d6(rng)] : card_level_2[d8(rng)];
+	if (level == 2)  return (r <= 60) ? card_level_1[d6(rng)] : ((r <= 95) ? card_level_2[d8(rng)] : card_level_3[d7(rng)]);
+	if (level == 3)  return (r <= 50) ? card_level_1[d6(rng)] : ((r <= 90) ? card_level_2[d8(rng)] : card_level_3[d7(rng)]);
+	if (level == 4)  return (r <= 40) ? card_level_1[d6(rng)] : ((r <= 80) ? card_level_2[d8(rng)] : card_level_3[d7(rng)]);
+	if (level == 5)  return (r <= 30) ? card_level_1[d6(rng)] : ((r <= 65) ? card_level_2[d8(rng)] : ((r <= 95) ? card_level_3[d7(rng)] : card_level_4[d7(rng)]));
+	if (level == 6)  return (r <= 30) ? card_level_1[d6(rng)] : ((r <= 60) ? card_level_2[d8(rng)] : ((r <= 90) ? card_level_3[d7(rng)] : card_level_4[d7(rng)]));
+	if (level == 7)  return (r <= 24) ? card_level_1[d6(rng)] : ((r <= 54) ? card_level_2[d8(rng)] : ((r <= 84) ? card_level_3[d7(rng)] : ((r <= 99) ? card_level_4[d7(rng)] : card_level_5[0])));
+	if (level == 8)  return (r <= 17) ? card_level_1[d6(rng)] : ((r <= 47) ? card_level_2[d8(rng)] : ((r <= 77) ? card_level_3[d7(rng)] : ((r <= 97) ? card_level_4[d7(rng)] : card_level_5[0])));
+	if (level == 9)  return (r <= 15) ? card_level_1[d6(rng)] : ((r <= 40) ? card_level_2[d8(rng)] : ((r <= 70) ? card_level_3[d7(rng)] : ((r <= 95) ? card_level_4[d7(rng)] : card_level_5[0])));
+	if (level == 10) return (r <= 10) ? card_level_1[d6(rng)] : ((r <= 35) ? card_level_2[d8(rng)] : ((r <= 60) ? card_level_3[d7(rng)] : ((r <= 90) ? card_level_4[d7(rng)] : card_level_5[0])));
 
 	return -1;
 }
@@ -245,8 +249,9 @@ gplayer_imp::KidAwakeningCreate(char type, char name_len, const char name[])
 
 		time_t nnow;
 		time(&nnow);
-		struct tm *tm_now = localtime(&nnow);
-		GetLua()->SetChildResetDay((char)tm_now->tm_mday);
+		struct tm tm_buf = {};
+		localtime_s(&tm_buf, &nnow);
+		GetLua()->SetChildResetDay((char)tm_buf.tm_mday);
 	}
 
 	KidAwakeningNameProtocol();
@@ -311,7 +316,9 @@ gplayer_imp::KidGetSuitePoints()
 			_kid.GetEquipedCourse(i)->course_id, ID_SPACE_ESSENCE, dt);
 		if (ess && dt == DT_COURSE_ESSENCE)
 		{
-			points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
+			int cl = _kid.GetEquipedCourse(i)->course_level;
+			if (cl >= 1 && cl <= 3)
+				points_recv += ess->score[cl - 1];
 
 			for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265})
 			{
@@ -378,7 +385,9 @@ gplayer_imp::KidAwakeningNewDay2()
 			_kid.GetEquipedCourse(i)->course_id, ID_SPACE_ESSENCE, dt);
 		if (ess && dt == DT_COURSE_ESSENCE)
 		{
-			points_recv += ess->score[_kid.GetEquipedCourse(i)->course_level - 1];
+			int cl = _kid.GetEquipedCourse(i)->course_level;
+			if (cl >= 1 && cl <= 3)
+				points_recv += ess->score[cl - 1];
 
 			for (unsigned int suite_id : {66226, 66255, 66256, 66257, 66258, 66259, 66260, 66261, 66262, 66263, 66264, 66265})
 			{
@@ -453,7 +462,11 @@ gplayer_imp::KidAwakeningCardLevel()
 		_kid.SetExpCourseRequired(exp_now + 4);
 	}
 
-	_runner->kid_course_perc(_kid.GetCardLevel(), _kid.GetExpCourseRequired() + exp_min_level[_kid.GetCardLevel()]);
+	{
+		char new_level = _kid.GetCardLevel();
+		int  base_exp  = (new_level < 10) ? exp_min_level[new_level] : 0;
+		_runner->kid_course_perc(new_level, _kid.GetExpCourseRequired() + base_exp);
+	}
 	KidAwakeningCashProtocol();
 	return true;
 }
@@ -1084,6 +1097,29 @@ gplayer_imp::KidCelestialTransformation(int mode)
 }
 
 void
+gplayer_imp::KidTransformEnd(int skill_count, int *skills)
+{
+	if (!_kid_transformation) return;
+
+	_kid_transformation      = 0;
+	_kid_transformation_time = 0;
+
+	if (skill_count > 0)
+	{
+		int neg_skills[32] = {};
+		for (int i = 0; i < skill_count; ++i)
+		{
+			neg_skills[2 * i]     =  skills[2 * i];
+			neg_skills[2 * i + 1] = -skills[2 * i + 1];
+		}
+		_runner->player_world_speak_info(1, 1, 1, skill_count, neg_skills);
+	}
+
+	_runner->get_skill_data();
+	PlayerGetProperty();
+}
+
+void
 gplayer_imp::FixChildSystem()
 {
 	for (unsigned int i = 0; i < 6; i++)
@@ -1100,8 +1136,11 @@ gplayer_imp::FixChildSystem()
 			6877, ID_SPACE_CONFIG, data3);
 		if (!config3 || data3 != DT_KID_LEVEL_MAX_CONFIG) return;
 
+		if (config2->rahk >= 10) continue;
 		int newlevel  = config3->level_max[config2->rahk];
-		int old_level = config3->level_max[_kid.GetCelestial(i)->rank];
+		int raw_rank  = _kid.GetCelestial(i)->rank;
+		if (raw_rank < 0 || raw_rank >= 10) continue;
+		int old_level = config3->level_max[raw_rank];
 
 		if (_kid.GetCelestial(i)->level > old_level)
 		{

@@ -270,6 +270,7 @@ public:
 	void ChangeShape2(int shape, int timeout);
 	int GetForm();
 	void SetFormCls(int form);
+	void KidTransformEnd(int skill_count, int *skills);
 
 	void LockEquipment(bool is_lock);
 	void BindToGound(bool is_bind);
