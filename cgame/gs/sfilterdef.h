@@ -575,6 +575,8 @@ enum filter_class_id{
 	CLASS_ANGRY      = 4733,
 	CLASS_REBIRTH3   = 4734,
 	CLASS_QUEFAN     = 4735,
+	CLASS_WOLF       = 4736,
+	CLASS_BLEEDING2  = 4737,
 
 };
 
