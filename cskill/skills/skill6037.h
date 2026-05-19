@@ -334,7 +334,7 @@ namespace GNET
 			skill->GetVictim()->SetProbability(_float2);
 			skill->GetVictim()->SetRatio(6037.0);
 			skill->GetVictim()->SetAmount(25000.0);
-			//skill->GetVictim()->SetDecCoolDown2(1);
+			skill->GetVictim()->SetDecCoolDown2(1);
 		}
 		return 1;
 	}
