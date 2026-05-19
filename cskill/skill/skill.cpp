@@ -39,6 +39,8 @@ bool SkillStub::ReqPreSKill(Skill * skill ) const
 	
 	if (rank >= 40)
 	{
+		if(pre_skills.empty())
+			return true;
 		unsigned int valid = 0;
 		for(unsigned int i=0; i<pre_skills.size(); i++)
 		{

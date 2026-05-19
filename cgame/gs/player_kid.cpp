@@ -725,8 +725,7 @@ gplayer_imp::KidAwakeningNewDay3()
 	{
 		if (config2->broadcast > 0)
 		{
-			__PRINTF("KID name[0]=%d name=%ls\n", (int)config2->name[0], config2->name);
-			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), config2->name);
+			SendClientMsgChild(_kid.GetName(), _kid.GetNameLength(), idx_item);
 		}
 
 		DATA_TYPE data3;
@@ -1155,13 +1154,13 @@ gplayer_imp::FixChildSystem()
 }
 
 void
-gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, const namechar *name)
+gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, int kid_id)
 {
 	struct
 	{
 		char player_name[MAX_USERNAME_LENGTH];
 		char child_name[MAX_USERNAME_LENGTH_NOTIFY];
-		char name[64]; // UTF-8, same packet size as namechar[32]
+		int kid_id;
 	} data;
 	memset(&data, 0, sizeof(data));
 
@@ -1173,10 +1172,11 @@ gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, const name
 	if (len2 > MAX_USERNAME_LENGTH_NOTIFY) len2 = MAX_USERNAME_LENGTH_NOTIFY;
 	memcpy(data.child_name, child_name, len2);
 
-	utf16_to_utf8((const char16_t *)name, data.name, sizeof(data.name));
+	data.kid_id = kid_id;
 
 	packet_wrapper buf(sizeof(data));
 	buf.push_back(&data, sizeof(data));
 
 	broadcast_chat_msg(CHILD_AWAKENING_CHAT_MSG_ID, buf.data(), buf.size(), GMSV::CHAT_CHANNEL_SYSTEM, 0, 0, 0);
+}
 }

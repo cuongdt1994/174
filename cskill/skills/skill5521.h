@@ -185,7 +185,7 @@ namespace GNET
         feature             = 0; 
         extra_effect        = 0; 
         immune_casting      = 0; 
-        pre_skills.push_back (std::pair < ID, int >(0, 1)); 
+        //pre_skills.push_back (std::pair < ID, int >(0, 1)); 
 #ifdef _SKILL_SERVER 
         statestub.push_back (new State1 ()); 
         statestub.push_back (new State2 ()); 

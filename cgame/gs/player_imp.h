@@ -5334,7 +5334,7 @@ public:	//lgc
 	void KidAwakeningCardMoveEquipInventory(char old_slot, char new_slot);
 	void KidCelestialInfoProtocol (int type = 0);
 	bool KidAwakeningNewDay3 ();
-	void SendClientMsgChild(char* child_name, int child_name_len, const namechar* name);
+	void SendClientMsgChild(char* child_name, int child_name_len, int kid_id);
 	void KidCelestialActivityProtocol ();
 	bool KidCelestialActivity(int val1, int val2, int val3);
 	bool KidCelestialUpgradeRank(int celestial_idx, int where, int inv_idx);
