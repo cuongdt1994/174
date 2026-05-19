@@ -1161,7 +1161,7 @@ gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, const name
 	{
 		char player_name[MAX_USERNAME_LENGTH];
 		char child_name[MAX_USERNAME_LENGTH_NOTIFY];
-		namechar name[32];
+		char name[64]; // UTF-8, same packet size as namechar[32]
 	} data;
 	memset(&data, 0, sizeof(data));
 
@@ -1173,7 +1173,7 @@ gplayer_imp::SendClientMsgChild(char *child_name, int child_name_len, const name
 	if (len2 > MAX_USERNAME_LENGTH_NOTIFY) len2 = MAX_USERNAME_LENGTH_NOTIFY;
 	memcpy(data.child_name, child_name, len2);
 
-	memcpy(data.name, name, sizeof(data.name));
+	utf16_to_utf8((const char16_t *)name, data.name, sizeof(data.name));
 
 	packet_wrapper buf(sizeof(data));
 	buf.push_back(&data, sizeof(data));
