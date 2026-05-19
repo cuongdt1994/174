@@ -10151,7 +10151,7 @@ namespace GNET
 		if (ThrowDice())
 			object.AddFilter(new filter_Wolf(object, r, count, inc));
 		else
-			object.QueryFilter(FILTER_ADDATTACKDEGREEATR, FILTER_ADDATTACKDEGREEATR);
+			object.QueryFilter(filter_Wolf, filter_Wolf);
 		return true;
 	}
 

@@ -8734,7 +8734,7 @@ public:
 	{
 		timeout_filter::Heartbeat(tick);
 		_parent.ResetCoolDown(0x1BBB, 1);
-		if (!_parent.IsFilterExist(4550))
+		if (!_parent.IsFilterExist(FILTER_KIDFORM))
 			_is_deleted = 1;
 	}
 };
@@ -13736,7 +13736,7 @@ public:
 
 	virtual void Heartbeat(int tick)
 	{
-		if (!_parent.IsFilterExist(FILTER_ADDDEFENCEDEGREEATR))
+		if (!_parent.IsFilterExist(FILTER_KIDFORM))
 			_is_deleted = 1;
 		timeout_filter::Heartbeat(tick);
 		if (_rebirth_time)
@@ -31995,7 +31995,7 @@ public:
 
 	void Heartbeat(int tick)
 	{
-		if (!_parent.IsFilterExist(FILTER_ADDDEFENCEDEGREEATR))
+		if (!_parent.IsFilterExist(FILTER_KIDFORM))
 			_is_deleted = 1;
 		timeout_filter::Heartbeat(tick);
 		const extend_prop &ep = _parent.GetExtendProp();
