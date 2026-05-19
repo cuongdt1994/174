@@ -1069,7 +1069,7 @@ gplayer_imp::KidCelestialTransformation(int mode)
 	// Activate transformation
 	// -------------------------------------------------------------------------
 	_kid_transformation      = 1;
-	_kid_transformation_time = 1800;
+	_kid_transformation_time = 29;
 
 	_filters.ClearSpecFilter(filter::FILTER_MASK_DEBUFF);
 	SetCoolDown(COOLDOWN_INDEX_KID_TRANSFORMATION, IDX_TIME_COOLDOWN);
